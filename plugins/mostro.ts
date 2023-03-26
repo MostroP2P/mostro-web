@@ -4,14 +4,17 @@ import { RelayPool }  from 'nostr'
 type MostroOptions = {
   pubKey: string,
   relays: string[]
+  store: any
 }
 
 class Mostro {
   pool: any
   mostro: string
+  store: any
   constructor(opts: MostroOptions) {
     this.pool = RelayPool(opts.relays)
     this.mostro = opts.pubKey
+    this.store = opts.store
     this.init()
   }
 
@@ -25,11 +28,10 @@ class Mostro {
       relay.close()
     })
     this.pool.on('event', (relay: any, sub_id: any, ev: any) => {
-      console.log('ev: ', ev)
       const { content, kind } = ev
       if (kind === 30000) {
         // Order
-        const payload = JSON.parse(content)
+        this.store.dispatch('orders/addOrder', JSON.parse(content))
       } else if (kind === 4) {
         // DM
       }
@@ -37,10 +39,11 @@ class Mostro {
   }
 }
 
-export default ( context: any, inject: Function) => {
+export default ( { env, store }: any, inject: Function) => {
   const opts = {
-    relays: context.env.RELAYS.split(','),
-    pubKey: context.env.MOSTRO_PUB_KEY
+    relays: env.RELAYS.split(','),
+    pubKey: env.MOSTRO_PUB_KEY,
+    store: store
   }
   const mostro = new Mostro(opts)
   inject('mostro', mostro)

@@ -35,7 +35,10 @@ export const state = () => ({
 })
 
 export const actions = {
-  addOrder(order: Order) {
+  addOrder(context: any, order: Order) {
+    console.log('> addOrder: ', order)
+    const { commit } = context
+    commit('addOrder', order)
     //..
   },
   removeOrder(order: Order) {
@@ -43,11 +46,14 @@ export const actions = {
   }
 }
 
-export const muttions = {
-  addOrder(order: Order) {
-    //..
+export const mutations = {
+  addOrder(state: any, order: Order) {
+    state.orders = [order, ...state.orders]
   },
-  removeOrder(order: Order) {
-    //..
+  removeOrder(state: any, order: Order) {
+    const index = state.orders.findIndex((item: Order) => item.id === order.id)
+    if (index !== -1) {
+      state.orders.splice(index, 1)
+    }
   }
 }
