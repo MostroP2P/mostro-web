@@ -2,7 +2,8 @@ import 'bigint-polyfill'
 import { RelayPool }  from 'nostr'
 
 type MostroOptions = {
-  pubKey: string,
+  mostroPubKey: string,
+  secretKey: string,
   relays: string[]
   store: any
 }
@@ -10,10 +11,12 @@ type MostroOptions = {
 class Mostro {
   pool: any
   mostro: string
+  secretKey: string
   store: any
   constructor(opts: MostroOptions) {
     this.pool = RelayPool(opts.relays)
-    this.mostro = opts.pubKey
+    this.mostro = opts.mostroPubKey
+    this.secretKey = opts.secretKey
     this.store = opts.store
     this.init()
   }
@@ -27,13 +30,29 @@ class Mostro {
     this.pool.on('close', (relay: any) => {
       relay.close()
     })
-    this.pool.on('event', (relay: any, sub_id: any, ev: any) => {
+    this.pool.on('event', async (relay: any, sub_id: any, ev: any) => {
       const { content, kind } = ev
       if (kind === 30000) {
         // Order
         this.store.dispatch('orders/addOrder', JSON.parse(content))
       } else if (kind === 4) {
         // DM
+        console.log(`> sub_id: ${sub_id}, ev: `, ev)
+        // @ts-ignore
+        let recipient = ev.tags.find(([k, v]) => k === 'p' && v && v !== '')[1]
+        const { nip04, nip19, getPublicKey } = window.NostrTools
+        const secretKey = nip19.decode(this.secretKey).data
+        const pubKey = getPublicKey(secretKey)
+        if (pubKey === recipient) {
+          try {
+            const plaintext = await nip04.decrypt(secretKey, pubKey, ev.content)
+            // TODO: Add to store
+          } catch(err) {
+            console.error('Error while trying to decode DM: ', err)
+          }
+        } else {
+          console.warn(`Ignoring DM for key: ${pubKey}`)
+        }
       }
     })
   }
@@ -42,7 +61,8 @@ class Mostro {
 export default ( { env, store }: any, inject: Function) => {
   const opts = {
     relays: env.RELAYS.split(','),
-    pubKey: env.MOSTRO_PUB_KEY,
+    mostroPubKey: env.MOSTRO_PUB_KEY,
+    secretKey: env.SECRET_KEY,
     store: store
   }
   const mostro = new Mostro(opts)

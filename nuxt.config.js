@@ -33,7 +33,8 @@ export default {
 
   env: {
     RELAYS: process.env.RELAYS,
-    MOSTRO_PUB_KEY: process.env.MOSTRO_PUB_KEY
+    MOSTRO_PUB_KEY: process.env.MOSTRO_PUB_KEY,
+    SECRET_KEY: process.env.SECRET_KEY // Temporal thing, this should later be recovered from user settings
   },
 
   // Auto import components: https://go.nuxtjs.dev/config-components
