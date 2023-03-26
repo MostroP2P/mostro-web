@@ -6,7 +6,17 @@
       link
     >
       <v-list-item-content>
-        <v-list-item-title>{{ order.fiat_amount }} {{ order.fiat_code.toUpperCase() }} </v-list-item-title>
+        <v-list-item-title class="d-flex justify-space-between">
+          {{ order.fiat_amount }} {{ order.fiat_code.toUpperCase() }}
+          <v-chip
+            style="cursor: pointer"
+            outlined
+            :color="order.kind === 'Sell' ? 'red' : 'green'"
+            small
+          >
+            {{ order.kind.toUpperCase() }}
+          </v-chip>
+        </v-list-item-title>
         <v-list-item-subtitle>
           {{ summary(order) }}
         </v-list-item-subtitle>
