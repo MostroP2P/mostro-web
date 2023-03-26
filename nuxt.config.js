@@ -8,6 +8,9 @@ export default {
     htmlAttrs: {
       lang: 'en'
     },
+    script: [
+      { src: 'https://unpkg.com/nostr-tools/lib/nostr.bundle.js' }
+    ],
     meta: [
       { charset: 'utf-8' },
       { name: 'viewport', content: 'width=device-width, initial-scale=1' },
@@ -25,7 +28,13 @@ export default {
 
   // Plugins to run before rendering page: https://go.nuxtjs.dev/config-plugins
   plugins: [
+    { src: '~/plugins/mostro.ts', mode: 'client'}
   ],
+
+  env: {
+    RELAYS: process.env.RELAYS,
+    MOSTRO_PUB_KEY: process.env.MOSTRO_PUB_KEY
+  },
 
   // Auto import components: https://go.nuxtjs.dev/config-components
   components: true,
@@ -71,5 +80,9 @@ export default {
 
   // Build Configuration: https://go.nuxtjs.dev/config-build
   build: {
+    transpile: [
+      'nostr-tools',
+      '@noble/curves'
+    ]
   }
 }

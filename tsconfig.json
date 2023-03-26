@@ -23,6 +23,7 @@
         "./*"
       ]
     },
+    "typeRoots": ["./node_modules/@types", "./types", "global.d.ts"],
     "types": [
       "@nuxt/types",
       "@nuxtjs/axios",
