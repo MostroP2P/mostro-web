@@ -1,7 +1,10 @@
 <template>
-  <v-card class="mx-auto"
-    max-width="400">
-    <v-list-item v-for="order in orders" :key="order.id">
+  <v-card class="mx-auto">
+    <v-list-item v-for="order in orders"
+      :key="order.id"
+      three-line
+      link
+    >
       <v-list-item-content>
         <v-list-item-title>{{ order.fiat_amount }} {{ order.fiat_code.toUpperCase() }} </v-list-item-title>
         <v-list-item-subtitle>
