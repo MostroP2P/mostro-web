@@ -1,5 +1,6 @@
 <template>
   <v-card class="mx-auto">
+    <v-list>
     <v-list-item v-for="order in orders"
       :key="order.id"
       three-line
@@ -25,6 +26,7 @@
         </v-list-item-subtitle>
       </v-list-item-content>
     </v-list-item>
+    </v-list>
   </v-card>
 </template>
 
@@ -34,6 +36,11 @@ import { mapState } from 'vuex'
 import { Order, OrderType } from '../store/orders'
 
 export default Vue.extend({
+  data() {
+    return {
+      headerHeight: 64
+    }
+  },
   methods: {
     summary(order: Order) {
       if (order.kind === OrderType.SELL)
