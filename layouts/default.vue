@@ -61,6 +61,11 @@ export default {
           to: '/'
         },
         {
+          icon: 'mdi-book',
+          title: 'My Orders',
+          to: '/my-orders'
+        },
+        {
           icon: 'mdi-information',
           title: 'About',
           to: '/about'

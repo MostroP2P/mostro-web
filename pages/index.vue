@@ -10,7 +10,6 @@
     <add-order-dialog class="fixed-btn mb-6"/>
   </div>
 </template>
-
 <script>
 export default {
   name: 'IndexPage'
