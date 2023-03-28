@@ -16,7 +16,7 @@
       <v-tabs-items v-model="tabs">
         <v-tab-item>
           <v-card-text>
-            <sell-form :onClose="() => showDialog = false" :onProcessingUpdate="onProcessingUpdate"/>
+            <order-form :onClose="() => showDialog = false" :onProcessingUpdate="onProcessingUpdate"/>
           </v-card-text>
         </v-tab-item>
         <v-tab-item>
