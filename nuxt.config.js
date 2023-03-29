@@ -9,7 +9,8 @@ export default {
       lang: 'en'
     },
     script: [
-      { src: 'https://unpkg.com/nostr-tools/lib/nostr.bundle.js' }
+      { src: 'https://unpkg.com/nostr-tools/lib/nostr.bundle.js' },
+      { src: 'https://kit.fontawesome.com/090ca49637.js', crossorigin: 'anonymous' }
     ],
     meta: [
       { charset: 'utf-8' },
