@@ -12,11 +12,24 @@
       v-model="fiatAmount"
       label="Fiat amount"
       type="number"
-      hint="Specific value, or range. Ex: 10, 10-100"
+      hint="Enter a specific value. Ex: 10, 100, etc. Ranges not supported yet"
       outlined
       required
       :rules="fiatAmountRules"
     >
+    </v-text-field>
+    <v-text-field
+      v-model="amount"
+      label="Sats amount"
+      type="number"
+      hint="Amount in satoshis"
+      outlined
+      required
+      :rules="amountRules"
+    >
+      <template v-slot:append>
+        <i class="fak fa-regular"/>
+      </template>
     </v-text-field>
     <v-text-field
       v-model="paymentMethod"
@@ -55,10 +68,14 @@ export default Vue.extend({
       valid: false,
       fiatAmount: 100,
       fiatCode: 'pen',
+      amount: 10000,
       paymentMethod: 'ibk',
       fiatAmountRules: [
         (v: string) => !!v || 'Fiat amount is required',
         (v: string) => /\d+(?:-\d+)?$/.test(v) || 'Invalid value or range'
+      ],
+      amountRules: [
+        (v: string) => !!v || 'Sats amount is required'
       ]
     }
   },
@@ -88,10 +105,12 @@ export default Vue.extend({
       this.onProcessingUpdate(true)
       const fiatAmount = typeof this.fiatAmount === 'number' ?
         this.fiatAmount : parseFloat(this.fiatAmount)
+      const satsAmount = typeof this.amount === 'number' ?
+        this.amount : parseFloat(this.amount)
       const order = {
         kind: this.orderType,
         status: OrderStatus.PENDING,
-        amount: 0,
+        amount: satsAmount,
         fiat_code: this.fiatCode,
         fiat_amount: fiatAmount,
         prime: 0,
