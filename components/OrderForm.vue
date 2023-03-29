@@ -86,12 +86,14 @@ export default Vue.extend({
     },
     async onSubmit() {
       this.onProcessingUpdate(true)
+      const fiatAmount = typeof this.fiatAmount === 'number' ?
+        this.fiatAmount : parseFloat(this.fiatAmount)
       const order = {
         kind: this.orderType,
         status: OrderStatus.PENDING,
         amount: 0,
         fiat_code: this.fiatCode,
-        fiat_amount: parseFloat(this.fiatAmount),
+        fiat_amount: fiatAmount,
         prime: 0,
         payment_method: this.paymentMethod,
         created_at: Math.floor(Date.now() / 1e3)
