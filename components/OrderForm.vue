@@ -48,7 +48,7 @@
 </template>
 <script lang="ts">
 import Vue from 'vue'
-import { Order, OrderStatus, OrderType } from '../store/orders'
+import { OrderStatus } from '../store/orders'
 export default Vue.extend({
   data() {
     return {
@@ -70,6 +70,13 @@ export default Vue.extend({
     onProcessingUpdate: {
       type: Function,
       default: () => (arg: boolean) => false
+    },
+    orderType: {
+      type: String,
+      required: true,
+      validator(value: string) {
+        return ['Sell', 'Buy'].includes(value)
+      }
     }
   },
   methods: {
@@ -80,11 +87,11 @@ export default Vue.extend({
     async onSubmit() {
       this.onProcessingUpdate(true)
       const order = {
-        kind: OrderType.SELL,
+        kind: this.orderType,
         status: OrderStatus.PENDING,
         amount: 0,
         fiat_code: this.fiatCode,
-        fiat_amount: this.fiatAmount,
+        fiat_amount: parseFloat(this.fiatAmount),
         prime: 0,
         payment_method: this.paymentMethod,
         created_at: Math.floor(Date.now() / 1e3)
