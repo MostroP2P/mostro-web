@@ -1,7 +1,7 @@
 <template>
   <v-card class="mx-auto">
     <v-list>
-    <v-list-item v-for="order in orders"
+    <v-list-item v-for="order in getPendingOrders"
       :key="order.id"
       three-line
       link
@@ -22,7 +22,10 @@
           {{ summary(order) }}
         </v-list-item-subtitle>
         <v-list-item-subtitle>
-          {{ order.payment_method }}
+          <div class="d-flex justify-space-between">
+            {{ order.payment_method }}
+            <take-sell-order-dialog :order="order"/>
+          </div>
         </v-list-item-subtitle>
       </v-list-item-content>
     </v-list-item>
@@ -32,7 +35,7 @@
 
 <script lang="ts">
 import Vue from 'vue'
-import { mapState } from 'vuex'
+import { mapGetters } from 'vuex'
 import { Order, OrderType } from '../store/orders'
 
 export default Vue.extend({
@@ -64,7 +67,7 @@ export default Vue.extend({
     }
   },
   computed: {
-    ...mapState('orders', ['orders'])
+    ...mapGetters('orders', ['getPendingOrders'])
   }
 })
 </script>
