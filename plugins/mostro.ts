@@ -59,8 +59,8 @@ class Mostro {
         if (pubKey === recipient) {
           try {
             const plaintext = await nip04.decrypt(secretKey, ev.pubkey, ev.content)
-            console.log('> plaintext: ', plaintext)
-            // TODO: Add to store
+            const msg = JSON.parse(plaintext)
+            this.store.dispatch('messages/addMessage', msg)
           } catch(err) {
             console.error('Error while trying to decode DM: ', err)
           }
