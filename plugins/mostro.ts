@@ -58,13 +58,14 @@ class Mostro {
         const pubKey = getPublicKey(secretKey)
         if (pubKey === recipient) {
           try {
-            const plaintext = await nip04.decrypt(secretKey, pubKey, ev.content)
+            const plaintext = await nip04.decrypt(secretKey, ev.pubkey, ev.content)
+            console.log('> plaintext: ', plaintext)
             // TODO: Add to store
           } catch(err) {
             console.error('Error while trying to decode DM: ', err)
           }
         } else {
-          console.warn(`Ignoring DM for key: ${pubKey}`)
+          console.warn(`Ignoring DM for key: ${recipient}, my pubkey is ${pubKey}`)
         }
       }
     })
