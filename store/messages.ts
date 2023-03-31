@@ -5,14 +5,16 @@ type NullableOrder = Order | null
 type PaymentRequest = [NullableOrder, string]
 
 
-type Message = {
+export type Message = {
   version: number,
   order_id: string,
   action: Action,
-  content: PaymentRequest | Order
+  content: {
+    PaymentRequest: PaymentRequest | Order
+  }
 }
 
-interface State {
+export interface State {
   messages: Message[]
 }
 

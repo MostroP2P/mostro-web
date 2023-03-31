@@ -1,0 +1,3 @@
+<template>
+  <message-list/>
+</template>
