@@ -1,5 +1,6 @@
 import { Order } from './orders'
 import { Action } from './action'
+import { ThreadSummary } from './types'
 
 type NullableOrder = Order | null
 type PaymentRequest = [NullableOrder, string]
@@ -9,7 +10,6 @@ type InvoiceAccepted = {
   fiatCode: string,
   paymentMethod: string
 }
-
 
 export type Message = {
   version: number,
@@ -24,7 +24,6 @@ export type Message = {
 export interface State {
   messages: Message[]
 }
-
 
 export const state: State = {
   messages: []
@@ -69,5 +68,23 @@ export const actions = {
 export const mutations = {
   addMessage(state: State, message: Message) {
     state.messages = [message, ...state.messages]
+  }
+}
+
+export const getters = {
+  getThreadSummaries(state: State, getters: any, rootState : any) : ThreadSummary[] {
+    const messageMap = new Map<string, number>
+    for (const message of state.messages) {
+      if (!messageMap.has(message.order_id)) {
+        messageMap.set(message.order_id, 1)
+      } else {
+        let currentCount = messageMap.get(message.order_id) as number
+        messageMap.set(message.order_id, currentCount + 1)
+      }
+    }
+    return Array.from(messageMap).map(([orderId, messageCount]) => {
+      const order = rootState.orders.orders.find((candidate: Order) => candidate.id === orderId)
+      return { orderId, messageCount, order }
+    })
   }
 }
