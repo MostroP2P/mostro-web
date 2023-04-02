@@ -25,7 +25,7 @@
         </v-list-item-action>
       </v-list-item>
     </template>
-    <v-card>
+    <v-card v-if="message.content.PaymentRequest">
       <v-card-title class="text-h5 grey lighten-2">
         Seller Action Required
       </v-card-title>
@@ -64,7 +64,6 @@
 <script lang="ts">
 import Vue from 'vue'
 import type { PropType } from 'vue'
-import { Order } from '~/store/orders'
 import { Message } from '~/store/messages'
 import { Action } from '~/store/action'
 import QrcodeVue from 'qrcode.vue'
@@ -91,17 +90,36 @@ export default Vue.extend({
         case Action.PayInvoice:
           // @ts-ignore
           return `Somebody wants to buy you ${this.satsAmount} sats for ${this.fiatCode} ${this.fiatAmount}` //${message.content.PaymentRequest[1]}
+        case Action.InvoiceAccepted:
+          // @ts-ignore
+          const details = `${this.buyerPubkey} has taken your order and wants to buy your sats. Get in touch and tell him/her how to send you ${this.fiatAmount} ${this.fiatCode} through ${this.paymentMethod}.`
+          // @ts-ignore
+          return `🧌 Order Id: ${this.orderId}\n\n` + details + 'Once you verify you have received the full amount you have to release the sats'
         default:
           return 'Unimplemented message 😥'
       }
     },
   },
   computed: {
+    orderId() {
+      return this.message.order_id
+    },
+    buyerPubkey() {
+      const invoiceAccepted = this.message.content.InvoiceAccepted
+      if (invoiceAccepted) {
+        return invoiceAccepted.buyer
+      }
+      return '?'
+    },
     fiatAmount() {
       const paymentRequest = this.message.content.PaymentRequest
       if (paymentRequest && Array.isArray(paymentRequest)) {
         // @ts-ignore
         return paymentRequest[0].fiat_amount
+      }
+      const invoiceAccepted = this.message.content.InvoiceAccepted
+      if (invoiceAccepted) {
+        return invoiceAccepted.fiatAmount
       }
       return 'N/A'
     },
@@ -118,6 +136,19 @@ export default Vue.extend({
         // @ts-ignore
         return paymentRequest[0].fiat_code
       }
+      const invoiceAccepted = this.message.content.InvoiceAccepted
+      if (invoiceAccepted) {
+        return invoiceAccepted.fiatCode
+      }
+      return 'N/A'
+    },
+    paymentMethod() {
+      const invoiceAccepted = this.message.content.InvoiceAccepted
+      if (invoiceAccepted) {
+        return invoiceAccepted.paymentMethod
+      }
+      return 'N/A'
+
     }
   }
 })

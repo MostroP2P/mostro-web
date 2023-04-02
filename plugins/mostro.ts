@@ -59,8 +59,18 @@ class Mostro {
         if (pubKey === recipient) {
           try {
             const plaintext = await nip04.decrypt(secretKey, ev.pubkey, ev.content)
-            const msg = JSON.parse(plaintext)
-            this.store.dispatch('messages/addMessage', msg)
+            console.log('> plaintext: ', plaintext)
+            // For now, some messages from mostro are just plain text. With time it
+            // is expected for them all to migrate to JSON objects. But in order to
+            // distinguish them at this point we're taking advantage of the fact that
+            // all text messages contain the 🧌 emoji :)
+            const emojiIndex = plaintext.indexOf('🧌')
+            if (emojiIndex !== -1) {
+              this.store.dispatch('messages/addTextMessage', plaintext)
+            } else {
+              const msg = JSON.parse(plaintext)
+              this.store.dispatch('messages/addMessage', msg)
+            }
           } catch(err) {
             console.error('Error while trying to decode DM: ', err)
           }
