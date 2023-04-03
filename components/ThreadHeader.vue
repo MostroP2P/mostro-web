@@ -3,7 +3,7 @@
     three-line
     link
   >
-    <v-list-item-content>
+    <v-list-item-content @click="onOrderThreadHeaderClicked">
       <v-list-item-title>
         <div class="d-flex justify-space-between">
           {{ orderType }} Order
@@ -57,6 +57,11 @@ export default Vue.extend({
     creationDate() {
       const date = new Date(this.threadSummary.order.created_at * 1e3)
       return timeago.format(date)
+    }
+  },
+  methods: {
+    onOrderThreadHeaderClicked() {
+      this.$router.push(`/my-orders/${this.threadSummary.order.id}`)
     }
   }
 })

@@ -1,7 +1,7 @@
 <template>
   <v-card class="mx-auto">
     <v-list>
-      <message v-for="(message, index) in messages"
+      <message v-for="(message, index) in getMessageByOrderId(this.orderId)"
         :key="`${message.id}-${index}`"
         :message="message"
       />
@@ -10,10 +10,16 @@
 </template>
 <script lang="ts">
 import Vue from 'vue'
-import { mapState } from 'vuex'
+import { mapGetters } from 'vuex'
 export default Vue.extend({
+  props: {
+    orderId: {
+      type: String,
+      required: true
+    }
+  },
   computed: {
-    ...mapState('messages', ['messages'])
+    ...mapGetters('messages', ['getMessageByOrderId'])
   }
 })
 </script>

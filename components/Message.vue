@@ -16,13 +16,6 @@
             Please pay this invoice to start up your selling process, it will expire in 15 minutes
           </v-list-item-subtitle>
         </v-list-item-content>
-        <v-list-item-action>
-          <v-icon
-            color="yellow darken-2"
-          >
-            fa-regular fa-bolt
-          </v-icon>
-        </v-list-item-action>
       </v-list-item>
     </template>
     <v-card v-if="message.content.PaymentRequest">

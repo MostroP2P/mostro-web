@@ -86,5 +86,10 @@ export const getters = {
       const order = rootState.orders.orders.find((candidate: Order) => candidate.id === orderId)
       return { orderId, messageCount, order }
     })
+  },
+  getMessageByOrderId(state: State) {
+    return (orderId: string) => {
+      return state.messages.filter((message: Message) => message.order_id === orderId)
+    }
   }
 }
