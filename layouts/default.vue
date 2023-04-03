@@ -66,6 +66,11 @@ export default {
           to: '/my-orders'
         },
         {
+          icon: 'mdi-email',
+          title: 'Messages',
+          to: '/messages'
+        },
+        {
           icon: 'mdi-information',
           title: 'About',
           to: '/about'

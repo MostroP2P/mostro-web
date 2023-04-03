@@ -41,8 +41,14 @@ export const actions = {
     commit('addOrder', order)
     //..
   },
-  removeOrder(order: Order) {
-    //..
+  removeOrder(context: any, order: Order) {
+    const { commit } = context
+    commit('removeOrder', order)
+  },
+  updateOrder(context: any, order: Order) {
+    const { commit } = context
+    commit('removeOrder', order)
+    commit('addOrder', order)
   }
 }
 
@@ -55,5 +61,11 @@ export const mutations = {
     if (index !== -1) {
       state.orders.splice(index, 1)
     }
+  }
+}
+
+export const getters = {
+  getPendingOrders(state: any) {
+    return state.orders.filter((order: Order) => order.status === 'Pending')
   }
 }

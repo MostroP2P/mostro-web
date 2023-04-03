@@ -14,11 +14,13 @@ class Mostro {
   mostro: string
   secretKey: string
   store: any
+  orderMap: Map<string, string> // Maps order id -> event id
   constructor(opts: MostroOptions) {
     this.pool = RelayPool(opts.relays)
     this.mostro = opts.mostroPubKey
     this.secretKey = opts.secretKey
     this.store = opts.store
+    this.orderMap = new Map<string, string>
     this.init()
   }
 
@@ -32,13 +34,23 @@ class Mostro {
       relay.close()
     })
     this.pool.on('event', async (relay: any, sub_id: any, ev: any) => {
-      const { content, kind } = ev
+      let { kind } = ev
       if (kind === 30000) {
         // Order
-        this.store.dispatch('orders/addOrder', JSON.parse(content))
+        let { content } = ev
+        content = JSON.parse(content)
+        console.log(`> order update. sub_id: ${sub_id}, ev: `, ev)
+        if (this.orderMap.has(content.id)) {
+          // Updates existing order
+          this.store.dispatch('orders/updateOrder', content)
+        } else {
+          // Adds new order
+          this.store.dispatch('orders/addOrder', content)
+          this.orderMap.set(content.id, ev.id)
+        }
       } else if (kind === 4) {
         // DM
-        console.log(`> sub_id: ${sub_id}, ev: `, ev)
+        console.log(`> DM. sub_id: ${sub_id}, ev: `, ev)
         // @ts-ignore
         let recipient = ev.tags.find(([k, v]) => k === 'p' && v && v !== '')[1]
         const { nip04, nip19, getPublicKey } = window.NostrTools
@@ -46,17 +58,48 @@ class Mostro {
         const pubKey = getPublicKey(secretKey)
         if (pubKey === recipient) {
           try {
-            const plaintext = await nip04.decrypt(secretKey, pubKey, ev.content)
-            // TODO: Add to store
+            const plaintext = await nip04.decrypt(secretKey, ev.pubkey, ev.content)
+            console.log('> plaintext: ', plaintext)
+            // For now, some messages from mostro are just plain text. With time it
+            // is expected for them all to migrate to JSON objects. But in order to
+            // distinguish them at this point we're taking advantage of the fact that
+            // all text messages contain the 🧌 emoji :)
+            const emojiIndex = plaintext.indexOf('🧌')
+            if (emojiIndex !== -1) {
+              this.store.dispatch('messages/addTextMessage', plaintext)
+            } else {
+              const msg = JSON.parse(plaintext)
+              this.store.dispatch('messages/addMessage', msg)
+            }
           } catch(err) {
             console.error('Error while trying to decode DM: ', err)
           }
         } else {
-          console.warn(`Ignoring DM for key: ${pubKey}`)
+          console.warn(`Ignoring DM for key: ${recipient}, my pubkey is ${pubKey}`)
         }
       }
     })
   }
+
+  async createEvent(payload: object) {
+    const { nip04, nip19, getPublicKey, getEventHash, signEvent } = window.NostrTools
+    const secretKey = nip19.decode(this.secretKey).data
+    const publicKey = nip19.decode(this.mostro).data
+    const ciphertext = await nip04.encrypt(secretKey, publicKey, JSON.stringify(payload))
+    let event = {
+      kind: 4,
+      created_at: Math.floor(Date.now() / 1000),
+      content: ciphertext,
+      pubkey: getPublicKey(secretKey),
+      tags: [ ['p', publicKey] ]
+    }
+    // @ts-ignore
+    event.id = getEventHash(event)
+    // @ts-ignore
+    event.sig = signEvent(event, secretKey)
+    return event
+  }
+
   async submitOrder(order: Order) {
     const payload = {
       version: 0,
@@ -73,21 +116,23 @@ class Mostro {
         }
       }
     }
-    const { nip04, nip19, getPublicKey, getEventHash, signEvent } = window.NostrTools
-    const secretKey = nip19.decode(this.secretKey).data
-    const publicKey = nip19.decode(this.mostro).data
-    const ciphertext = await nip04.encrypt(secretKey, publicKey, JSON.stringify(payload))
-    let event = {
-      kind: 4,
-      created_at: Math.floor(Date.now() / 1000),
-      content: ciphertext,
-      pubkey: getPublicKey(secretKey),
-      tags: [ ['p', publicKey] ]
+    const event = await this.createEvent(payload)
+    const msg = ['EVENT', event]
+    await this.pool.send(msg)
+  }
+  async takeSell(order: Order, invoice: string) {
+    const payload = {
+      version: 0,
+      order_id: order.id,
+      action: 'TakeSell',
+      content: {
+        PaymentRequest: [
+          null,
+          invoice
+        ]
+      }
     }
-    // @ts-ignore
-    event.id = getEventHash(event)
-    // @ts-ignore
-    event.sig = signEvent(event, secretKey)
+    const event = await this.createEvent(payload)
     const msg = ['EVENT', event]
     await this.pool.send(msg)
   }

@@ -16,12 +16,20 @@
       <v-tabs-items v-model="tabs">
         <v-tab-item>
           <v-card-text>
-            <sell-form :onClose="() => showDialog = false" :onProcessingUpdate="onProcessingUpdate"/>
+            <order-form
+              :onClose="() => showDialog = false"
+              :onProcessingUpdate="onProcessingUpdate"
+              orderType="Sell"
+            />
           </v-card-text>
         </v-tab-item>
         <v-tab-item>
           <v-card-text>
-            Buy
+            <order-form
+              :onClose="() => showDialog = false"
+              :onProcessingUpdate="onProcessingUpdate"
+              orderType="Buy"
+            />
           </v-card-text>
         </v-tab-item>
       </v-tabs-items>

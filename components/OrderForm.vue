@@ -12,11 +12,24 @@
       v-model="fiatAmount"
       label="Fiat amount"
       type="number"
-      hint="Specific value, or range. Ex: 10, 10-100"
+      hint="Enter a specific value. Ex: 10, 100, etc. Ranges not supported yet"
       outlined
       required
       :rules="fiatAmountRules"
     >
+    </v-text-field>
+    <v-text-field
+      v-model="amount"
+      label="Sats amount"
+      type="number"
+      hint="Amount in satoshis"
+      outlined
+      required
+      :rules="amountRules"
+    >
+      <template v-slot:append>
+        <i class="fak fa-regular"/>
+      </template>
     </v-text-field>
     <v-text-field
       v-model="paymentMethod"
@@ -48,17 +61,21 @@
 </template>
 <script lang="ts">
 import Vue from 'vue'
-import { Order, OrderStatus, OrderType } from '../store/orders'
+import { OrderStatus } from '../store/orders'
 export default Vue.extend({
   data() {
     return {
       valid: false,
       fiatAmount: 100,
       fiatCode: 'pen',
+      amount: 10000,
       paymentMethod: 'ibk',
       fiatAmountRules: [
         (v: string) => !!v || 'Fiat amount is required',
         (v: string) => /\d+(?:-\d+)?$/.test(v) || 'Invalid value or range'
+      ],
+      amountRules: [
+        (v: string) => !!v || 'Sats amount is required'
       ]
     }
   },
@@ -70,6 +87,13 @@ export default Vue.extend({
     onProcessingUpdate: {
       type: Function,
       default: () => (arg: boolean) => false
+    },
+    orderType: {
+      type: String,
+      required: true,
+      validator(value: string) {
+        return ['Sell', 'Buy'].includes(value)
+      }
     }
   },
   methods: {
@@ -79,12 +103,16 @@ export default Vue.extend({
     },
     async onSubmit() {
       this.onProcessingUpdate(true)
+      const fiatAmount = typeof this.fiatAmount === 'number' ?
+        this.fiatAmount : parseFloat(this.fiatAmount)
+      const satsAmount = typeof this.amount === 'number' ?
+        this.amount : parseFloat(this.amount)
       const order = {
-        kind: OrderType.SELL,
+        kind: this.orderType,
         status: OrderStatus.PENDING,
-        amount: 0,
+        amount: satsAmount,
         fiat_code: this.fiatCode,
-        fiat_amount: this.fiatAmount,
+        fiat_amount: fiatAmount,
         prime: 0,
         payment_method: this.paymentMethod,
         created_at: Math.floor(Date.now() / 1e3)
