@@ -1,6 +1,20 @@
-# mostro-web-ui
+## Mostro Web
 
-## Build Setup
+Super early version of a web client for the [Mostro](https://github.com/MostroP2P/mostro) P2P System.
+
+This project is a web interface that facilitates peer-to-peer bitcoin trading over the lightning network ⚡️ using nostr 🦩. The lightning network is a layer 2 scaling solution for bitcoin that enables fast and low-cost transactions.
+
+### Configuration - (Dev only 🧑‍💻)
+
+Create a `.env` file with these 3 environment variable defined:
+
+```
+RELAYS=<comma-separated-list-of-relay-urls>
+MOSTRO_PUB_KEY=<public-key-of-your-mostro-instance>
+SECRET_KEY=<the-user-secret-key>
+```
+
+### Build Setup
 
 ```bash
 # install dependencies
@@ -19,51 +33,16 @@ $ npm run generate
 
 For detailed explanation on how things work, check out the [documentation](https://nuxtjs.org).
 
-## Special Directories
+### Features
+-   [x] Posts Orders (Buy & Sell)
+-   [x] Displays order list
+-   [x] Decodes DMs from mostro
+-   [ ] Buyer Takes Sell
+-   [ ] Seller Takes Buy
+-   [ ] Handling multiple relays
+-   [ ] NIP-07 for key management
+-   [ ] Persisting old events?
 
-You can create the following extra directories, some of which have special behaviors. Only `pages` is required; you can delete them if you don't want to use their functionality.
+### License
 
-### `assets`
-
-The assets directory contains your uncompiled assets such as Stylus or Sass files, images, or fonts.
-
-More information about the usage of this directory in [the documentation](https://nuxtjs.org/docs/2.x/directory-structure/assets).
-
-### `components`
-
-The components directory contains your Vue.js components. Components make up the different parts of your page and can be reused and imported into your pages, layouts and even other components.
-
-More information about the usage of this directory in [the documentation](https://nuxtjs.org/docs/2.x/directory-structure/components).
-
-### `layouts`
-
-Layouts are a great help when you want to change the look and feel of your Nuxt app, whether you want to include a sidebar or have distinct layouts for mobile and desktop.
-
-More information about the usage of this directory in [the documentation](https://nuxtjs.org/docs/2.x/directory-structure/layouts).
-
-
-### `pages`
-
-This directory contains your application views and routes. Nuxt will read all the `*.vue` files inside this directory and setup Vue Router automatically.
-
-More information about the usage of this directory in [the documentation](https://nuxtjs.org/docs/2.x/get-started/routing).
-
-### `plugins`
-
-The plugins directory contains JavaScript plugins that you want to run before instantiating the root Vue.js Application. This is the place to add Vue plugins and to inject functions or constants. Every time you need to use `Vue.use()`, you should create a file in `plugins/` and add its path to plugins in `nuxt.config.js`.
-
-More information about the usage of this directory in [the documentation](https://nuxtjs.org/docs/2.x/directory-structure/plugins).
-
-### `static`
-
-This directory contains your static files. Each file inside this directory is mapped to `/`.
-
-Example: `/static/robots.txt` is mapped as `/robots.txt`.
-
-More information about the usage of this directory in [the documentation](https://nuxtjs.org/docs/2.x/directory-structure/static).
-
-### `store`
-
-This directory contains your Vuex store files. Creating a file in this directory automatically activates Vuex.
-
-More information about the usage of this directory in [the documentation](https://nuxtjs.org/docs/2.x/directory-structure/store).
+This project is licensed under the MIT License 📜. See the `LICENSE` file for more information.
