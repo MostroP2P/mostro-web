@@ -87,7 +87,7 @@ export const getters = {
       return { orderId, messageCount, order }
     })
   },
-  getMessageByOrderId(state: State) {
+  getMessagesByOrderId(state: State) {
     return (orderId: string) => {
       return state.messages.filter((message: Message) => message.order_id === orderId)
     }

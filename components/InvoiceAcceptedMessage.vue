@@ -2,8 +2,12 @@
   <v-list-item-content>
     <v-list-item-title>Invoice Accepted</v-list-item-title>
     <v-list-item-subtitle>
-      {{ getMessageText(message)}}
+      {{ getMessageText }}
     </v-list-item-subtitle>
+    <div class="d-flex justify-space-between mt-5">
+      <v-btn color="warning">Dispute</v-btn>
+      <v-btn color="primary">Release</v-btn>
+    </div>
   </v-list-item-content>
 </template>
 
@@ -19,14 +23,13 @@ export default Vue.extend({
       required: true
     }
   },
-  methods: {
-    getMessageText(message: Message) {
-      const details = `${this.buyerPubkey} has taken your order and wants to buy your sats. Get in touch and tell him/her how to send you ${this.fiatAmount} ${this.fiatCode} through ${this.paymentMethod}.`
-      // @ts-ignore
-      return `🧌 Order Id: ${this.orderId}\n\n` + details + 'Once you verify you have received the full amount you have to release the sats'
-    }
-  },
   computed: {
+    getMessageText() {
+      // @ts-ignore
+      const details = `The user ${this.buyerPubkey} has taken your order and wants to buy your sats. Get in touch and tell him/her how to send you ${this.fiatAmount} ${this.fiatCode} through ${this.paymentMethod}.\n\n`
+      const finalInstructions = 'Once you verify you have received the full amount you have to release the sats'
+      return details + finalInstructions
+    },
     fiatAmount() {
       const invoiceAccepted = this.message.content.InvoiceAccepted
       if (invoiceAccepted) {

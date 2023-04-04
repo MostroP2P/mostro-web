@@ -1,10 +1,13 @@
 <template>
   <v-card class="mx-auto">
     <v-list>
-      <message v-for="(message, index) in getMessageByOrderId(this.orderId)"
+      <div
+        v-for="(message, index) in orderMessages"
         :key="`${message.id}-${index}`"
-        :message="message"
-      />
+      >
+        <message :message="message"/>
+        <v-divider v-if="index < orderMessages.length - 1"/>
+      </div>
     </v-list>
   </v-card>
 </template>
@@ -19,7 +22,11 @@ export default Vue.extend({
     }
   },
   computed: {
-    ...mapGetters('messages', ['getMessageByOrderId'])
+    ...mapGetters('messages', ['getMessagesByOrderId']),
+    orderMessages() {
+      // @ts-ignore
+      return this.getMessagesByOrderId(this.orderId)
+    }
   }
 })
 </script>

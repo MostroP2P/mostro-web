@@ -3,7 +3,7 @@
     v-on="on"
     v-bind="attrs"
     three-line
-    link
+    :link="isLink"
   >
     <pay-invoice-message
       v-if="message.action === action.PayInvoice"
@@ -35,5 +35,10 @@ export default Vue.extend({
       required: true
     }
   },
+  computed: {
+    isLink() {
+      return this.action === Action.PayInvoice
+    }
+  }
 })
 </script>
