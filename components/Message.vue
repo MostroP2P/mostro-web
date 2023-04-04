@@ -7,15 +7,14 @@
         three-line
         link
       >
-        <v-list-item-content>
-          <v-list-item-title>Order taken!</v-list-item-title>
-          <v-list-item-subtitle>
-            {{ getMessageText(message)}}
-          </v-list-item-subtitle>
-          <v-list-item-subtitle>
-            Please pay this invoice to start up your selling process, it will expire in 15 minutes
-          </v-list-item-subtitle>
-        </v-list-item-content>
+        <pay-invoice-message
+          v-if="message.action === action.PayInvoice"
+          :message="message"
+        />
+        <invoice-accepted-message
+          v-if="message.action === action.InvoiceAccepted"
+          :message="message"
+        />
       </v-list-item>
     </template>
     <v-card v-if="message.content.PaymentRequest">
@@ -60,12 +59,14 @@ import type { PropType } from 'vue'
 import { Message } from '~/store/messages'
 import { Action } from '~/store/action'
 import QrcodeVue from 'qrcode.vue'
+import InvoiceAcceptedMessage from './InvoiceAcceptedMessage.vue'
 
 export default Vue.extend({
   data() {
     return {
       showDialog: false,
-      invoiceMode: 0
+      invoiceMode: 0,
+      action: Action
     }
   },
   components: {
