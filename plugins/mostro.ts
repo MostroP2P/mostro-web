@@ -66,9 +66,10 @@ class Mostro {
             // all text messages contain the 🧌 emoji :)
             const emojiIndex = plaintext.indexOf('🧌')
             if (emojiIndex !== -1) {
-              this.store.dispatch('messages/addTextMessage', plaintext)
+              const msg = { text: plaintext, created_at: ev.created_at}
+              this.store.dispatch('messages/addTextMessage', msg)
             } else {
-              const msg = JSON.parse(plaintext)
+              const msg = { ...JSON.parse(plaintext), created_at: ev.created_at }
               this.store.dispatch('messages/addMessage', msg)
             }
           } catch(err) {

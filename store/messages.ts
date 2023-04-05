@@ -18,7 +18,13 @@ export type Message = {
   content: {
     PaymentRequest?: PaymentRequest | Order,
     InvoiceAccepted?: InvoiceAccepted
-  }
+  },
+  created_at: number
+}
+
+export type TextMessage = {
+  text: string,
+  created_at: number
 }
 
 export interface State {
@@ -34,14 +40,15 @@ export const actions = {
     const { commit } = context
     commit('addMessage', message)
   },
-  addTextMessage(context: any, message: string) {
+  addTextMessage(context: any, message: TextMessage) {
+    const { text } = message
     // This will have to be removed later when the message format changes
     const orderIdRegex = /Order\sId:\s+(\S+)/
     const buyerPubkeyRegex = /([^\s]+)\s+has\staken\syour\sorder\sand\swants\sto\sbuy\syour\ssats\./
     const paymentDetailsRegex = /Get\sin\stouch\sand\stell\shim\/her\show\sto\ssend\syou\s(\S+)\s(\S+)\sthrough\s(\S+)\./
-    const orderIdMatch = orderIdRegex.exec(message)
-    const buyerPubkeyMatch = buyerPubkeyRegex.exec(message)
-    const paymentDetailsMatch = paymentDetailsRegex.exec(message)
+    const orderIdMatch = orderIdRegex.exec(text)
+    const buyerPubkeyMatch = buyerPubkeyRegex.exec(text)
+    const paymentDetailsMatch = paymentDetailsRegex.exec(text)
     const orderId = orderIdMatch ? orderIdMatch[1] : null
     const buyerPubkey = buyerPubkeyMatch ? buyerPubkeyMatch[1] : null
     const fiatCode = paymentDetailsMatch ? paymentDetailsMatch[1] : null
@@ -58,7 +65,8 @@ export const actions = {
           fiatAmount,
           paymentMethod
         }
-      }
+      },
+      created_at: message.created_at
     }
     const { commit } = context
     commit('addMessage', msg)
@@ -90,6 +98,7 @@ export const getters = {
   getMessagesByOrderId(state: State) {
     return (orderId: string) => {
       return state.messages.filter((message: Message) => message.order_id === orderId)
+        .sort((msgA: Message, msgB: Message) => msgA.created_at - msgB.created_at)
     }
   }
 }
