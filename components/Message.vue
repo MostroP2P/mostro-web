@@ -1,9 +1,5 @@
 <template>
-  <v-list-item
-    v-on="on"
-    v-bind="attrs"
-    three-line
-  >
+  <v-list-item three-line>
     <pay-invoice-message
       v-if="message.action === action.PayInvoice"
       :message="message"
