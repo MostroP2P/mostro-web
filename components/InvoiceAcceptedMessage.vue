@@ -5,8 +5,14 @@
       {{ getMessageText }}
     </v-list-item-subtitle>
     <div class="d-flex justify-space-between mt-5">
-      <v-btn color="warning">Dispute</v-btn>
-      <v-btn color="primary">Release</v-btn>
+      <v-btn text color="warning">
+        <v-icon left>mdi-alert-outline</v-icon>
+        Dispute
+      </v-btn>
+      <v-btn text color="primary">
+        <v-icon left>mdi-thumb-up</v-icon>
+        Release
+      </v-btn>
     </div>
   </v-list-item-content>
 </template>
