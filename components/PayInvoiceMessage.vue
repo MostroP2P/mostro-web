@@ -1,13 +1,19 @@
 <template>
   <v-dialog v-model="showDialog" max-width="500">
     <template v-slot:activator="{ on, attrs}">
-      <v-list-item-content v-bind="attrs" v-on="on">
+      <v-list-item-content>
         <v-list-item-title>Order taken</v-list-item-title>
         <v-list-item-subtitle>
           {{ messageText }}
         </v-list-item-subtitle>
-        <v-list-item-subtitle>
+        <v-list-item-subtitle class="d-flex justify-space-between">
           Please pay this invoice to start up your selling process, it will expire in 15 minutes
+          <v-btn text color="primary" v-bind="attrs" v-on="on">
+            <v-icon left>
+              mdi-qrcode-scan
+            </v-icon>
+            Show Invoice
+          </v-btn>
         </v-list-item-subtitle>
       </v-list-item-content>
     </template>
