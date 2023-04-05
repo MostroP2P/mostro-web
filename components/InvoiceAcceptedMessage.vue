@@ -1,6 +1,9 @@
 <template>
   <v-list-item-content>
-    <v-list-item-title>Invoice Accepted</v-list-item-title>
+    <v-list-item-title class="d-flex justify-space-between">
+      Invoice Accepted
+      <div class="text-caption text--secondary">{{ timeago.format(creationDate) }}</div>
+    </v-list-item-title>
     <v-list-item-subtitle>
       {{ getMessageText }}
     </v-list-item-subtitle>
@@ -18,8 +21,12 @@
 import Vue from 'vue'
 import type { PropType } from 'vue'
 import { Message } from '~/store/messages'
+import * as timeago from 'timeago.js'
 
 export default Vue.extend({
+  data() {
+    return { timeago }
+  },
   props: {
     message: {
       type: Object as PropType<Message>,
@@ -60,6 +67,9 @@ export default Vue.extend({
         return invoiceAccepted.buyer
       }
       return '?'
+    },
+    creationDate() {
+      return this.message.created_at * 1e3
     }
   }
 })

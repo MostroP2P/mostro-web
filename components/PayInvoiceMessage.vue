@@ -2,7 +2,10 @@
   <v-dialog v-model="showDialog" max-width="500">
     <template v-slot:activator="{ on, attrs}">
       <v-list-item-content>
-        <v-list-item-title>Order taken</v-list-item-title>
+        <v-list-item-title class="d-flex justify-space-between">
+          Order taken
+          <div class="text-caption text--secondary">{{ timeago.format(creationDate) }}</div>
+        </v-list-item-title>
         <v-list-item-subtitle>
           {{ messageText }}
         </v-list-item-subtitle>
@@ -60,11 +63,13 @@ import Vue from 'vue'
 import type { PropType } from 'vue'
 import { Message } from '~/store/messages'
 import QrcodeVue from 'qrcode.vue'
+import * as timeago from 'timeago.js'
 export default Vue.extend({
   data() {
     return {
       showDialog: false,
       invoiceMode: 0,
+      timeago
     }
   },
   components: {
@@ -103,6 +108,9 @@ export default Vue.extend({
         return paymentRequest[0].fiat_amount
       }
       return 'N/A'
+    },
+    creationDate() {
+      return this.message.created_at * 1e3
     }
   }
 })
