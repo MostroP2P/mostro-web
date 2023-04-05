@@ -9,10 +9,7 @@
         <v-icon left>mdi-alert-outline</v-icon>
         Dispute
       </v-btn>
-      <v-btn text color="primary">
-        <v-icon left>mdi-thumb-up</v-icon>
-        Release
-      </v-btn>
+      <release-funds-dialog/>
     </div>
   </v-list-item-content>
 </template>

@@ -8,6 +8,10 @@
       v-if="message.action === action.InvoiceAccepted"
       :message="message"
     />
+    <fiat-sent-message
+      v-if="message.action === action.FiatSent"
+      :message="message"
+    />
   </v-list-item>
 </template>
 <script lang="ts">
