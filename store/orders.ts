@@ -51,8 +51,7 @@ export const actions = {
   },
   updateOrder(context: any, order: Order) {
     const { commit } = context
-    commit('removeOrder', order)
-    commit('addOrder', order)
+    commit('updateOrder', order)
   }
 }
 
@@ -66,6 +65,11 @@ export const mutations = {
     const newOrders = new Map<string, Order>()
     newOrders.delete(order.id)
     Vue.set(state, 'orders', newOrders)
+  },
+  updateOrder(state: OrderState, newOrder: Order) {
+    const updatedOrders = new Map<string, Order>(state.orders)
+    updatedOrders.set(newOrder.id, newOrder)
+    Vue.set(state, 'orders', updatedOrders)
   }
 }
 
