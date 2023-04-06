@@ -136,7 +136,7 @@ export const getters = {
       }
     }
     return Array.from(messageMap).map(([orderId, messageCount]) => {
-      const order = rootState.orders.orders.find((candidate: Order) => candidate.id === orderId)
+      const order = rootState.orders.orders.get(orderId)
       return { orderId, messageCount, order }
     })
   },
