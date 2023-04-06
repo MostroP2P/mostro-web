@@ -1,3 +1,3 @@
 <template>
-  <message-list/>
+  <message-list :order-id="''"/>
 </template>
