@@ -1,3 +1,5 @@
+import Vue from 'vue'
+
 export enum OrderType {
   BUY = 'Buy',
   SELL = 'Sell'
@@ -35,15 +37,13 @@ export interface OrderState {
 }
 
 export const state = () => ({
-  orders: new Map<string, Order>()
+  orders: Vue.observable(new Map<string, Order>())
 })
 
 export const actions = {
   addOrder(context: any, order: Order) {
-    console.log('> addOrder: ', order)
     const { commit } = context
     commit('addOrder', order)
-    //..
   },
   removeOrder(context: any, order: Order) {
     const { commit } = context
@@ -58,12 +58,14 @@ export const actions = {
 
 export const mutations = {
   addOrder(state: OrderState, order: Order) {
-    state.orders.set(order.id, order)
+    const newOrders = new Map<string, Order>(state.orders)
+    newOrders.set(order.id, order)
+    Vue.set(state, 'orders', newOrders)
   },
   removeOrder(state: OrderState, order: Order) {
-    if (state.orders.has(order.id)) {
-      state.orders.delete(order.id)
-    }
+    const newOrders = new Map<string, Order>()
+    newOrders.delete(order.id)
+    Vue.set(state, 'orders', newOrders)
   }
 }
 
@@ -72,5 +74,8 @@ export const getters = {
     const orderList: Order[] = []
     state.orders.forEach((order: Order) => orderList.push(order))
     return orderList.filter((order: Order) => order.status === 'Pending')
+  },
+  getOrderStatus(state: OrderState, orderId: string) {
+    return (orderId: string) => state.orders.get(orderId)?.status
   }
 }
