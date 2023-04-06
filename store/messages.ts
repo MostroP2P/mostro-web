@@ -35,9 +35,9 @@ export interface State {
   messages: Message[]
 }
 
-export const state: State = {
-  messages: []
-}
+export const state = () => ({
+  messages: [] as Message[]
+})
 
 const decodeInvoiceAcceptedTextMessage = (message: TextMessage) => {
   const { text } = message
