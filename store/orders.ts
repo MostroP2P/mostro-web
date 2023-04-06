@@ -30,8 +30,12 @@ export interface Order {
   created_at: number,
 }
 
+export interface OrderState {
+  orders: Map<string, Order>
+}
+
 export const state = () => ({
-  orders: []
+  orders: new Map<string, Order>()
 })
 
 export const actions = {
@@ -53,19 +57,20 @@ export const actions = {
 }
 
 export const mutations = {
-  addOrder(state: any, order: Order) {
-    state.orders = [order, ...state.orders]
+  addOrder(state: OrderState, order: Order) {
+    state.orders.set(order.id, order)
   },
-  removeOrder(state: any, order: Order) {
-    const index = state.orders.findIndex((item: Order) => item.id === order.id)
-    if (index !== -1) {
-      state.orders.splice(index, 1)
+  removeOrder(state: OrderState, order: Order) {
+    if (state.orders.has(order.id)) {
+      state.orders.delete(order.id)
     }
   }
 }
 
 export const getters = {
-  getPendingOrders(state: any) {
-    return state.orders.filter((order: Order) => order.status === 'Pending')
+  getPendingOrders(state: OrderState) {
+    const orderList: Order[] = []
+    state.orders.forEach((order: Order) => orderList.push(order))
+    return orderList.filter((order: Order) => order.status === 'Pending')
   }
 }
