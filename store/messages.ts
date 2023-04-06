@@ -126,7 +126,7 @@ export const mutations = {
 
 export const getters = {
   getThreadSummaries(state: State, getters: any, rootState : any) : ThreadSummary[] {
-    const messageMap = new Map<string, number>
+    const messageMap = new Map<string, number>()
     for (const message of state.messages) {
       if (!messageMap.has(message.order_id)) {
         messageMap.set(message.order_id, 1)
