@@ -13,7 +13,7 @@
           <v-icon left>mdi-alert-outline</v-icon>
           Dispute
         </v-btn>
-        <release-funds-dialog/>
+        <release-funds-dialog :order-id="$route.params.id"/>
       </div>
     </div>
     <v-stepper alt-labels class="mt-5">
@@ -64,7 +64,6 @@ export default Vue.extend({
   mounted() {
     // @ts-ignore
     this.orderStatus = this.getOrderStatus(this.$route.params.id)
-    console.log('payInvoiceMessage: ', this.payInvoiceMessage)
   },
   computed: {
     ...mapGetters('orders', ['getOrderStatus']),
@@ -73,7 +72,6 @@ export default Vue.extend({
       const orderId = this.$route.params.id
       // @ts-ignore
       const messages = this.getMessagesByOrderId(orderId)
-      console.log('msg> order id: ', orderId, ' -> ', messages)
       return messages[0]
     },
     isOrderTaken() {

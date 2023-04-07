@@ -37,16 +37,30 @@
 
 <script lang="ts">
 import Vue from 'vue'
+import { mapState } from 'vuex'
+import { Order } from '~/store/orders'
 export default Vue.extend({
   data() {
     return {
       showDialog: false
     }
   },
-  methods: {
-    release() {
-      
+  props: {
+    orderId: {
+      type: String,
+      required: true
     }
+  },
+  methods: {
+    async release() {
+      const order: Order = this.orders.get(this.orderId)
+      // @ts-ignore
+      await this.$mostro.release(order)
+      this.showDialog = false
+    }
+  },
+  computed: {
+    ...mapState('orders', ['orders']),
   }
 })
 </script>

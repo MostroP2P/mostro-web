@@ -137,6 +137,16 @@ class Mostro {
     const msg = ['EVENT', event]
     await this.pool.send(msg)
   }
+  async release(order: Order) {
+    const payload = {
+      version: 0,
+      action: 'Release',
+      order_id: order.id
+    }
+    const event = await this.createEvent(payload)
+    const msg = ['EVENT', event]
+    await this.pool.send(msg)
+  }
 }
 
 export default ( { env, store }: any, inject: Function) => {
