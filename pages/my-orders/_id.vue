@@ -5,10 +5,10 @@
     </div>
     <div class="d-flex justify-center align-center mt-5">
       <pay-invoice-button
-        v-if="orderStatus === OrderStatusConstant.WaitingPayment && payInvoiceMessage"
+        v-if="currentOrderStatus === OrderStatusConstant.WaitingPayment && payInvoiceMessage"
         :message="payInvoiceMessage"
       />
-      <div v-if="orderStatus === OrderStatusConstant.FIAT_SENT || orderStatus === OrderStatusConstant.ACTIVE">
+      <div v-if="currentOrderStatus === OrderStatusConstant.FIAT_SENT || currentOrderStatus === OrderStatusConstant.ACTIVE">
         <v-btn text color="warning">
           <v-icon left>mdi-alert-outline</v-icon>
           Dispute
@@ -54,20 +54,19 @@ const steps = {
 }
 export default Vue.extend({
   layout: 'message-list',
-  data() : { orderStatus: OrderStatus } {
+  data() {
     return {
-      orderStatus: OrderStatus.PENDING,
       // @ts-ignore
       OrderStatusConstant: OrderStatus
     }
   },
-  mounted() {
-    // @ts-ignore
-    this.orderStatus = this.getOrderStatus(this.$route.params.id)
-  },
   computed: {
     ...mapGetters('orders', ['getOrderStatus']),
     ...mapGetters('messages', ['getMessagesByOrderId']),
+    currentOrderStatus() {
+      // @ts-ignore
+      return this.getOrderStatus(this.$route.params.id)
+    },
     payInvoiceMessage() {
       const orderId = this.$route.params.id
       // @ts-ignore
@@ -75,19 +74,24 @@ export default Vue.extend({
       return messages[0]
     },
     isOrderTaken() {
-      return steps[this.orderStatus] >= steps[OrderStatus.PENDING] ?? 0
+      // @ts-ignore
+      return steps[this.currentOrderStatus] >= steps[OrderStatus.PENDING] ?? 0
     },
     isWaitingPayment() {
-      return steps[this.orderStatus] >= steps[OrderStatus.WAITING_PAYMENT] ?? 0
+      // @ts-ignore
+      return steps[this.currentOrderStatus] >= steps[OrderStatus.WAITING_PAYMENT] ?? 0
     },
     isActive() {
-      return steps[this.orderStatus] >= steps[OrderStatus.ACTIVE] ?? 0
+      // @ts-ignore
+      return steps[this.currentOrderStatus] >= steps[OrderStatus.ACTIVE] ?? 0
     },
     isFiatSent() {
-      return steps[this.orderStatus] >= steps[OrderStatus.FIAT_SENT] ?? 0
+      // @ts-ignore
+      return steps[this.currentOrderStatus] >= steps[OrderStatus.FIAT_SENT] ?? 0
     },
     isFundsReleased() {
-      return steps[this.orderStatus] >= steps[OrderStatus.SUCCESS] ?? 0
+      // @ts-ignore
+      return steps[this.currentOrderStatus] >= steps[OrderStatus.SUCCESS] ?? 0
     }
   }
 })

@@ -79,7 +79,7 @@ export const getters = {
     state.orders.forEach((order: Order) => orderList.push(order))
     return orderList.filter((order: Order) => order.status === 'Pending')
   },
-  getOrderStatus(state: OrderState, orderId: string) {
+  getOrderStatus(state: OrderState) {
     return (orderId: string) => state.orders.get(orderId)?.status
   }
 }
