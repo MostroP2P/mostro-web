@@ -6,10 +6,19 @@
     </v-list-item-title>
     <div class="wrap-text text-message">
       <p>
-        The user <code> <strong class="buyer-key">{{ isMobile ? truncateMiddle(buyerPubkey, 10) : buyerPubkey  }}</strong> </code> has taken your order and wants to buy your sats. Get in touch and tell him/her how to send you {{ fiatAmount }} {{ fiatCode }} through {{ paymentMethod }}.
+        The user
+        <code>
+            <strong>
+              <a @click="(e) => onPubkeyClick(e)">
+                {{ isMobile ? truncateMiddle(buyerPubkey) : buyerPubkey  }}
+              </a>
+            </strong>
+        </code>
+        has taken your order and wants to buy your sats. Get in touch and tell
+        him/her how to send you {{ fiatAmount }} {{ fiatCode }} through {{ paymentMethod }}.
       </p>
       <p>
-         Once you verify you have received the full amount you have to release the sats
+         Once you verify you have received the full amount you have to release the sats.
       </p>
     </div>
   </v-list-item-content>
@@ -19,47 +28,26 @@
 import Vue from 'vue'
 import type { PropType } from 'vue'
 import { Message } from '~/store/messages'
+import textMessage from '~/mixins/text-message'
 import * as timeago from 'timeago.js'
 
 export default Vue.extend({
   data() {
     return { timeago, isMobile: false }
   },
+  mixins: [ textMessage ],
   props: {
     message: {
       type: Object as PropType<Message>,
       required: true
     }
   },
-  mounted() {
-    this.checkMobile();
-    window.addEventListener('resize', this.checkMobile);
-  },
-  beforeDestroy() {
-    window.removeEventListener('resize', this.checkMobile);
-  },
   methods: {
-    checkMobile() {
-      this.isMobile = window.innerWidth <= 600;
-    },
-    truncateMiddle(str: string, maxLength: number) {
-      if (str.length <= maxLength) {
-        return str;
-      }
-
-      const halfLength = Math.floor(maxLength / 2);
-      const start = str.slice(0, halfLength);
-      const end = str.slice(-halfLength);
-      return `${start}...${end}`;
+    onPubkeyClick(e: any) {
+      // TODO: send the user to /messages/{npub}
     }
   },
   computed: {
-    getMessageText() {
-      // @ts-ignore
-      const details = `The user ${this.buyerPubkey} has taken your order and wants to buy your sats. Get in touch and tell him/her how to send you ${this.fiatAmount} ${this.fiatCode} through ${this.paymentMethod}.\n\n`
-      const finalInstructions = 'Once you verify you have received the full amount you have to release the sats'
-      return details + finalInstructions
-    },
     fiatAmount() {
       const invoiceAccepted = this.message.content.InvoiceAccepted
       if (invoiceAccepted) {
@@ -94,23 +82,3 @@ export default Vue.extend({
   }
 })
 </script>
-<style scoped>
-.text-message {
-  font-size: 0.875rem;
-  color: rgba(0, 0, 0, 0.6);
-  line-height: 1.2;
-}
-.wrap-text {
-  white-space: normal;
-  word-wrap: break-word;
-}
-@media (max-width: 600px) {
-  .buyer-key {
-    display: inline-block;
-    max-width: 50vw; /* Adjust this value based on how much space you want for the public key */
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-}
-</style>
