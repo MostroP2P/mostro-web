@@ -25,11 +25,11 @@
           </v-btn>
         </v-btn-toggle>
       </div>
-      <v-card-text v-if="invoiceMode === 0" class="d-flex justify-center align-center mt-2">
+      <v-card-text v-if="hasMessage && invoiceMode === 0" class="d-flex justify-center align-center mt-2">
         <qrcode-vue :value="message.content.PaymentRequest[1]" :size="300" level="H"/>
       </v-card-text>
-      <v-card-text v-if="invoiceMode === 1" class="text-caption mt-2">
-        {{ message.content.PaymentRequest[1] }}
+      <v-card-text v-if="hasMessage && invoiceMode === 1" class="text-caption mt-2">
+        {{ message?.content?.PaymentRequest[1] }}
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
@@ -69,5 +69,12 @@ export default Vue.extend({
       timeago
     }
   },
+  computed: {
+    hasMessage() {
+      return this.message &&
+        this.message.content &&
+        this.message.content.PaymentRequest
+    }
+  }
 })
 </script>
