@@ -7,13 +7,6 @@
     <v-list-item-subtitle>
       {{ getMessageText }}
     </v-list-item-subtitle>
-    <div class="d-flex justify-space-between mt-5">
-      <v-btn text color="warning">
-        <v-icon left>mdi-alert-outline</v-icon>
-        Dispute
-      </v-btn>
-      <release-funds-dialog/>
-    </div>
   </v-list-item-content>
 </template>
 
