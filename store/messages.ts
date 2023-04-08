@@ -23,7 +23,7 @@ export type Message = {
   order_id: string,
   action: Action,
   content: {
-    PaymentRequest?: PaymentRequest | Order,
+    PaymentRequest?: PaymentRequest,
     InvoiceAccepted?: InvoiceAccepted,
     FiatSent?: FiatSent
     SaleCompleted?: SaleCompleted
