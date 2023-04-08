@@ -16,7 +16,7 @@
 <script lang="ts">
 import Vue from 'vue'
 import type { PropType } from 'vue'
-import { Message } from '~/store/messages'
+import { MostroMessage } from '~/store/types'
 import * as timeago from 'timeago.js'
 export default Vue.extend({
   data() {
@@ -28,7 +28,7 @@ export default Vue.extend({
   },
   props: {
     message: {
-      type: Object as PropType<Message>,
+      type: Object as PropType<MostroMessage>,
       required: true
     }
   },

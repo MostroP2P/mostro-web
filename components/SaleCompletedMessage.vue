@@ -23,7 +23,7 @@ import Vue from 'vue'
 import type { PropType } from 'vue'
 import * as timeago from 'timeago.js'
 import textMessage from '~/mixins/text-message'
-import { Message } from '~/store/messages'
+import { MostroMessage } from '~/store/types'
 
 export default Vue.extend({
   data() {
@@ -32,7 +32,7 @@ export default Vue.extend({
   mixins: [ textMessage ],
   props: {
     message: {
-      type: Object as PropType<Message>,
+      type: Object as PropType<MostroMessage>,
       required: true
     }
   },

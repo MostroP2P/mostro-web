@@ -1,42 +1,16 @@
-import { Order } from './orders'
-import { Action } from './action'
-import { ThreadSummary } from './types'
+import {
+  Action,
+  ThreadSummary,
+  MostroMessage,
+  TextMessage
+} from './types'
 
-type NullableOrder = Order | null
-type PaymentRequest = [NullableOrder, string]
-type InvoiceAccepted = {
-  buyer: string,
-  fiatAmount: number,
-  fiatCode: string,
-  paymentMethod: string
-}
-type Peer = {
-  pubkey: string
-}
-
-export type Message = {
-  version: number,
-  order_id: string,
-  action: Action,
-  content: {
-    PaymentRequest?: PaymentRequest,
-    InvoiceAccepted?: InvoiceAccepted,
-    Peer?: Peer
-  },
-  created_at: number
-}
-
-export type TextMessage = {
-  text: string,
-  created_at: number
-}
-
-export interface State {
-  messages: Message[]
+export interface MostroMessagesState {
+  messages: MostroMessage[]
 }
 
 export const state = () => ({
-  messages: [] as Message[]
+  messages: [] as MostroMessage[]
 })
 
 const decodeInvoiceAcceptedTextMessage = (message: TextMessage) => {
@@ -123,7 +97,7 @@ const decodeSaleCompletedMessage = (message: TextMessage) => {
 }
 
 export const actions = {
-  addMessage(context: any, message: Message) {
+  addMessage(context: any, message: MostroMessage) {
     const { commit } = context
     commit('addMessage', message)
   },
@@ -147,13 +121,17 @@ export const actions = {
 }
 
 export const mutations = {
-  addMessage(state: State, message: Message) {
+  addMessage(state: MostroMessagesState, message: MostroMessage) {
     state.messages = [message, ...state.messages]
   }
 }
 
 export const getters = {
-  getThreadSummaries(state: State, getters: any, rootState : any) : ThreadSummary[] {
+  getThreadSummaries(
+    state: MostroMessagesState,
+    getters: any,
+    rootState : any
+  ) : ThreadSummary[] {
     const messageMap = new Map<string, number>()
     for (const message of state.messages) {
       if (!messageMap.has(message.order_id)) {
@@ -168,10 +146,11 @@ export const getters = {
       return { orderId, messageCount, order }
     })
   },
-  getMessagesByOrderId(state: State) {
+  getMessagesByOrderId(state: MostroMessagesState ) {
     return (orderId: string) => {
-      return state.messages.filter((message: Message) => message.order_id === orderId)
-        .sort((msgA: Message, msgB: Message) => msgA.created_at - msgB.created_at)
+      return state.messages
+        .filter((message: MostroMessage) => message.order_id === orderId)
+        .sort((a: MostroMessage, b: MostroMessage) => a.created_at - b.created_at)
     }
   }
 }
