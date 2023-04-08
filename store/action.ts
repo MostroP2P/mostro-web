@@ -7,5 +7,8 @@ export enum Action {
   TakeBuy = 'TakeBuy',
   PayInvoice = 'PayInvoice',
   FiatSent = 'FiatSent',
-  Release = 'Release'
+  Release = 'Release',
+
+  // Custom-non official action
+  SaleCompleted = 'SaleCompleted'
 }

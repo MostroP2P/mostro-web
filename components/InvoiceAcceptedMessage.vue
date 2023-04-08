@@ -33,7 +33,7 @@ import * as timeago from 'timeago.js'
 
 export default Vue.extend({
   data() {
-    return { timeago, isMobile: false }
+    return { timeago }
   },
   mixins: [ textMessage ],
   props: {

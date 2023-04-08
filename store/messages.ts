@@ -14,6 +14,10 @@ type FiatSent = {
   buyer: string
 }
 
+type SaleCompleted = {
+  buyer: string
+}
+
 export type Message = {
   version: number,
   order_id: string,
@@ -22,6 +26,7 @@ export type Message = {
     PaymentRequest?: PaymentRequest | Order,
     InvoiceAccepted?: InvoiceAccepted,
     FiatSent?: FiatSent
+    SaleCompleted?: SaleCompleted
   },
   created_at: number
 }
@@ -99,6 +104,29 @@ const decodeFiatSentMessage = (message: TextMessage) => {
   return { matches, msg }
 }
 
+const decodeSaleCompletedMessage = (message: TextMessage) => {
+  const { text } = message
+  const orderIdRegex = /Order\sId:\s+(\S+)/
+  const buyerPubkeyRegex = /Your\ssale\sof\ssats\shas\sbeen\scompleted\safter\sconfirming\spayment\sfrom\s([^\s]+)\s⚡️🍊⚡️/
+  const orderIdMatch = orderIdRegex.exec(text)
+  const buyerPubkeyMatch = buyerPubkeyRegex.exec(text)
+  const orderId = orderIdMatch ? orderIdMatch[1] : null
+  const buyerPubkey = buyerPubkeyMatch ? buyerPubkeyMatch[1] : null
+  const msg = {
+    version: 0,
+    order_id: orderId,
+    action: Action.SaleCompleted,
+    content: {
+      SaleCompleted: {
+        buyer: buyerPubkey
+      }
+    },
+    created_at: message.created_at
+  }
+  const matches = orderId !== null && buyerPubkey !== null
+  return { matches, msg }
+}
+
 export const actions = {
   addMessage(context: any, message: Message) {
     const { commit } = context
@@ -114,6 +142,11 @@ export const actions = {
     const fiatSent = decodeFiatSentMessage(message)
     if (fiatSent.matches) {
       commit('addMessage', fiatSent.msg)
+      return
+    }
+    const saleCompleted = decodeSaleCompletedMessage(message)
+    if (saleCompleted.matches) {
+      commit('addMessage', saleCompleted.msg)
     }
   }
 }
