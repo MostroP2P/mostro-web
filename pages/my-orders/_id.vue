@@ -5,7 +5,7 @@
     </div>
     <div class="d-flex justify-center align-center mt-5">
       <pay-invoice-button
-        v-if="currentOrderStatus === OrderStatusConstant.WaitingPayment && payInvoiceMessage"
+        v-if="currentOrderStatus === OrderStatusConstant.WAITING_PAYMENT && payInvoiceMessage"
         :message="payInvoiceMessage"
       />
       <div v-if="currentOrderStatus === OrderStatusConstant.FIAT_SENT || currentOrderStatus === OrderStatusConstant.ACTIVE">
@@ -22,7 +22,7 @@
           Waiting Payment
         </v-stepper-step>
         <v-divider></v-divider>
-        <v-stepper-step step="2" :complete="isWaitingPayment">
+        <v-stepper-step step="2" :complete="isActive">
           Invoice Accepted
         </v-stepper-step>
         <v-divider></v-divider>
