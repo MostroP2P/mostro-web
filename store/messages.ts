@@ -10,12 +10,8 @@ type InvoiceAccepted = {
   fiatCode: string,
   paymentMethod: string
 }
-type FiatSent = {
-  buyer: string
-}
-
-type SaleCompleted = {
-  buyer: string
+type Peer = {
+  pubkey: string
 }
 
 export type Message = {
@@ -25,8 +21,7 @@ export type Message = {
   content: {
     PaymentRequest?: PaymentRequest,
     InvoiceAccepted?: InvoiceAccepted,
-    FiatSent?: FiatSent
-    SaleCompleted?: SaleCompleted
+    Peer?: Peer
   },
   created_at: number
 }
@@ -94,8 +89,8 @@ const decodeFiatSentMessage = (message: TextMessage) => {
     order_id: orderId,
     action: Action.FiatSent,
     content: {
-      FiatSent: {
-        buyer: buyerPubkey
+      Peer: {
+        pubkey: buyerPubkey
       }
     },
     created_at: message.created_at
@@ -117,8 +112,8 @@ const decodeSaleCompletedMessage = (message: TextMessage) => {
     order_id: orderId,
     action: Action.SaleCompleted,
     content: {
-      SaleCompleted: {
-        buyer: buyerPubkey
+      Peer: {
+        pubkey: buyerPubkey
       }
     },
     created_at: message.created_at

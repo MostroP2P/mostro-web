@@ -45,9 +45,9 @@ export default Vue.extend({
   },
   computed: {
     buyerPubkey() {
-      const fiatSent = this.message.content.FiatSent
-      if (fiatSent) {
-        return fiatSent.buyer
+      const peer = this.message.content.Peer
+      if (peer) {
+        return peer.pubkey
       }
       return '?'
     },

@@ -43,10 +43,9 @@ export default Vue.extend({
   },
   computed: {
     buyerPubkey() {
-      const saleCompleted = this.message.content.SaleCompleted
-      console.log('this.message: ', this.message)
-      if (saleCompleted) {
-        return saleCompleted.buyer
+      const peer = this.message.content.Peer
+      if (peer) {
+        return peer.pubkey
       }
       return '?'
     },
