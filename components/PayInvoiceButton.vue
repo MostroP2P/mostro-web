@@ -50,7 +50,7 @@ import Vue from 'vue'
 import type { PropType } from 'vue'
 import QrcodeVue from 'qrcode.vue'
 import * as timeago from 'timeago.js'
-import { Message } from '~/store/messages'
+import { MostroMessage } from '~/store/types'
 
 export default Vue.extend({
   components: {
@@ -58,7 +58,7 @@ export default Vue.extend({
   },
   props: {
     message: {
-      type: Object as PropType<Message>,
+      type: Object as PropType<MostroMessage>,
       required: true
     }
   },
@@ -70,10 +70,10 @@ export default Vue.extend({
     }
   },
   computed: {
-    hasMessage() {
+    hasMessage() : boolean {
       return this.message &&
         this.message.content &&
-        this.message.content.PaymentRequest
+        this.message.content.PaymentRequest !== undefined
     }
   }
 })
