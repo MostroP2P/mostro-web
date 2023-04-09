@@ -1,9 +1,9 @@
 <template>
-  <v-card class="mx-auto" v-if="getThreadSummaries.length > 0">
+  <v-card class="mx-auto" v-if="getMostroThreadSummaries.length > 0">
     <v-list>
-      <div v-for="(threadSummary, index) in getThreadSummaries" :key="threadSummary.orderId">
+      <div v-for="(threadSummary, index) in getMostroThreadSummaries" :key="threadSummary.orderId">
         <thread-header :threadSummary="threadSummary"/>
-        <v-divider v-if="index < getThreadSummaries.length - 1"/>
+        <v-divider v-if="index < getMostroThreadSummaries.length - 1"/>
       </div>
     </v-list>
   </v-card>
@@ -16,7 +16,7 @@ import Vue from 'vue'
 import { mapGetters } from 'vuex'
 export default Vue.extend({
   computed: {
-    ...mapGetters('messages', ['getThreadSummaries'])
+    ...mapGetters('messages', ['getMostroThreadSummaries'])
   }
 })
 </script>

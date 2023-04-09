@@ -62,7 +62,7 @@ export default Vue.extend({
   },
   computed: {
     ...mapGetters('orders', ['getOrderStatus']),
-    ...mapGetters('messages', ['getMessagesByOrderId']),
+    ...mapGetters('messages', ['getMostroMessagesByOrderId']),
     currentOrderStatus() {
       // @ts-ignore
       return this.getOrderStatus(this.$route.params.id)
@@ -70,7 +70,7 @@ export default Vue.extend({
     payInvoiceMessage() {
       const orderId = this.$route.params.id
       // @ts-ignore
-      const messages = this.getMessagesByOrderId(orderId)
+      const messages = this.getMostroMessagesByOrderId(orderId)
       return messages[0]
     },
     isOrderTaken() {

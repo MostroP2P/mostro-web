@@ -2,16 +2,16 @@ import {
   Action,
   ThreadSummary,
   MostroMessage,
-  TextMessage
+  TextMessage,
+  PeerMessage
 } from './types'
 
-export interface MostroMessagesState {
-  messages: MostroMessage[]
+export interface MessagesState {
+  messages: {
+    mostro: MostroMessage[],
+    peer: PeerMessage[]
+  }
 }
-
-export const state = () => ({
-  messages: [] as MostroMessage[]
-})
 
 const decodeInvoiceAcceptedTextMessage = (message: TextMessage) => {
   const { text } = message
@@ -96,44 +96,51 @@ const decodeSaleCompletedMessage = (message: TextMessage) => {
   return { matches, msg }
 }
 
+export const state = () => ({
+  messages: {
+    mostro: [] as MostroMessage[],
+    peer: [] as PeerMessage[]
+  }
+})
+
 export const actions = {
-  addMessage(context: any, message: MostroMessage) {
+  addMostroMessage(context: any, message: MostroMessage) {
     const { commit } = context
-    commit('addMessage', message)
+    commit('addMostroMessage', message)
   },
-  addTextMessage(context: any, message: TextMessage) {
+  addMostroTextMessage(context: any, message: TextMessage) {
     const { commit } = context
     const invoiceAccepted = decodeInvoiceAcceptedTextMessage(message)
     if (invoiceAccepted.matches) {
-      commit('addMessage', invoiceAccepted.msg)
+      commit('addMostroMessage', invoiceAccepted.msg)
       return
     }
     const fiatSent = decodeFiatSentMessage(message)
     if (fiatSent.matches) {
-      commit('addMessage', fiatSent.msg)
+      commit('addMostroMessage', fiatSent.msg)
       return
     }
     const saleCompleted = decodeSaleCompletedMessage(message)
     if (saleCompleted.matches) {
-      commit('addMessage', saleCompleted.msg)
+      commit('addMostroMessage', saleCompleted.msg)
     }
   }
 }
 
 export const mutations = {
-  addMessage(state: MostroMessagesState, message: MostroMessage) {
-    state.messages = [message, ...state.messages]
+  addMostroMessage(state: MessagesState, message: MostroMessage) {
+    state.messages.mostro = [message, ...state.messages.mostro]
   }
 }
 
 export const getters = {
-  getThreadSummaries(
-    state: MostroMessagesState,
+  getMostroThreadSummaries(
+    state: MessagesState,
     getters: any,
     rootState : any
   ) : ThreadSummary[] {
     const messageMap = new Map<string, number>()
-    for (const message of state.messages) {
+    for (const message of state.messages.mostro) {
       if (!messageMap.has(message.order_id)) {
         messageMap.set(message.order_id, 1)
       } else {
@@ -146,9 +153,17 @@ export const getters = {
       return { orderId, messageCount, order }
     })
   },
-  getMessagesByOrderId(state: MostroMessagesState ) {
+  getPeerThreadSummaries(
+    state: MessagesState,
+    getters: any,
+    rootState: any
+  ) {
+    // TODO: implement this
+    return []
+  },
+  getMostroMessagesByOrderId(state: MessagesState ) {
     return (orderId: string) => {
-      return state.messages
+      return state.messages.mostro
         .filter((message: MostroMessage) => message.order_id === orderId)
         .sort((a: MostroMessage, b: MostroMessage) => a.created_at - b.created_at)
     }

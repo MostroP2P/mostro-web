@@ -57,9 +57,9 @@ class Mostro {
         const secretKey = nip19.decode(this.secretKey).data
         const pubKey = getPublicKey(secretKey)
         if (pubKey === recipient) {
+          // TODO: Handle peer messages
           try {
             const plaintext = await nip04.decrypt(secretKey, ev.pubkey, ev.content)
-            console.log('> plaintext: ', plaintext)
             // For now, some messages from mostro are just plain text. With time it
             // is expected for them all to migrate to JSON objects. But in order to
             // distinguish them at this point we're taking advantage of the fact that
@@ -67,10 +67,10 @@ class Mostro {
             const emojiIndex = plaintext.indexOf('🧌')
             if (emojiIndex !== -1) {
               const msg = { text: plaintext, created_at: ev.created_at}
-              this.store.dispatch('messages/addTextMessage', msg)
+              this.store.dispatch('messages/addMostroTextMessage', msg)
             } else {
               const msg = { ...JSON.parse(plaintext), created_at: ev.created_at }
-              this.store.dispatch('messages/addMessage', msg)
+              this.store.dispatch('messages/addMostroMessage', msg)
             }
           } catch(err) {
             console.error('Error while trying to decode DM: ', err)
@@ -78,6 +78,8 @@ class Mostro {
         } else {
           console.warn(`Ignoring DM for key: ${recipient}, my pubkey is ${pubKey}`)
         }
+      } else {
+        console.info(`Got event with kind: ${kind}, ev: `, ev)
       }
     })
   }

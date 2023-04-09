@@ -22,10 +22,10 @@ export default Vue.extend({
     }
   },
   computed: {
-    ...mapGetters('messages', ['getMessagesByOrderId']),
+    ...mapGetters('messages', ['getMostroMessagesByOrderId']),
     orderMessages() {
       // @ts-ignore
-      return this.getMessagesByOrderId(this.orderId)
+      return this.getMostroMessagesByOrderId(this.orderId)
     }
   }
 })

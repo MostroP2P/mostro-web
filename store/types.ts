@@ -56,3 +56,16 @@ export enum Action {
   InvoiceAccepted = 'InvoiceAccepted',
   SaleCompleted = 'SaleCompleted'
 }
+
+// Peer messages
+export type PeerThreadSummary = {
+  peer: string,
+  createdAt: number,
+  lastMessage: string
+}
+
+export type PeerMessage = {
+  peer: string,
+  createdAt: number,
+  message: string
+}
