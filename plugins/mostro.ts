@@ -26,9 +26,7 @@ class Mostro {
 
   init() {
     this.pool.on('open', (relay: any) => {
-      const { nip19 } = window.NostrTools
-      const mostroPubKey = nip19.decode(this.mostro)
-      relay.subscribe('subid', {limit: 100, kinds:[4, 30000], authors: [mostroPubKey.data]})
+      relay.subscribe('mostro', {limit: 100, kinds:[4, 30000]})
     })
     this.pool.on('close', (relay: any) => {
       relay.close()
@@ -39,7 +37,7 @@ class Mostro {
         // Order
         let { content } = ev
         content = JSON.parse(content)
-        console.log(`> order update. sub_id: ${sub_id}, ev: `, ev)
+        // console.log(`> order update. sub_id: ${sub_id}, ev: `, ev)
         if (this.orderMap.has(content.id)) {
           // Updates existing order
           this.store.dispatch('orders/updateOrder', content)
@@ -50,38 +48,78 @@ class Mostro {
         }
       } else if (kind === 4) {
         // DM
-        console.log(`> DM. sub_id: ${sub_id}, ev: `, ev)
+        // console.debug(`> DM. ev: `, ev)
         // @ts-ignore
         let recipient = ev.tags.find(([k, v]) => k === 'p' && v && v !== '')[1]
         const { nip04, nip19, getPublicKey } = window.NostrTools
-        const secretKey = nip19.decode(this.secretKey).data
-        const pubKey = getPublicKey(secretKey)
-        if (pubKey === recipient) {
-          // TODO: Handle peer messages
+        const mySecretKey = nip19.decode(this.secretKey).data
+        const myPubKey = getPublicKey(mySecretKey)
+        const mostroPubKey = nip19.decode(this.mostro).data
+        if (myPubKey === recipient) {
           try {
-            const plaintext = await nip04.decrypt(secretKey, ev.pubkey, ev.content)
-            // For now, some messages from mostro are just plain text. With time it
-            // is expected for them all to migrate to JSON objects. But in order to
-            // distinguish them at this point we're taking advantage of the fact that
-            // all text messages contain the 🧌 emoji :)
-            const emojiIndex = plaintext.indexOf('🧌')
-            if (emojiIndex !== -1) {
-              const msg = { text: plaintext, created_at: ev.created_at}
-              this.store.dispatch('messages/addMostroTextMessage', msg)
+            const plaintext = await nip04.decrypt(mySecretKey, ev.pubkey, ev.content)
+            if (ev.pubkey === mostroPubKey) {
+              // console.log('> Mostro DM: ', plaintext)
+              // Mostro DMs
+              // For now, some messages from mostro are just plain text. With time it
+              // is expected for them all to migrate to JSON objects. But in order to
+              // distinguish them at this point we're taking advantage of the fact that
+              // all text messages contain the 🧌 emoji :)
+              const emojiIndex = plaintext.indexOf('🧌')
+              if (emojiIndex !== -1) {
+                const msg = { text: plaintext, created_at: ev.created_at}
+                this.store.dispatch('messages/addMostroTextMessage', msg)
+              } else {
+                const msg = { ...JSON.parse(plaintext), created_at: ev.created_at }
+                this.store.dispatch('messages/addMostroMessage', msg)
+              }              
             } else {
-              const msg = { ...JSON.parse(plaintext), created_at: ev.created_at }
-              this.store.dispatch('messages/addMostroMessage', msg)
+              // Peer DMs
+              const peerNpub = nip19.npubEncode(ev.pubkey)
+              this.store.dispatch('messages/addPeerMessage', {
+                id: ev.id,
+                text: plaintext,
+                peerNpub: peerNpub,
+                sender: 'other',
+                created_at: ev.created_at
+              })
             }
           } catch(err) {
             console.error('Error while trying to decode DM: ', err)
           }
+        } else if(ev.pubkey === myPubKey) {
+          // DM I created
+          if (recipient !== mostroPubKey) {
+            // This is a DM I created for a conversation
+            try {
+              const plaintext = await nip04.decrypt(mySecretKey, recipient, ev.content)
+              const peerNpub = nip19.npubEncode(recipient)
+              this.store.dispatch('messages/addPeerMessage', {
+                id: ev.id,
+                text: plaintext,
+                peerNpub: peerNpub,
+                sender: 'me',
+                created_at: ev.created_at
+              })
+            } catch(err) {
+              console.error('Error while decrypting message: ', err)
+            }  
+          }
         } else {
-          console.warn(`Ignoring DM for key: ${recipient}, my pubkey is ${pubKey}`)
+          console.log(`> DM. ev: `, ev)
+          console.warn(`Ignoring _DM for key: ${recipient}, my pubkey is ${myPubKey}`)
         }
       } else {
         console.info(`Got event with kind: ${kind}, ev: `, ev)
       }
     })
+  }
+
+  subscribe() {
+    const { nip19, getPublicKey } = window.NostrTools
+    const secretKey = nip19.decode(this.secretKey).data
+    const publicKey = getPublicKey(secretKey)
+    // this.pool.subscribe('secondary', {limit: 100, kinds:[4], authors: [publicKey]})
   }
 
   async createEvent(payload: object) {
@@ -90,15 +128,15 @@ class Mostro {
     const publicKey = nip19.decode(this.mostro).data
     const ciphertext = await nip04.encrypt(secretKey, publicKey, JSON.stringify(payload))
     let event = {
+      id: undefined,
+      sig: undefined,
       kind: 4,
       created_at: Math.floor(Date.now() / 1000),
       content: ciphertext,
       pubkey: getPublicKey(secretKey),
       tags: [ ['p', publicKey] ]
     }
-    // @ts-ignore
     event.id = getEventHash(event)
-    // @ts-ignore
     event.sig = signEvent(event, secretKey)
     return event
   }
@@ -146,6 +184,28 @@ class Mostro {
       order_id: order.id
     }
     const event = await this.createEvent(payload)
+    const msg = ['EVENT', event]
+    await this.pool.send(msg)
+  }
+  async submitDirectMessage(message: string, npub: string, replyTo: string) {
+    const { nip04, nip19, getPublicKey, getEventHash, signEvent } = window.NostrTools
+    const destinationPubKey = nip19.decode(npub).data
+    const mySecretKey = nip19.decode(this.secretKey).data
+    const ciphertext = await nip04.encrypt(mySecretKey, destinationPubKey, message)
+    let event = {
+      id: undefined,
+      sig: undefined,
+      kind: 4,
+      created_at: Math.floor(Date.now() / 1000),
+      content: ciphertext,
+      pubkey: getPublicKey(mySecretKey),
+      tags: [
+        ['p', destinationPubKey],
+        ['e', replyTo, '', 'reply']
+      ]
+    }
+    event.id = getEventHash(event)
+    event.sig = signEvent(event, mySecretKey)
     const msg = ['EVENT', event]
     await this.pool.send(msg)
   }

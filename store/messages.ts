@@ -1,15 +1,20 @@
+import Vue from 'vue'
+
 import {
   Action,
   ThreadSummary,
   MostroMessage,
   TextMessage,
-  PeerMessage
+  PeerMessage,
+  PeerThreadSummary
 } from './types'
 
 export interface MessagesState {
   messages: {
     mostro: MostroMessage[],
-    peer: PeerMessage[]
+    peer: {
+      [key: string]: PeerMessage[]
+    }
   }
 }
 
@@ -99,7 +104,7 @@ const decodeSaleCompletedMessage = (message: TextMessage) => {
 export const state = () => ({
   messages: {
     mostro: [] as MostroMessage[],
-    peer: [] as PeerMessage[]
+    peer: {}
   }
 })
 
@@ -124,12 +129,23 @@ export const actions = {
     if (saleCompleted.matches) {
       commit('addMostroMessage', saleCompleted.msg)
     }
+  },
+  addPeerMessage(context: any, peerMessage: PeerMessage) {
+    const { commit } = context
+    commit('addPeerMessage', peerMessage)
   }
 }
 
 export const mutations = {
   addMostroMessage(state: MessagesState, message: MostroMessage) {
     state.messages.mostro = [message, ...state.messages.mostro]
+  },
+  addPeerMessage(state: MessagesState, peerMessage: PeerMessage) {
+    const { peerNpub } = peerMessage
+    const updatedMessages = Object.assign({}, state.messages)
+    const existingMessages = updatedMessages.peer[peerNpub] ?? []
+    updatedMessages.peer[peerNpub] = [...existingMessages, peerMessage]
+    Vue.set(state, 'messages', updatedMessages)
   }
 }
 
@@ -157,15 +173,33 @@ export const getters = {
     state: MessagesState,
     getters: any,
     rootState: any
-  ) {
-    // TODO: implement this
-    return []
+  ) : PeerThreadSummary[] {
+    const npubs = Object.keys(state.messages.peer)
+    return npubs.map((npub: string) => {
+      const peerMessages = getters.getPeerMessagesByNpub(npub)
+      const lastMessage = peerMessages[peerMessages.length - 1]
+      return {
+        peer: npub,
+        messageCount: peerMessages.length,
+        lastMessage
+      }
+    })
   },
   getMostroMessagesByOrderId(state: MessagesState ) {
     return (orderId: string) => {
       return state.messages.mostro
         .filter((message: MostroMessage) => message.order_id === orderId)
         .sort((a: MostroMessage, b: MostroMessage) => a.created_at - b.created_at)
+    }
+  },
+  getPeerMessagesByNpub(state: MessagesState) {
+    return (npub: string) => {
+      if (state.messages.peer[npub]) {
+        const messages = [...state.messages.peer[npub]]
+        return messages
+          .sort((a: PeerMessage, b: PeerMessage) => a.created_at - b.created_at)
+      }
+      return []
     }
   }
 }
