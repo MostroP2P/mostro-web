@@ -113,7 +113,7 @@ export default Vue.extend({
         amount: satsAmount,
         fiat_code: this.fiatCode,
         fiat_amount: fiatAmount,
-        prime: 0,
+        premium: 0,
         payment_method: this.paymentMethod,
         created_at: Math.floor(Date.now() / 1e3)
       }
@@ -122,8 +122,6 @@ export default Vue.extend({
       this.onProcessingUpdate(false)
       this.onClose()
     }
-  },
-  computed: {
   }
 })
 </script>

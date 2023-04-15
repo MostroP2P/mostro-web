@@ -28,7 +28,7 @@ export interface Order {
   fiat_code: string,
   fiat_amount: number,
   payment_method: string,
-  prime: number,
+  premium: number,
   created_at: number,
 }
 

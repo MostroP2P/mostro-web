@@ -153,7 +153,7 @@ class Mostro {
           fiat_code: order.fiat_code,
           fiat_amount: order.fiat_amount,
           payment_method: order.payment_method,
-          prime: order.prime
+          premium: order.premium
         }
       }
     }
