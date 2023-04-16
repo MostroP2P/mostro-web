@@ -5,7 +5,7 @@
       :message="message"
     />
     <invoice-accepted-message
-      v-if="message.action === action.InvoiceAccepted"
+      v-if="message.action === action.BuyerTookOrder"
       :message="message"
     />
     <fiat-sent-message

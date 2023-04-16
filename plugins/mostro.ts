@@ -59,7 +59,7 @@ class Mostro {
           try {
             const plaintext = await nip04.decrypt(mySecretKey, ev.pubkey, ev.content)
             if (ev.pubkey === mostroPubKey) {
-              // console.log('> Mostro DM: ', plaintext)
+              console.log('> Mostro DM: ', plaintext)
               // Mostro DMs
               // For now, some messages from mostro are just plain text. With time it
               // is expected for them all to migrate to JSON objects. But in order to

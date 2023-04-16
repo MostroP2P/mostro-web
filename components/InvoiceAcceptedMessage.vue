@@ -49,30 +49,30 @@ export default Vue.extend({
   },
   computed: {
     fiatAmount() {
-      const invoiceAccepted = this.message.content.InvoiceAccepted
-      if (invoiceAccepted) {
-        return invoiceAccepted.fiatAmount
+      const smallOrder = this.message.content.SmallOrder
+      if (smallOrder) {
+        return smallOrder.fiat_amount
       }
       return NaN
     },
     fiatCode() {
-      const invoiceAccepted = this.message.content.InvoiceAccepted
-      if (invoiceAccepted) {
-        return invoiceAccepted.fiatCode
+      const smallOrder = this.message.content.SmallOrder
+      if (smallOrder) {
+        return smallOrder.fiat_code
       }
       return NaN
     },
     paymentMethod() {
-      const invoiceAccepted = this.message.content.InvoiceAccepted
-      if (invoiceAccepted) {
-        return invoiceAccepted.paymentMethod
+      const smallOrder = this.message.content.SmallOrder
+      if (smallOrder) {
+        return smallOrder.payment_method
       }
       return NaN
     },
     buyerPubkey() {
-      const invoiceAccepted = this.message.content.InvoiceAccepted
-      if (invoiceAccepted) {
-        return invoiceAccepted.buyer
+      const smallOrder = this.message.content.SmallOrder
+      if (smallOrder) {
+        return smallOrder.buyer_pubkey
       }
       return '?'
     },

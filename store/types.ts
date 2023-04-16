@@ -10,11 +10,15 @@ export type ThreadSummary = {
 
 type NullableOrder = Order | null
 type PaymentRequest = [NullableOrder, string]
-type InvoiceAccepted = {
-  buyer: string,
-  fiatAmount: number,
-  fiatCode: string,
-  paymentMethod: string
+type SmallOrder = {
+  amount: number,
+  buyer_pubkey: string,
+  fiat_amount: number,
+  fiat_code: string,
+  id: string,
+  payment_method: string,
+  premium: number,
+  seller_pubkey: string
 }
 type Peer = {
   pubkey: string
@@ -29,7 +33,7 @@ export type MostroMessage = {
   action: Action,
   content: {
     PaymentRequest?: PaymentRequest,
-    InvoiceAccepted?: InvoiceAccepted,
+    SmallOrder?: SmallOrder,
     Peer?: Peer
   },
   created_at: number
@@ -48,12 +52,12 @@ export enum Action {
   TakeSell = 'TakeSell',
   TakeBuy = 'TakeBuy',
   PayInvoice = 'PayInvoice',
+  BuyerTookOrder = 'BuyerTookOrder',
   FiatSent = 'FiatSent',
   Release = 'Release',
   Cancel = 'Cancel',
 
   // Custom-non official action
-  InvoiceAccepted = 'InvoiceAccepted',
   SaleCompleted = 'SaleCompleted'
 }
 
