@@ -61,7 +61,7 @@
 </template>
 <script lang="ts">
 import Vue from 'vue'
-import { OrderStatus } from '../store/orders'
+import { OrderStatus } from '../store/types'
 export default Vue.extend({
   data() {
     return {

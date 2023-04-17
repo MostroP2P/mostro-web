@@ -1,5 +1,3 @@
-import { Order } from "./orders"
-
 export type ThreadSummary = {
   orderId: string,
   order: Order,
@@ -10,7 +8,8 @@ export type ThreadSummary = {
 
 type NullableOrder = Order | null
 type PaymentRequest = [NullableOrder, string]
-type SmallOrder = {
+
+export type SmallOrder = {
   amount: number,
   buyer_pubkey: string,
   fiat_amount: number,
@@ -20,6 +19,7 @@ type SmallOrder = {
   premium: number,
   seller_pubkey: string
 }
+
 type Peer = {
   pubkey: string
 }
@@ -54,11 +54,9 @@ export enum Action {
   PayInvoice = 'PayInvoice',
   BuyerTookOrder = 'BuyerTookOrder',
   FiatSent = 'FiatSent',
+  HoldInvoicePaymentSettled = 'HoldInvoicePaymentSettled',
   Release = 'Release',
-  Cancel = 'Cancel',
-
-  // Custom-non official action
-  SaleCompleted = 'SaleCompleted'
+  Cancel = 'Cancel'
 }
 
 // Peer messages
@@ -74,4 +72,38 @@ export type PeerMessage = {
   sender: 'me' | 'other',
   created_at: number,
   text: string
+}
+
+export enum OrderType {
+  BUY = 'Buy',
+  SELL = 'Sell'
+}
+
+export enum OrderStatus {
+  ACTIVE = 'Active',
+  CANCELED = 'Canceled',
+  CANCELED_BY_ADMIN = 'CanceledByAdmin',
+  COMPLETED_BY_ADMIN = 'CompletedByAdmin',
+  DISPUTE = 'Dispute',
+  EXPIRED = 'Expired',
+  FIAT_SENT = 'FiatSent',
+  SETTLE_HODL_INVOICE = 'SettledHoldInvoice',
+  PENDING = 'Pending',
+  SUCCESS = 'Success',
+  WAITING_BUYER_INVOICE = 'WaitingBuyerInvoice',
+  WAITING_PAYMENT = 'WaitingPayment'
+}
+
+export interface Order {
+  id: string,
+  kind: OrderType,
+  status: OrderStatus,
+  amount: number,
+  fiat_code: string,
+  fiat_amount: number,
+  payment_method: string,
+  premium: number,
+  created_at: number,
+  buyer_pubkey?: string,
+  seller_pubkey?: string
 }

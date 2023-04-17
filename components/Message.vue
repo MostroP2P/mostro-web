@@ -13,7 +13,7 @@
       :message="message"
     />
     <sale-completed-message
-      v-if="message.action === action.SaleCompleted"
+      v-if="message.action === action.HoldInvoicePaymentSettled"
       :message="message"
     />
   </v-list-item>

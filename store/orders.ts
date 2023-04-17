@@ -1,36 +1,5 @@
 import Vue from 'vue'
-
-export enum OrderType {
-  BUY = 'Buy',
-  SELL = 'Sell'
-}
-
-export enum OrderStatus {
-  ACTIVE = 'Active',
-  CANCELED = 'Canceled',
-  CANCELED_BY_ADMIN = 'CanceledByAdmin',
-  COMPLETED_BY_ADMIN = 'CompletedByAdmin',
-  DISPUTE = 'Dispute',
-  EXPIRED = 'Expired',
-  FIAT_SENT = 'FiatSent',
-  SETTLE_HODL_INVOICE = 'SettledHoldInvoice',
-  PENDING = 'Pending',
-  SUCCESS = 'Success',
-  WAITING_BUYER_INVOICE = 'WaitingBuyerInvoice',
-  WAITING_PAYMENT = 'WaitingPayment'
-}
-
-export interface Order {
-  id: string,
-  kind: OrderType,
-  status: OrderStatus,
-  amount: number,
-  fiat_code: string,
-  fiat_amount: number,
-  payment_method: string,
-  premium: number,
-  created_at: number,
-}
+import { Order } from './types'
 
 export interface OrderState {
   orders: Map<string, Order>
@@ -81,5 +50,8 @@ export const getters = {
   },
   getOrderStatus(state: OrderState) {
     return (orderId: string) => state.orders.get(orderId)?.status
+  },
+  getOrderById(state: OrderState) {
+    return (orderId: string) => state.orders.get(orderId)
   }
 }

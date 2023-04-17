@@ -38,7 +38,7 @@
 <script lang="ts">
 import Vue from 'vue'
 import { mapState } from 'vuex'
-import { Order } from '~/store/orders'
+import { Order } from '~/store/types'
 export default Vue.extend({
   data() {
     return {

@@ -18,29 +18,6 @@ export interface MessagesState {
   }
 }
 
-const decodeSaleCompletedMessage = (message: TextMessage) => {
-  const { text } = message
-  const orderIdRegex = /Order\sId:\s+(\S+)/
-  const buyerPubkeyRegex = /Your\ssale\sof\ssats\shas\sbeen\scompleted\safter\sconfirming\spayment\sfrom\s([^\s]+)\s⚡️🍊⚡️/
-  const orderIdMatch = orderIdRegex.exec(text)
-  const buyerPubkeyMatch = buyerPubkeyRegex.exec(text)
-  const orderId = orderIdMatch ? orderIdMatch[1] : null
-  const buyerPubkey = buyerPubkeyMatch ? buyerPubkeyMatch[1] : null
-  const msg = {
-    version: 0,
-    order_id: orderId,
-    action: Action.SaleCompleted,
-    content: {
-      Peer: {
-        pubkey: buyerPubkey
-      }
-    },
-    created_at: message.created_at
-  }
-  const matches = orderId !== null && buyerPubkey !== null
-  return { matches, msg }
-}
-
 export const state = () => ({
   messages: {
     mostro: [] as MostroMessage[],
@@ -49,16 +26,24 @@ export const state = () => ({
 })
 
 export const actions = {
-  addMostroMessage(context: any, message: MostroMessage) {
-    const { commit } = context
+  async addMostroMessage(context: any, message: MostroMessage) {
+    const { commit, dispatch, rootGetters } = context
+    if (message.action === Action.BuyerTookOrder) {
+      // If the action is BuyerTookOrder we're receiving the buyer's identity
+      // so here we expand our order data with it.
+      const { content } = message
+      if (content.SmallOrder) {
+        const { seller_pubkey, buyer_pubkey } = content.SmallOrder
+        const order = await rootGetters['orders/getOrderById'](message.order_id)
+        order.seller_pubkey = seller_pubkey
+        order.buyer_pubkey = buyer_pubkey
+        dispatch('orders/updateOrder', order, { root: true })
+      }
+    }
     commit('addMostroMessage', message)
   },
   addMostroTextMessage(context: any, message: TextMessage) {
     const { commit } = context
-    const saleCompleted = decodeSaleCompletedMessage(message)
-    if (saleCompleted.matches) {
-      commit('addMostroMessage', saleCompleted.msg)
-    }
   },
   addPeerMessage(context: any, peerMessage: PeerMessage) {
     const { commit } = context

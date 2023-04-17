@@ -24,6 +24,7 @@ import type { PropType } from 'vue'
 import * as timeago from 'timeago.js'
 import textMessage from '~/mixins/text-message'
 import { MostroMessage } from '~/store/types'
+import { mapGetters } from 'vuex'
 
 export default Vue.extend({
   data() {
@@ -42,12 +43,12 @@ export default Vue.extend({
     }
   },
   computed: {
+    ...mapGetters('orders', ['getOrderById']),
     buyerPubkey() {
-      const peer = this.message.content.Peer
-      if (peer) {
-        return peer.pubkey
-      }
-      return '?'
+      const { order_id } = this.message
+      // @ts-ignore
+      const buyerPubkey = this.getOrderById(order_id).buyer_pubkey
+      return buyerPubkey ? buyerPubkey : '?'
     },
     creationDate() {
       return this.message.created_at * 1e3

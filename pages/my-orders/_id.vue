@@ -43,7 +43,7 @@
 <script lang="ts">
 import Vue from 'vue'
 import { mapGetters } from 'vuex'
-import { OrderStatus } from '~/store/orders'
+import { OrderStatus } from '~/store/types'
 
 const steps = {
   [`${OrderStatus.PENDING}`]: 0,

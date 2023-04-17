@@ -37,7 +37,7 @@
 <script lang="ts">
 import Vue from 'vue'
 import { mapGetters } from 'vuex'
-import { Order, OrderType } from '../store/orders'
+import { Order, OrderType } from '../store/types'
 
 export default Vue.extend({
   data() {

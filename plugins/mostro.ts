@@ -1,6 +1,6 @@
 import 'bigint-polyfill'
 import { RelayPool }  from 'nostr'
-import { Order } from '../store/orders'
+import { Order } from '../store/types'
 
 type MostroOptions = {
   mostroPubKey: string,
@@ -106,8 +106,8 @@ class Mostro {
             }  
           }
         } else {
-          console.log(`> DM. ev: `, ev)
-          console.warn(`Ignoring _DM for key: ${recipient}, my pubkey is ${myPubKey}`)
+          // console.log(`> DM. ev: `, ev)
+          // console.warn(`Ignoring _DM for key: ${recipient}, my pubkey is ${myPubKey}`)
         }
       } else {
         console.info(`Got event with kind: ${kind}, ev: `, ev)
