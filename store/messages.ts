@@ -18,30 +18,6 @@ export interface MessagesState {
   }
 }
 
-const decodeFiatSentMessage = (message: TextMessage) => {
-  const { text } = message
-  // This will have to be removed later when the message format changes
-  const orderIdRegex = /Order\sId:\s+(\S+)/
-  const buyerPubkeyRegex = /([^\s]+)\s+has\sinformed\sthat\salready\ssent\syou\sthe\sfiat\smoney/
-  const orderIdMatch = orderIdRegex.exec(text)
-  const buyerPubkeyMatch = buyerPubkeyRegex.exec(text)
-  const orderId = orderIdMatch ? orderIdMatch[1] : null
-  const buyerPubkey = buyerPubkeyMatch ? buyerPubkeyMatch[1] : null
-  const msg = {
-    version: 0,
-    order_id: orderId,
-    action: Action.FiatSent,
-    content: {
-      Peer: {
-        pubkey: buyerPubkey
-      }
-    },
-    created_at: message.created_at
-  }
-  const matches = orderId !== null && buyerPubkey !== null
-  return { matches, msg }
-}
-
 const decodeSaleCompletedMessage = (message: TextMessage) => {
   const { text } = message
   const orderIdRegex = /Order\sId:\s+(\S+)/
@@ -79,11 +55,6 @@ export const actions = {
   },
   addMostroTextMessage(context: any, message: TextMessage) {
     const { commit } = context
-    const fiatSent = decodeFiatSentMessage(message)
-    if (fiatSent.matches) {
-      commit('addMostroMessage', fiatSent.msg)
-      return
-    }
     const saleCompleted = decodeSaleCompletedMessage(message)
     if (saleCompleted.matches) {
       commit('addMostroMessage', saleCompleted.msg)
