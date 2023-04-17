@@ -9,7 +9,7 @@
         <p>
           <code>
             <strong>
-              <a @click="(e) => onPubkeyClick(e)">
+              <a @click="() => onPubkeyClick(buyerPubkey)">
                 {{ isMobile ? truncateMiddle(buyerPubkey) : buyerPubkey }}
               </a>
             </strong>
@@ -39,8 +39,8 @@ export default Vue.extend({
     }
   },
   methods: {
-    onPubkeyClick(e: any) {
-      // TODO: send the user to /messages/{npub}
+    onPubkeyClick(buyerPubkey: string) {
+      this.$router.push(`/messages/${buyerPubkey}`)
     }
   },
   computed: {
