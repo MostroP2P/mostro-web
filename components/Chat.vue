@@ -76,7 +76,7 @@ export default {
       const { npub } = this.$route.params
       // @ts-ignore
       const lastMessage = this.peerMessages[this.peerMessages.length - 1]
-      const { id } = lastMessage
+      const id = lastMessage?.id || null
       // @ts-ignore
       await this.$mostro.submitDirectMessage(text, npub, id)
       // @ts-ignore

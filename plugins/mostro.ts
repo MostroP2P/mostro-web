@@ -201,8 +201,10 @@ class Mostro {
       pubkey: getPublicKey(mySecretKey),
       tags: [
         ['p', destinationPubKey],
-        ['e', replyTo, '', 'reply']
       ]
+    }
+    if (replyTo) {
+      event.tags.push(['e', replyTo, '', 'reply'])
     }
     event.id = getEventHash(event)
     event.sig = signEvent(event, mySecretKey)
