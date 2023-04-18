@@ -28,7 +28,7 @@ export const state = () => ({
 export const actions = {
   async addMostroMessage(context: any, message: MostroMessage) {
     const { commit, dispatch, rootGetters } = context
-    if (message.action === Action.BuyerTookOrder) {
+    if (message.action === Action.BuyerTookOrder || message.action === Action.AddInvoice) {
       // If the action is BuyerTookOrder we're receiving the buyer's identity
       // so here we expand our order data with it.
       const { content } = message
