@@ -21,8 +21,6 @@ import * as timeago from 'timeago.js'
 export default Vue.extend({
   data() {
     return {
-      showDialog: false,
-      invoiceMode: 0,
       timeago
     }
   },

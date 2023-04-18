@@ -20,6 +20,10 @@
       v-if="message.action === action.WaitingSellerToPay"
       :message="message"
     />
+    <add-invoice-message
+      v-if="message.action === action.AddInvoice"
+      :message="message"
+    />
   </v-list-item>
 </template>
 <script lang="ts">
@@ -31,8 +35,6 @@ import { Action } from '~/store/types'
 export default Vue.extend({
   data() {
     return {
-      showDialog: false,
-      invoiceMode: 0,
       action: Action
     }
   },
