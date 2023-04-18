@@ -16,6 +16,10 @@
       v-if="message.action === action.HoldInvoicePaymentSettled"
       :message="message"
     />
+    <waiting-seller-to-pay
+      v-if="message.action === action.WaitingSellerToPay"
+      :message="message"
+    />
   </v-list-item>
 </template>
 <script lang="ts">
