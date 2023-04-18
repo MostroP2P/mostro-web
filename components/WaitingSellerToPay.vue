@@ -32,6 +32,9 @@ export default Vue.extend({
   computed: {
     orderId() {
       return this.message.order_id
+    },
+    creationDate() {
+      return this.message.created_at * 1e3
     }
   }
 })
