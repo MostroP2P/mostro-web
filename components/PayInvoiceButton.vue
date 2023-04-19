@@ -9,7 +9,7 @@
       </v-btn>
     </template>
     <v-card>
-      <v-card-title class="text-h5 grey lighten-2">
+      <v-card-title class="text-title">
         Seller Action Required
       </v-card-title>
       <v-card-text>
@@ -49,7 +49,6 @@
 import Vue from 'vue'
 import type { PropType } from 'vue'
 import QrcodeVue from 'qrcode.vue'
-import * as timeago from 'timeago.js'
 import { MostroMessage } from '~/store/types'
 
 export default Vue.extend({
@@ -65,8 +64,7 @@ export default Vue.extend({
   data() {
     return {
       showDialog: false,
-      invoiceMode: 0,
-      timeago
+      invoiceMode: 0
     }
   },
   computed: {
