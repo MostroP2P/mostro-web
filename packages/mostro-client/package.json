@@ -1,0 +1,20 @@
+{
+  "name": "@mostro-web/mostro-client",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@mostro-web/mostro-types": "workspace:*",
+    "bigint-polyfill": "^0.1.0",
+    "nostr": "^0.2.8"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.2",
+    "vite": "^4.3.0"
+  }
+}

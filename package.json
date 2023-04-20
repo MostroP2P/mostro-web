@@ -1,0 +1,14 @@
+{
+  "name": "mostro-web",
+  "version": "1.0.0",
+  "description": "Mostro web ecosystem for rapid development",
+  "keywords": [
+    "mostro",
+    "nostr"
+  ],
+  "author": "",
+  "license": "MIT",
+  "scripts": {
+    "clean": "rm -rf node_modules && pnpm -r exec rm -rf node_modules"
+  }
+}
