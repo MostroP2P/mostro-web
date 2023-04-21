@@ -3,6 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
+  "main": "src/main.ts",
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc && vite build",
@@ -11,11 +12,13 @@
     "tauri:build": "tauri build"
   },
   "dependencies": {
+    "@mostro-web/mostro-ui": "workspace:*",
     "vue": "^3.2.47"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^1.2.3",
     "@vitejs/plugin-vue": "^4.1.0",
+    "vite-plugin-vuetify": "^1.0.2",
     "typescript": "^5.0.2",
     "vite": "^4.3.0",
     "vue-tsc": "^1.2.0"

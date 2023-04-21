@@ -1,20 +1,10 @@
-/**
- * main.ts
- *
- * Bootstraps Vuetify and other plugins then mounts the App`
- */
+import type {App} from "vue"
+import HelloWorld from "./components/HelloWorld.vue";
+import {registerPlugins} from "./plugins";
 
-// Components
-import App from './App.vue'
-
-// Composables
-import { createApp } from 'vue'
-
-// Plugins
-import { registerPlugins } from '@/plugins'
-
-const app = createApp(App)
-
-registerPlugins(app)
-
-app.mount('#app')
+export default {
+  install: (app: App) => {
+    registerPlugins(app)
+    app.component(HelloWorld.name, HelloWorld)
+  }
+}
