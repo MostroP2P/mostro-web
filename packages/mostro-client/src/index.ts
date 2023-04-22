@@ -1,3 +1,5 @@
+/* eslint-disable */
+// @ts-ignore
 import "bigint-polyfill";
 import { RelayPool } from "nostr";
 import { Order } from "@mostro-web/mostro-types";
@@ -33,7 +35,7 @@ class Mostro {
     });
     // @ts-ignore
     this.pool.on("event", async (relay: any, sub_id: any, ev: any) => {
-      let { kind } = ev;
+      const { kind } = ev;
       if (kind === 30000) {
         // Order
         let { content } = ev;
@@ -51,7 +53,9 @@ class Mostro {
         // DM
         // console.debug(`> DM. ev: `, ev)
         // @ts-ignore
-        let recipient = ev.tags.find(([k, v]) => k === "p" && v && v !== "")[1];
+        const recipient = ev.tags.find(
+          ([k, v]: [string, string]) => k === "p" && v && v !== ""
+        )[1];
         const { nip04, nip19, getPublicKey } = window.NostrTools;
         const mySecretKey = nip19.decode(this.secretKey).data;
         const myPubKey = getPublicKey(mySecretKey);
@@ -145,7 +149,7 @@ class Mostro {
       publicKey,
       JSON.stringify(payload)
     );
-    let event = {
+    const event = {
       id: undefined,
       sig: undefined,
       kind: 4,
@@ -212,7 +216,7 @@ class Mostro {
       destinationPubKey,
       message
     );
-    let event = {
+    const event = {
       id: undefined,
       sig: undefined,
       kind: 4,

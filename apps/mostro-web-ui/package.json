@@ -7,7 +7,7 @@
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
-    "lint:fix": "eslint --ext \".ts,.vue\" --ignore-path .gitignore . --fix"
+    "lint:fix": "eslint . --ext \".ts,.vue\" --fix"
   },
   "dependencies": {
     "nuxt": "^3.4.1"

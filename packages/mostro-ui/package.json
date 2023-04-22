@@ -8,7 +8,7 @@
     "preview": "vite preview",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "lint:fix": "eslint . --fix --ext .ts,.tsx,.vue"
+    "lint:fix": "eslint . --ext \".ts,.vue\" --fix"
   },
   "dependencies": {
     "@mdi/font": "7.0.96",

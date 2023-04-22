@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "lint:fix": "eslint . --fix"
+    "lint:fix": "eslint . --ext \".ts\" --fix"
   },
   "devDependencies": {
     "@mostro-web/eslint-config-custom": "workspace:*",
