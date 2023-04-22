@@ -8,6 +8,10 @@
         v-if="currentOrderStatus === OrderStatusConstant.WAITING_PAYMENT && payInvoiceMessage"
         :message="payInvoiceMessage"
       />
+      <give-invoice-button
+        v-if="currentOrderStatus === OrderStatusConstant.WAITING_BUYER_INVOICE && giveInvoiceMessage"
+        :message="giveInvoiceMessage"
+      />
       <div v-if="currentOrderStatus === OrderStatusConstant.FIAT_SENT || currentOrderStatus === OrderStatusConstant.ACTIVE">
         <v-btn text color="warning">
           <v-icon left>mdi-alert-outline</v-icon>
@@ -42,8 +46,8 @@
 </template>
 <script lang="ts">
 import Vue from 'vue'
-import { mapGetters } from 'vuex'
-import { OrderStatus } from '~/store/types'
+import { mapGetters, mapState } from 'vuex'
+import { OrderStatus, Order, OrderType } from '~/store/types'
 
 const steps = {
   [`${OrderStatus.PENDING}`]: 0,
@@ -61,6 +65,7 @@ export default Vue.extend({
     }
   },
   computed: {
+    ...mapState('orders', ['orders']),
     ...mapGetters('orders', ['getOrderStatus']),
     ...mapGetters('messages', ['getMostroMessagesByOrderId']),
     currentOrderStatus() {
@@ -72,6 +77,12 @@ export default Vue.extend({
       // @ts-ignore
       const messages = this.getMostroMessagesByOrderId(orderId)
       return messages[0]
+    },
+    giveInvoiceMessage() {
+      const orderId = this.$route.params.id
+      // @ts-ignore
+      const messages = this.getMostroMessagesByOrderId(orderId)
+      return messages[messages.length - 1]
     },
     isOrderTaken() {
       // @ts-ignore

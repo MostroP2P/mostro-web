@@ -13,6 +13,7 @@
     "@noble/curves": "^0.8.3",
     "@nuxtjs/axios": "^5.13.6",
     "bigint-polyfill": "^0.1.0",
+    "bolt11": "^1.4.1",
     "core-js": "^3.25.3",
     "fs": "0.0.1-security",
     "nostr": "^0.2.8",

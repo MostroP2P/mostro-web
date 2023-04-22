@@ -1,6 +1,6 @@
 import 'bigint-polyfill'
 import { RelayPool }  from 'nostr'
-import { Order } from '../store/types'
+import { Order, SmallOrder } from '../store/types'
 
 type MostroOptions = {
   mostroPubKey: string,
@@ -59,7 +59,7 @@ class Mostro {
           try {
             const plaintext = await nip04.decrypt(mySecretKey, ev.pubkey, ev.content)
             if (ev.pubkey === mostroPubKey) {
-              console.log('> Mostro DM: ', plaintext)
+              console.log('> Mostro DM: ', plaintext, ', ev: ', ev)
               // Mostro DMs
               // For now, some messages from mostro are just plain text. With time it
               // is expected for them all to migrate to JSON objects. But in order to
@@ -72,7 +72,7 @@ class Mostro {
               } else {
                 const msg = { ...JSON.parse(plaintext), created_at: ev.created_at }
                 this.store.dispatch('messages/addMostroMessage', msg)
-              }              
+              }
             } else {
               // Peer DMs
               const peerNpub = nip19.npubEncode(ev.pubkey)
@@ -113,13 +113,6 @@ class Mostro {
         console.info(`Got event with kind: ${kind}, ev: `, ev)
       }
     })
-  }
-
-  subscribe() {
-    const { nip19, getPublicKey } = window.NostrTools
-    const secretKey = nip19.decode(this.secretKey).data
-    const publicKey = getPublicKey(secretKey)
-    // this.pool.subscribe('secondary', {limit: 100, kinds:[4], authors: [publicKey]})
   }
 
   async createEvent(payload: object) {
@@ -166,6 +159,22 @@ class Mostro {
       version: 0,
       order_id: order.id,
       action: 'TakeSell',
+      content: {
+        PaymentRequest: [
+          null,
+          invoice
+        ]
+      }
+    }
+    const event = await this.createEvent(payload)
+    const msg = ['EVENT', event]
+    await this.pool.send(msg)
+  }
+  async addInvoice(order: SmallOrder, invoice: string) {
+    const payload = {
+      version: 0,
+      order_id: order.id,
+      action: 'AddInvoice',
       content: {
         PaymentRequest: [
           null,

@@ -6,19 +6,8 @@
     </v-list-item-title>
     <v-list-item-subtitle>
       <p>
-        Get in touch with the seller, user
-        <code>
-          <strong>
-            <a @click="() => onPubkeyClick(sellerId)">
-              {{ isMobile ? truncateMiddle(sellerId) : sellerId  }}
-            </a>
-          </strong>
-        </code>      
-        so as to get the details on how to send the money you must send {{ fiatAmount }} {{ fiatCode }} through {{ paymentMethod }}.
+        We sent a hold invoice to the seller of order id : <strong>{{ orderId }}</strong> create a lightning invoice of {{ satsAmount }} sats to proceed.
       </p>
-    </v-list-item-subtitle>
-    <v-list-item-subtitle class="d-flex justify-space-between">
-      Once you send the money, please let me know by pressing the "FIAT SENT" button down below.
     </v-list-item-subtitle>
   </v-list-item-content>
 </template>
@@ -43,6 +32,12 @@ export default Vue.extend({
     }
   },
   computed: {
+    orderId() {
+      return this.message.order_id
+    },
+    satsAmount() {
+      return this.message.content.SmallOrder?.amount
+    },
     sellerId() {
       return this.message.content.SmallOrder?.seller_pubkey
     },
