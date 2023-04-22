@@ -9,18 +9,21 @@
     "build": "vue-tsc && vite build",
     "preview": "vite preview",
     "tauri:dev": "tauri dev",
-    "tauri:build": "tauri build"
+    "tauri:build": "tauri build",
+    "eslint:fix": "eslint --fix"
   },
   "dependencies": {
     "@mostro-web/mostro-ui": "workspace:*",
     "vue": "^3.2.47"
   },
   "devDependencies": {
+    "@mostro-web/eslint-config-custom": "workspace:*",
     "@tauri-apps/cli": "^1.2.3",
     "@vitejs/plugin-vue": "^4.1.0",
     "vite-plugin-vuetify": "^1.0.2",
     "typescript": "^5.0.2",
     "vite": "^4.3.0",
+    "vite-plugin-eslint": "^1.8.1",
     "vue-tsc": "^1.2.0"
   }
 }

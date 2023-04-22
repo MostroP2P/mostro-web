@@ -1,0 +1,7 @@
+{
+  "root": true,
+  "extends": ["@mostro-web/custom", "plugin:storybook/recommended"],
+  "parserOptions": {
+    "project": "./tsconfig.json"
+  }
+}

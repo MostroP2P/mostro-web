@@ -1,0 +1,8 @@
+{
+  "root": true,
+  "extends": ["@mostro-web/custom", "plugin:nuxt/recommended"],
+  "plugins": ["nuxt"],
+  "parserOptions": {
+    "project": "./tsconfig.json"
+  }
+}

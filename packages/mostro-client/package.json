@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@mostro-web/eslint-config-custom": "workspace:*",
     "@mostro-web/mostro-types": "workspace:*",
     "bigint-polyfill": "^0.1.0",
     "nostr": "^0.2.8"
