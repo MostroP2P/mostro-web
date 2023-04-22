@@ -6,12 +6,15 @@
     "dev": "nuxt dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
-    "postinstall": "nuxt prepare"
+    "postinstall": "nuxt prepare",
+    "lint:fix": "eslint --ext \".ts,.vue\" --ignore-path .gitignore . --fix"
+  },
+  "dependencies": {
+    "nuxt": "^3.4.1"
   },
   "devDependencies": {
     "@mostro-web/eslint-config-custom": "workspace:*",
     "@types/node": "^18",
-    "eslint-plugin-nuxt": "^4.0.0",
-    "nuxt": "^3.4.1"
+    "eslint-plugin-nuxt": "^4.0.0"
   }
 }

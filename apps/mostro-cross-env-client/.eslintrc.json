@@ -1,7 +1,15 @@
 {
   "root": true,
-  "extends": ["@mostro-web/custom"],
+  "extends": ["@mostro-web/eslint-config-custom"],
+  "env": {
+    "browser": true,
+    "node": true
+  },
+  "parser": "vue-eslint-parser",
   "parserOptions": {
-    "project": "./tsconfig.json"
+    "parser": "@typescript-eslint/parser",
+    "project": "./tsconfig.json",
+    "sourceType": "module",
+    "extraFileExtensions": [".vue"]
   }
 }

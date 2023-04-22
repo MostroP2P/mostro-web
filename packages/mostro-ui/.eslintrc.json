@@ -1,7 +1,21 @@
 {
   "root": true,
-  "extends": ["@mostro-web/custom", "plugin:storybook/recommended"],
+  "extends": [
+    "@mostro-web/eslint-config-custom",
+    "plugin:storybook/recommended"
+  ],
+  "env": {
+    "browser": true,
+    "node": true
+  },
+  "rules": {
+    "@typescript-eslint/quotes": "off"
+  },
+  "parser": "vue-eslint-parser",
   "parserOptions": {
-    "project": "./tsconfig.json"
+    "parser": "@typescript-eslint/parser",
+    "project": "./tsconfig.json",
+    "sourceType": "module",
+    "extraFileExtensions": [".vue"]
   }
 }

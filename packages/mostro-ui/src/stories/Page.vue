@@ -51,11 +51,10 @@
 
 <script lang="ts" setup>
 import './page.css';
+import { ref } from 'vue';
 import MyHeader from './Header.vue';
 
-import { ref } from 'vue';
-
-const user = ref<{ name: string } | null>(null)
+const user = ref<{ name: string } | null>(null);
 
 const onLogin = () => {
   user.value = { name: 'Jane Doe' };

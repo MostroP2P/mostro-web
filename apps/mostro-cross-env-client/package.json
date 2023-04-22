@@ -10,7 +10,7 @@
     "preview": "vite preview",
     "tauri:dev": "tauri dev",
     "tauri:build": "tauri build",
-    "eslint:fix": "eslint --fix"
+    "lint:fix": "eslint . --fix"
   },
   "dependencies": {
     "@mostro-web/mostro-ui": "workspace:*",

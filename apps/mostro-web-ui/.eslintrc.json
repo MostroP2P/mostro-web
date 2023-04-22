@@ -1,8 +1,18 @@
 {
   "root": true,
-  "extends": ["@mostro-web/custom", "plugin:nuxt/recommended"],
-  "plugins": ["nuxt"],
+  "env": {
+    "browser": true,
+    "node": true
+  },
+  "extends": ["plugin:nuxt/recommended", "@mostro-web/eslint-config-custom"],
+  "rules": {
+    "@typescript-eslint/quotes": "off"
+  },
+  "parser": "vue-eslint-parser",
   "parserOptions": {
-    "project": "./tsconfig.json"
+    "parser": "@typescript-eslint/parser",
+    "project": "./tsconfig.json",
+    "sourceType": "module",
+    "extraFileExtensions": [".vue"]
   }
 }

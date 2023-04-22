@@ -75,7 +75,7 @@
 </template>
 
 <script lang="ts">
-  export default {
-    name: "HelloWorld"
-  }
+export default {
+  name: "HelloWorld",
+};
 </script>

@@ -1,6 +1,6 @@
 {
   "root": true,
-  "extends": ["@mostro-web/custom"],
+  "extends": ["@mostro-web/eslint-config-custom"],
   "parserOptions": {
     "project": "./tsconfig.json"
   }

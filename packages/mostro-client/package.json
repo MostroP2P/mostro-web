@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "lint:fix": "eslint . --fix"
   },
   "dependencies": {
     "@mostro-web/eslint-config-custom": "workspace:*",
