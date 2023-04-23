@@ -24,12 +24,14 @@ import Vue from 'vue'
 import type { PropType } from 'vue'
 import { MostroMessage } from '~/store/types'
 import * as timeago from 'timeago.js'
+import textMessage from '~/mixins/text-message'
 export default Vue.extend({
   data() {
     return {
       timeago
     }
   },
+  mixins: [ textMessage ],
   props: {
     message: {
       type: Object as PropType<MostroMessage>,
@@ -48,6 +50,9 @@ export default Vue.extend({
         return smallOrder.seller_pubkey
       }
       return '?'
+    },
+    creationDate() {
+      return this.message.created_at * 1e3
     }
   }
 })
