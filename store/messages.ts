@@ -42,10 +42,6 @@ export const actions = {
     }
     commit('addMostroMessage', message)
   },
-  addMostroTextMessage(context: any, message: TextMessage) {
-    console.log('addMostroTextMessage. message: ', message)
-    const { commit } = context
-  },
   addPeerMessage(context: any, peerMessage: PeerMessage) {
     const { commit } = context
     commit('addPeerMessage', peerMessage)
