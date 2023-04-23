@@ -196,6 +196,16 @@ class Mostro {
     const msg = ['EVENT', event]
     await this.pool.send(msg)
   }
+  async fiatSent(order: Order) {
+    const payload = {
+      version: 0,
+      action: 'FiatSent',
+      order_id: order.id
+    }
+    const event = await this.createEvent(payload)
+    const msg = ['EVENT', event]
+    await this.pool.send(msg)
+  }
   async submitDirectMessage(message: string, npub: string, replyTo: string) {
     const { nip04, nip19, getPublicKey, getEventHash, signEvent } = window.NostrTools
     const destinationPubKey = nip19.decode(npub).data
@@ -219,6 +229,12 @@ class Mostro {
     event.sig = signEvent(event, mySecretKey)
     const msg = ['EVENT', event]
     await this.pool.send(msg)
+  }
+
+  getNpub() {
+    const { getPublicKey, nip19 } = window.NostrTools
+    const decodedSecretKey = nip19.decode(this.secretKey).data
+    return nip19.npubEncode(getPublicKey(decodedSecretKey))
   }
 }
 

@@ -3,23 +3,7 @@
     <div class="message-list-wrapper flex-grow-1">
       <message-list :order-id="$route.params.id"/>
     </div>
-    <div class="d-flex justify-center align-center mt-5">
-      <pay-invoice-button
-        v-if="currentOrderStatus === OrderStatusConstant.WAITING_PAYMENT && payInvoiceMessage"
-        :message="payInvoiceMessage"
-      />
-      <give-invoice-button
-        v-if="currentOrderStatus === OrderStatusConstant.WAITING_BUYER_INVOICE && giveInvoiceMessage"
-        :message="giveInvoiceMessage"
-      />
-      <div v-if="currentOrderStatus === OrderStatusConstant.FIAT_SENT || currentOrderStatus === OrderStatusConstant.ACTIVE">
-        <v-btn text color="warning">
-          <v-icon left>mdi-alert-outline</v-icon>
-          Dispute
-        </v-btn>
-        <release-funds-dialog :order-id="$route.params.id"/>
-      </div>
-    </div>
+    <trade-actions></trade-actions>
     <v-stepper alt-labels class="mt-5">
       <v-stepper-header>
         <v-stepper-step step="1" :complete="isWaitingPayment">
@@ -67,22 +51,9 @@ export default Vue.extend({
   computed: {
     ...mapState('orders', ['orders']),
     ...mapGetters('orders', ['getOrderStatus']),
-    ...mapGetters('messages', ['getMostroMessagesByOrderId']),
     currentOrderStatus() {
       // @ts-ignore
       return this.getOrderStatus(this.$route.params.id)
-    },
-    payInvoiceMessage() {
-      const orderId = this.$route.params.id
-      // @ts-ignore
-      const messages = this.getMostroMessagesByOrderId(orderId)
-      return messages[0]
-    },
-    giveInvoiceMessage() {
-      const orderId = this.$route.params.id
-      // @ts-ignore
-      const messages = this.getMostroMessagesByOrderId(orderId)
-      return messages[messages.length - 1]
     },
     isOrderTaken() {
       // @ts-ignore
