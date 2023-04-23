@@ -1,12 +1,23 @@
 <template>
-  <div>
+  <div style="width: 100%">
     <v-list-item-content>
       <v-list-item-title class="d-flex justify-space-between">
         Fiat Sent
         <div class="text-caption text--secondary">{{ timeago.format(creationDate) }}</div>
       </v-list-item-title>
       <div class="wrap-text text-message">
-        <p>
+        <p v-if="isLocalBuyer">
+          🧌 I told
+          <code>
+            <strong>
+              <a @click="() => onPubkeyClick(sellerPubkey)">
+                {{ isMobile ? truncateMiddle(sellerPubkey) : sellerPubkey }}
+              </a>
+            </strong>
+          </code>
+          that you have sent fiat money once the seller confirms the money was received, the sats should be sent to you.
+        </p>
+        <p v-if="!isLocalBuyer">
           <code>
             <strong>
               <a @click="() => onPubkeyClick(buyerPubkey)">
@@ -23,6 +34,7 @@
 
 <script lang="ts">
 import Vue from 'vue'
+import { mapGetters } from 'vuex'
 import type { PropType } from 'vue'
 import * as timeago from 'timeago.js'
 import { MostroMessage } from '~/store/types'
@@ -44,12 +56,22 @@ export default Vue.extend({
     }
   },
   computed: {
+    ...mapGetters('orders', ['getOrderById']),
+    order() {
+      // @ts-ignore
+      return this.getOrderById(this.$route.params.id)
+    },
     buyerPubkey() {
-      const peer = this.message.content.Peer
-      if (peer) {
-        return peer.pubkey
-      }
-      return '?'
+      // @ts-ignore
+      return this.order?.buyer_pubkey
+    },
+    sellerPubkey() {
+      // @ts-ignore
+      return this.order?.seller_pubkey
+    },
+    isLocalBuyer() {
+      // @ts-ignore
+      return this?.$mostro?.getNpub() === this.order?.buyer_pubkey
     },
     creationDate() {
       return this.message.created_at * 1e3

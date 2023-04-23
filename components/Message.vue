@@ -32,6 +32,7 @@
 </template>
 <script lang="ts">
 import Vue from 'vue'
+import { mapGetters } from 'vuex'
 import type { PropType } from 'vue'
 import { MostroMessage } from '~/store/types'
 import { Action } from '~/store/types'
@@ -47,6 +48,17 @@ export default Vue.extend({
       type: Object as PropType<MostroMessage>,
       required: true
     }
+  },
+  computed: {
+    ...mapGetters('orders', ['getOrderById']),
+    order() {
+      // @ts-ignore
+      return this.getOrderById(this.$route.params.id)
+    },
+    isLocalBuyer() {
+      // @ts-ignore
+      return this?.$mostro?.getNpub() === this.order?.buyer_pubkey
+    },
   }
 })
 </script>
