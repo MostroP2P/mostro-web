@@ -1,10 +1,8 @@
 import Vue from 'vue'
 
 import {
-  Action,
   ThreadSummary,
   MostroMessage,
-  TextMessage,
   PeerMessage,
   PeerThreadSummary
 } from './types'
