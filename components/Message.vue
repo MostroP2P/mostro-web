@@ -24,6 +24,10 @@
       v-if="message.action === action.AddInvoice"
       :message="message"
     />
+    <hodl-invoice-payment-accepted
+      v-if="message.action === action.HoldInvoicePaymentAccepted"
+      :message="message"
+    />
   </v-list-item>
 </template>
 <script lang="ts">
