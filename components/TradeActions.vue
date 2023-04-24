@@ -14,8 +14,11 @@
         <v-icon left>mdi-alert-outline</v-icon>
         Dispute
       </v-btn>
-      <release-funds-dialog :order-id="$route.params.id"/>
     </div>
+    <release-funds-dialog
+      v-if="showRelease"
+      :order-id="$route.params.id"
+    />
   </div>
 </template>
 <script lang="ts">
@@ -70,10 +73,15 @@ export default Vue.extend({
       // @ts-ignore
       return this?.$mostro?.getNpub() === this.order?.buyer_pubkey
     },
+    showRelease() {
+      // @ts-ignore
+      return this.isLocalSeller && this.currentOrderStatus === OrderStatus.FIAT_SENT
+    },
     showDispute() {
       if (this.isLocalBuyer) {
         // Rule for local buyer
-        return false
+        // @ts-ignore
+        return this.currentOrderStatus === OrderStatus.FIAT_SENT
       } else  {
         // Rule for local seller
         // @ts-ignore
@@ -81,7 +89,9 @@ export default Vue.extend({
       }
     },
     showFiatSent() {
-      return true
+      // @ts-ignore
+      // return this.currentOrderStatus === OrderStatus.
+      return this.currentOrderStatus === OrderStatus.ACTIVE
     }
   }
 })
