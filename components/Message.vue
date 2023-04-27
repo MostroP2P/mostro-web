@@ -28,6 +28,10 @@
       v-if="message.action === action.HoldInvoicePaymentAccepted"
       :message="message"
     />
+    <released-message
+      v-if="message.action === action.Release"
+      :message="message"
+    />
   </v-list-item>
 </template>
 <script lang="ts">
