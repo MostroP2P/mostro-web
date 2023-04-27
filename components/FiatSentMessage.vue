@@ -7,25 +7,10 @@
       </v-list-item-title>
       <div class="wrap-text text-message">
         <p v-if="isLocalBuyer">
-          🧌 I told
-          <code>
-            <strong>
-              <a @click="() => onPubkeyClick(sellerPubkey)">
-                {{ isMobile ? truncateMiddle(sellerPubkey) : sellerPubkey }}
-              </a>
-            </strong>
-          </code>
-          that you have sent fiat money once the seller confirms the money was received, the sats should be sent to you.
+          🧌 I told <npub :npub="sellerPubkey"/> that you have sent fiat money once the seller confirms the money was received, the sats should be sent to you.
         </p>
         <p v-if="!isLocalBuyer">
-          <code>
-            <strong>
-              <a @click="() => onPubkeyClick(buyerPubkey)">
-                {{ isMobile ? truncateMiddle(buyerPubkey) : buyerPubkey }}
-              </a>
-            </strong>
-          </code>
-        has informed that already sent you the fiat money, once you confirmed you received it, please release funds. You will not be able to create another order until you release funds.
+          <npub :npub="buyerPubkey"/> has informed that already sent you the fiat money, once you confirmed you received it, please release funds. You will not be able to create another order until you release funds.
         </p>
       </div>
     </v-list-item-content>
@@ -39,9 +24,13 @@ import type { PropType } from 'vue'
 import * as timeago from 'timeago.js'
 import { MostroMessage } from '~/store/types'
 import textMessage from '~/mixins/text-message'
+import NPub from '~/components/NPub.vue'
 export default Vue.extend({
   data() {
     return { timeago }
+  },
+  components: {
+    npub: NPub
   },
   mixins: [ textMessage ],
   props: {

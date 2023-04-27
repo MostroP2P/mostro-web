@@ -7,13 +7,7 @@
     <v-list-item-subtitle>
       <p>
         The escrow deposit is secured, you may now proceed to pay. Open a conversation with
-        <code>
-            <strong>
-              <a @click="() => onPubkeyClick(sellerPubkey)">
-                {{ isMobile ? truncateMiddle(sellerPubkey) : sellerPubkey  }}
-              </a>
-            </strong>
-        </code>
+        <npub :npub="sellerPubkey"/>
         and get the information on how to perform the fiat payment. Once this is done, press the "FIAT SENT" button below.
       </p>
     </v-list-item-subtitle>
@@ -25,11 +19,15 @@ import type { PropType } from 'vue'
 import { MostroMessage } from '~/store/types'
 import * as timeago from 'timeago.js'
 import textMessage from '~/mixins/text-message'
+import NPub from '~/components/NPub.vue'
 export default Vue.extend({
   data() {
     return {
       timeago
     }
+  },
+  components: {
+    npub: NPub
   },
   mixins: [ textMessage ],
   props: {

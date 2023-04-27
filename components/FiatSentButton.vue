@@ -12,13 +12,7 @@
       </v-card-title>
       <v-card-text>
         I confirm that I've sent {{ fiatAmount }} {{ fiatCode }} to
-        <code>
-            <strong>
-              <a @click="() => onPubkeyClick(sellerPubkey)">
-                {{ isMobile ? truncateMiddle(sellerPubkey) : sellerPubkey  }}
-              </a>
-            </strong>
-        </code>
+        <npub :npub="sellerPubkey"/>
         .
       </v-card-text>
       <v-card-actions>
@@ -38,12 +32,16 @@
 import Vue from 'vue'
 import { mapGetters } from 'vuex'
 import textMessage from '~/mixins/text-message'
+import NPub from '~/components/NPub.vue'
 export default Vue.extend({
   data() {
     return {
       showDialog: false,
       isLoading: false
     }
+  },
+  components: {
+    npub: NPub
   },
   mixins: [ textMessage ],
   methods: {

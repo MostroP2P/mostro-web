@@ -7,13 +7,7 @@
     <div class="wrap-text text-message">
       <p>
         The user
-        <code>
-            <strong>
-              <a @click="() => onPubkeyClick(buyerPubkey)">
-                {{ isMobile ? truncateMiddle(buyerPubkey) : buyerPubkey  }}
-              </a>
-            </strong>
-        </code>
+        <npub :npub="buyerPubkey"/>
         has taken your order and wants to buy your sats. Get in touch and tell
         him/her how to send you {{ fiatAmount }} {{ fiatCode }} through {{ paymentMethod }}.
       </p>
@@ -29,11 +23,15 @@ import Vue from 'vue'
 import type { PropType } from 'vue'
 import { MostroMessage } from '~/store/types'
 import textMessage from '~/mixins/text-message'
+import NPub from '~/components/NPub.vue'
 import * as timeago from 'timeago.js'
 
 export default Vue.extend({
   data() {
     return { timeago }
+  },
+  components: {
+    npub: NPub
   },
   mixins: [ textMessage ],
   props: {

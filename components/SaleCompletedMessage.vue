@@ -7,13 +7,7 @@
     <div class="wrap-text text-message">
       <p>
         Your sale of sats has been completed after confirming payment from
-        <code>
-          <strong>
-            <a @click="() => onPubkeyClick(buyerPubkey)">
-              {{ isMobile ? truncateMiddle(buyerPubkey) : buyerPubkey  }}
-            </a>
-          </strong>
-        </code>
+        <npub :npub="buyerPubkey"/>
       </p>
     </div>
   </v-list-item-content>
@@ -25,10 +19,14 @@ import * as timeago from 'timeago.js'
 import textMessage from '~/mixins/text-message'
 import { MostroMessage } from '~/store/types'
 import { mapGetters } from 'vuex'
+import NPub from '~/components/NPub.vue'
 
 export default Vue.extend({
   data() {
     return { timeago }
+  },
+  components: {
+    npub: NPub
   },
   mixins: [ textMessage ],
   props: {
