@@ -113,6 +113,8 @@ export interface Order {
   buyer_pubkey?: string,
   seller_pubkey?: string
   buyer_invoice?: string
+  master_seller_pubkey?: string
+  master_buyer_pubkey?: string
 }
 
 /**

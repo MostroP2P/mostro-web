@@ -133,9 +133,23 @@ class Mostro {
     return event
   }
 
+  getLocalKeys() {
+    const { nip19, getPublicKey } = window.NostrTools
+    const mySecretKey = nip19.decode(this.secretKey).data
+    const myPublicKey = getPublicKey(mySecretKey)
+    const npub = nip19.npubEncode(myPublicKey)
+    return {
+      nsec: this.secretKey,
+      npub: npub,
+      secret: mySecretKey,
+      public: myPublicKey
+    }
+  }
+
   async submitOrder(order: Order) {
     const payload = {
       version: 0,
+      pubkey: this.getLocalKeys().npub,
       action: 'Order',
       content: {
         Order: {
@@ -157,6 +171,7 @@ class Mostro {
   async takeSell(order: Order, invoice: string) {
     const payload = {
       version: 0,
+      pubkey: this.getLocalKeys().npub,
       order_id: order.id,
       action: 'TakeSell',
       content: {
@@ -173,6 +188,7 @@ class Mostro {
   async addInvoice(order: SmallOrder, invoice: string) {
     const payload = {
       version: 0,
+      pubkey: this.getLocalKeys().npub,
       order_id: order.id,
       action: 'AddInvoice',
       content: {
@@ -189,6 +205,7 @@ class Mostro {
   async release(order: Order) {
     const payload = {
       version: 0,
+      pubkey: this.getLocalKeys().npub,
       action: 'Release',
       order_id: order.id
     }
@@ -199,6 +216,7 @@ class Mostro {
   async fiatSent(order: Order) {
     const payload = {
       version: 0,
+      pubkey: this.getLocalKeys().npub,
       action: 'FiatSent',
       order_id: order.id
     }
