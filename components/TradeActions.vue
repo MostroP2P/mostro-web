@@ -82,16 +82,16 @@ export default Vue.extend({
         // Rule for local buyer
         // @ts-ignore
         return this.currentOrderStatus === OrderStatus.FIAT_SENT
-      } else  {
+      } else {
         // Rule for local seller
         // @ts-ignore
-        return this.currentOrderStatus in [OrderStatus.ACTIVE, OrderStatus.FIAT_SENT]
+        return [OrderStatus.ACTIVE, OrderStatus.FIAT_SENT].includes(this.currentOrderStatus)
       }
     },
     showFiatSent() {
       // @ts-ignore
       // return this.currentOrderStatus === OrderStatus.
-      return this.currentOrderStatus === OrderStatus.ACTIVE
+      return this.currentOrderStatus === OrderStatus.ACTIVE && this.isLocalBuyer
     }
   }
 })
