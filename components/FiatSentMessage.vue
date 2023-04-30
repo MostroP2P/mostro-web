@@ -52,7 +52,7 @@ export default Vue.extend({
     },
     buyerPubkey() {
       // @ts-ignore
-      return this.order?.buyer_pubkey
+      return this.message?.content?.Peer?.pubkey ?? '?'
     },
     sellerPubkey() {
       // @ts-ignore
