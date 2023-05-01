@@ -59,7 +59,8 @@ export enum Action {
   HoldInvoicePaymentAccepted = 'HoldInvoicePaymentAccepted',
   HoldInvoicePaymentSettled = 'HoldInvoicePaymentSettled',
   Release = 'Release',
-  Cancel = 'Cancel'
+  Cancel = 'Cancel',
+  RateUser = 'RateUser'
 }
 
 // Peer messages

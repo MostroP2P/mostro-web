@@ -32,6 +32,10 @@
       v-if="message.action === action.Release"
       :message="message"
     />
+    <rate-user-message
+      v-if="message.action === action.RateUser"
+      :message="message"
+    />
   </v-list-item>
 </template>
 <script lang="ts">
