@@ -1,11 +1,11 @@
 <template>
   <div class="d-flex justify-center align-center mt-5">
     <pay-invoice-button
-      v-if="currentOrderStatus === OrderStatusConstant.WAITING_PAYMENT && payInvoiceMessage"
+      v-if="showPayInvoice"
       :message="payInvoiceMessage"
     />
     <give-invoice-button
-      v-if="currentOrderStatus === OrderStatusConstant.WAITING_BUYER_INVOICE && giveInvoiceMessage"
+      v-if="showGiveInvoice"
       :message="giveInvoiceMessage"
     />
     <fiat-sent-button v-if="showFiatSent"/>
@@ -24,14 +24,8 @@
 <script lang="ts">
 import Vue from 'vue'
 import { mapGetters } from 'vuex'
-import { OrderStatus, OrderType } from '~/store/types'
+import { OrderStatus, OrderType, MostroMessage, Action } from '~/store/types'
 export default Vue.extend({
-  data() {
-    return {
-      OrderStatusConstant: OrderStatus,
-      OrderType
-    }
-  },
   computed: {
     ...mapGetters('orders', ['getOrderStatus', 'getOrderById']),
     ...mapGetters('messages', ['getMostroMessagesByOrderId']),
@@ -39,7 +33,14 @@ export default Vue.extend({
       const orderId = this.$route.params.id
       // @ts-ignore
       const messages = this.getMostroMessagesByOrderId(orderId)
-      return messages[0]
+      // Takes the first message, should probably search for a specific one.
+      return messages.find((msg: MostroMessage) => msg.action === Action.WaitingSellerToPay)
+    },
+    giveInvoiceMessage() {
+      const orderId = this.$route.params.id
+      // @ts-ignore
+      const messages = this.getMostroMessagesByOrderId(orderId)
+      messages.find((msg: MostroMessage) => msg.action === Action.AddInvoice)
     },
     currentOrderStatus() {
       // @ts-ignore
@@ -90,8 +91,15 @@ export default Vue.extend({
     },
     showFiatSent() {
       // @ts-ignore
-      // return this.currentOrderStatus === OrderStatus.
       return this.currentOrderStatus === OrderStatus.ACTIVE && this.isLocalBuyer
+    },
+    showPayInvoice() {
+      // @ts-ignore
+      return this.currentOrderStatus === OrderStatus.WAITING_BUYER_INVOICE && this.isLocalSeller
+    },
+    showGiveInvoice() {
+      // @ts-ignore
+      return this.currentOrderStatus === OrderStatus.WAITING_BUYER_INVOICE && this.giveInvoiceMessage
     }
   }
 })
