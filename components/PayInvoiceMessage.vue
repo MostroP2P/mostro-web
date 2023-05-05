@@ -33,7 +33,7 @@ export default Vue.extend({
   computed: {
     messageText() {
       // @ts-ignore
-      return `Somebody wants to buy you ${this.satsAmount} sats for ${this.fiatCode} ${this.fiatAmount}`
+      return `You're selling ${this.satsAmount} sats for ${this.fiatCode} ${this.fiatAmount}`
     },
     satsAmount() {
       const paymentRequest = this.message.content.PaymentRequest
