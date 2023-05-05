@@ -6,7 +6,7 @@
       </v-btn>
     </template>
     <v-card>
-      <v-card-title>Take Order</v-card-title>
+      <v-card-title>Take Sell Order</v-card-title>
       <v-card-text>
         Please enter a lightning network invoice.
       </v-card-text>
