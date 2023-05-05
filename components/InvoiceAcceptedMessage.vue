@@ -21,6 +21,7 @@
 <script lang="ts">
 import Vue from 'vue'
 import type { PropType } from 'vue'
+import { mapGetters } from 'vuex'
 import { MostroMessage } from '~/store/types'
 import textMessage from '~/mixins/text-message'
 import NPub from '~/components/NPub.vue'
@@ -46,6 +47,11 @@ export default Vue.extend({
     }
   },
   computed: {
+    ...mapGetters('orders', ['getOrderById']),
+    order() {
+      // @ts-ignore
+      return this.getOrderById(this.$route.params.id)
+    },
     fiatAmount() {
       const smallOrder = this.message.content.SmallOrder
       if (smallOrder) {
@@ -61,11 +67,8 @@ export default Vue.extend({
       return NaN
     },
     paymentMethod() {
-      const smallOrder = this.message.content.SmallOrder
-      if (smallOrder) {
-        return smallOrder.payment_method
-      }
-      return NaN
+      // @ts-ignore
+      return this?.order?.payment_method
     },
     buyerPubkey() {
       const smallOrder = this.message.content.SmallOrder
