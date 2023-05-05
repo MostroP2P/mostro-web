@@ -33,8 +33,7 @@ export default Vue.extend({
       const orderId = this.$route.params.id
       // @ts-ignore
       const messages = this.getMostroMessagesByOrderId(orderId)
-      // Takes the first message, should probably search for a specific one.
-      return messages.find((msg: MostroMessage) => msg.action === Action.WaitingSellerToPay)
+      return messages.find((msg: MostroMessage) => msg.action === Action.WaitingSellerToPay || msg.action === Action.PayInvoice)
     },
     giveInvoiceMessage() {
       const orderId = this.$route.params.id
@@ -95,7 +94,7 @@ export default Vue.extend({
     },
     showPayInvoice() {
       // @ts-ignore
-      return this.currentOrderStatus === OrderStatus.WAITING_BUYER_INVOICE && this.isLocalSeller
+      return this.currentOrderStatus === OrderStatus.WAITING_PAYMENT
     },
     showGiveInvoice() {
       // @ts-ignore

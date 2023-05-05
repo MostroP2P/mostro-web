@@ -4,6 +4,10 @@
       v-if="message.action === action.PayInvoice"
       :message="message"
     />
+    <waiting-buyer-invoice-message
+      v-if="message.action === action.WaitingBuyerInvoice"
+      :message="message"
+    />
     <invoice-accepted-message
       v-if="message.action === action.BuyerTookOrder"
       :message="message"

@@ -185,6 +185,22 @@ class Mostro {
     const msg = ['EVENT', event]
     await this.pool.send(msg)
   }
+  async takeBuy(order: Order) {
+    const payload = {
+      version: 0,
+      pubkey: this.getLocalKeys().npub,
+      order_id: order.id,
+      action: 'TakeBuy',
+      content: {
+        Peer: {
+          pubkey: this.getLocalKeys().npub
+        }
+      }
+    }
+    const event = await this.createEvent(payload)
+    const msg = ['EVENT', event]
+    await this.pool.send(msg)
+  }
   async addInvoice(order: SmallOrder, invoice: string) {
     const payload = {
       version: 0,

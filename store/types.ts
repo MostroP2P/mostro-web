@@ -55,6 +55,7 @@ export enum Action {
   BuyerTookOrder = 'BuyerTookOrder',
   FiatSent = 'FiatSent',
   WaitingSellerToPay = 'WaitingSellerToPay',
+  WaitingBuyerInvoice = 'WaitingBuyerInvoice',
   AddInvoice = 'AddInvoice',
   HoldInvoicePaymentAccepted = 'HoldInvoicePaymentAccepted',
   HoldInvoicePaymentSettled = 'HoldInvoicePaymentSettled',
