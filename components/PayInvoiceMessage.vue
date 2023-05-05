@@ -8,7 +8,7 @@
       {{ messageText }}
     </v-list-item-subtitle>
     <v-list-item-subtitle class="d-flex justify-space-between">
-      Please pay this invoice to start up your selling process, it will expire in 15 minutes
+      Please press the "SHOW INVOICE" button below to display the invoice you're expected to pay. It will expire in 15 minutes
     </v-list-item-subtitle>
   </v-list-item-content>
 </template>
