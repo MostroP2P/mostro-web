@@ -1,4 +1,3 @@
-import 'bigint-polyfill'
 import { RelayPool }  from 'nostr'
 import { Order, SmallOrder } from '../store/types'
 
@@ -130,7 +129,7 @@ class Mostro {
     }
     event.id = getEventHash(event)
     event.sig = signEvent(event, secretKey)
-    return event
+    return ['EVENT', event]
   }
 
   getLocalKeys() {
@@ -165,8 +164,7 @@ class Mostro {
       }
     }
     const event = await this.createEvent(payload)
-    const msg = ['EVENT', event]
-    await this.pool.send(msg)
+    await this.pool.send(event)
   }
   async takeSell(order: Order, invoice: string) {
     const payload = {
@@ -182,8 +180,7 @@ class Mostro {
       }
     }
     const event = await this.createEvent(payload)
-    const msg = ['EVENT', event]
-    await this.pool.send(msg)
+    await this.pool.send(event)
   }
   async takeBuy(order: Order) {
     const payload = {
@@ -198,8 +195,7 @@ class Mostro {
       }
     }
     const event = await this.createEvent(payload)
-    const msg = ['EVENT', event]
-    await this.pool.send(msg)
+    await this.pool.send(event)
   }
   async addInvoice(order: SmallOrder, invoice: string) {
     const payload = {
@@ -215,8 +211,7 @@ class Mostro {
       }
     }
     const event = await this.createEvent(payload)
-    const msg = ['EVENT', event]
-    await this.pool.send(msg)
+    await this.pool.send(event)
   }
   async release(order: Order) {
     const payload = {
@@ -226,8 +221,7 @@ class Mostro {
       order_id: order.id
     }
     const event = await this.createEvent(payload)
-    const msg = ['EVENT', event]
-    await this.pool.send(msg)
+    await this.pool.send(event)
   }
   async fiatSent(order: Order) {
     const payload = {
@@ -237,8 +231,7 @@ class Mostro {
       order_id: order.id
     }
     const event = await this.createEvent(payload)
-    const msg = ['EVENT', event]
-    await this.pool.send(msg)
+    await this.pool.send(event)
   }
   async submitDirectMessage(message: string, npub: string, replyTo: string) {
     const { nip04, nip19, getPublicKey, getEventHash, signEvent } = window.NostrTools
@@ -261,8 +254,7 @@ class Mostro {
     }
     event.id = getEventHash(event)
     event.sig = signEvent(event, mySecretKey)
-    const msg = ['EVENT', event]
-    await this.pool.send(msg)
+    await this.pool.send(event)
   }
 
   getNpub() {
