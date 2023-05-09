@@ -39,7 +39,7 @@ export default Vue.extend({
       const orderId = this.$route.params.id
       // @ts-ignore
       const messages = this.getMostroMessagesByOrderId(orderId)
-      return messages.find((msg: MostroMessage) => msg.action === Action.AddInvoice)
+      return messages.find((msg: MostroMessage) => msg.action === Action.AddInvoice || msg.action === Action.TakeSell)
     },
     currentOrderStatus() {
       // @ts-ignore
