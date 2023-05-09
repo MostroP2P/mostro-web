@@ -1,6 +1,6 @@
 import 'bigint-polyfill'
 import { RelayPool }  from 'nostr'
-import { Order } from '../store/types'
+import { Order, SmallOrder } from '../store/types'
 
 type MostroOptions = {
   mostroPubKey: string,
@@ -59,7 +59,7 @@ class Mostro {
           try {
             const plaintext = await nip04.decrypt(mySecretKey, ev.pubkey, ev.content)
             if (ev.pubkey === mostroPubKey) {
-              console.log('> Mostro DM: ', plaintext)
+              console.log('> Mostro DM: ', plaintext, ', ev: ', ev)
               // Mostro DMs
               // For now, some messages from mostro are just plain text. With time it
               // is expected for them all to migrate to JSON objects. But in order to
@@ -67,12 +67,11 @@ class Mostro {
               // all text messages contain the 🧌 emoji :)
               const emojiIndex = plaintext.indexOf('🧌')
               if (emojiIndex !== -1) {
-                const msg = { text: plaintext, created_at: ev.created_at}
-                this.store.dispatch('messages/addMostroTextMessage', msg)
+                console.warn('Potential text message not handled')
               } else {
                 const msg = { ...JSON.parse(plaintext), created_at: ev.created_at }
                 this.store.dispatch('messages/addMostroMessage', msg)
-              }              
+              }
             } else {
               // Peer DMs
               const peerNpub = nip19.npubEncode(ev.pubkey)
@@ -115,13 +114,6 @@ class Mostro {
     })
   }
 
-  subscribe() {
-    const { nip19, getPublicKey } = window.NostrTools
-    const secretKey = nip19.decode(this.secretKey).data
-    const publicKey = getPublicKey(secretKey)
-    // this.pool.subscribe('secondary', {limit: 100, kinds:[4], authors: [publicKey]})
-  }
-
   async createEvent(payload: object) {
     const { nip04, nip19, getPublicKey, getEventHash, signEvent } = window.NostrTools
     const secretKey = nip19.decode(this.secretKey).data
@@ -141,9 +133,23 @@ class Mostro {
     return event
   }
 
+  getLocalKeys() {
+    const { nip19, getPublicKey } = window.NostrTools
+    const mySecretKey = nip19.decode(this.secretKey).data
+    const myPublicKey = getPublicKey(mySecretKey)
+    const npub = nip19.npubEncode(myPublicKey)
+    return {
+      nsec: this.secretKey,
+      npub: npub,
+      secret: mySecretKey,
+      public: myPublicKey
+    }
+  }
+
   async submitOrder(order: Order) {
     const payload = {
       version: 0,
+      pubkey: this.getLocalKeys().npub,
       action: 'Order',
       content: {
         Order: {
@@ -153,7 +159,8 @@ class Mostro {
           fiat_code: order.fiat_code,
           fiat_amount: order.fiat_amount,
           payment_method: order.payment_method,
-          premium: order.premium
+          premium: order.premium,
+          buyer_invoice: order.buyer_invoice
         }
       }
     }
@@ -164,8 +171,42 @@ class Mostro {
   async takeSell(order: Order, invoice: string) {
     const payload = {
       version: 0,
+      pubkey: this.getLocalKeys().npub,
       order_id: order.id,
       action: 'TakeSell',
+      content: {
+        PaymentRequest: [
+          null,
+          invoice
+        ]
+      }
+    }
+    const event = await this.createEvent(payload)
+    const msg = ['EVENT', event]
+    await this.pool.send(msg)
+  }
+  async takeBuy(order: Order) {
+    const payload = {
+      version: 0,
+      pubkey: this.getLocalKeys().npub,
+      order_id: order.id,
+      action: 'TakeBuy',
+      content: {
+        Peer: {
+          pubkey: this.getLocalKeys().npub
+        }
+      }
+    }
+    const event = await this.createEvent(payload)
+    const msg = ['EVENT', event]
+    await this.pool.send(msg)
+  }
+  async addInvoice(order: SmallOrder, invoice: string) {
+    const payload = {
+      version: 0,
+      pubkey: this.getLocalKeys().npub,
+      order_id: order.id,
+      action: 'AddInvoice',
       content: {
         PaymentRequest: [
           null,
@@ -180,7 +221,19 @@ class Mostro {
   async release(order: Order) {
     const payload = {
       version: 0,
+      pubkey: this.getLocalKeys().npub,
       action: 'Release',
+      order_id: order.id
+    }
+    const event = await this.createEvent(payload)
+    const msg = ['EVENT', event]
+    await this.pool.send(msg)
+  }
+  async fiatSent(order: Order) {
+    const payload = {
+      version: 0,
+      pubkey: this.getLocalKeys().npub,
+      action: 'FiatSent',
       order_id: order.id
     }
     const event = await this.createEvent(payload)
@@ -210,6 +263,12 @@ class Mostro {
     event.sig = signEvent(event, mySecretKey)
     const msg = ['EVENT', event]
     await this.pool.send(msg)
+  }
+
+  getNpub() {
+    const { getPublicKey, nip19 } = window.NostrTools
+    const decodedSecretKey = nip19.decode(this.secretKey).data
+    return nip19.npubEncode(getPublicKey(decodedSecretKey))
   }
 }
 

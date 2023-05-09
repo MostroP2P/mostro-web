@@ -1,5 +1,5 @@
 <template>
-  <v-dialog v-model="showDialog" width="500">
+  <v-dialog v-model="showDialog" width="600">
     <template v-slot:activator="{on, attrs}">
       <v-btn fab absolute right bottom color="accent" class="mb-5 mr-5" v-bind="attrs" v-on="on">
         <v-icon>mdi-plus</v-icon>

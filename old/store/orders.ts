@@ -37,7 +37,18 @@ export const mutations = {
   },
   updateOrder(state: OrderState, newOrder: Order) {
     const updatedOrders = new Map<string, Order>(state.orders)
-    updatedOrders.set(newOrder.id, newOrder)
+    const orderId = newOrder.id
+    if (state.orders.has(orderId)) {
+      // We don't want to overwrite buyer & seller pubkeys
+      const oldOrder =  state.orders.get(orderId)
+      if (oldOrder?.buyer_pubkey) {
+        newOrder.buyer_pubkey = oldOrder?.buyer_pubkey
+      }
+      if (oldOrder?.seller_pubkey) {
+        newOrder.seller_pubkey = oldOrder?.seller_pubkey
+      }
+    }
+    updatedOrders.set(orderId, newOrder)
     Vue.set(state, 'orders', updatedOrders)
   }
 }

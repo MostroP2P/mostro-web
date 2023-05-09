@@ -6,12 +6,9 @@
       </v-btn>
     </template>
     <v-card>
-      <v-card-title>Take Sell Order</v-card-title>
+      <v-card-title>Take Buy Order</v-card-title>
       <v-card-text>
-        Please enter a lightning network invoice.
-      </v-card-text>
-      <v-card-text>
-        <v-textarea v-model="invoice" outlined/>
+        Confirm you want to sell sats for {{ order.fiat_amount }} {{ order.fiat_code}}
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
@@ -35,7 +32,7 @@ export default Vue.extend({
     return {
       showDialog: false,
       isProcessing: false,
-      invoice: null
+      amount: null
     }
   },
   props: {
@@ -49,11 +46,12 @@ export default Vue.extend({
       this.isProcessing = true
       try {
         // @ts-ignore
-        await this.$mostro.takeSell(this.order, this.invoice)
+        await this.$mostro.takeBuy(this.order)
+        this.$router.push('/my-orders')
       } catch(err) {
         console.error('Error while taking sell order: ', err)
       } finally {
-        this.isProcessing = true
+        this.isProcessing = false
         this.showDialog = false
       }
     }

@@ -55,10 +55,13 @@ export enum Action {
   BuyerTookOrder = 'BuyerTookOrder',
   FiatSent = 'FiatSent',
   WaitingSellerToPay = 'WaitingSellerToPay',
+  WaitingBuyerInvoice = 'WaitingBuyerInvoice',
   AddInvoice = 'AddInvoice',
+  HoldInvoicePaymentAccepted = 'HoldInvoicePaymentAccepted',
   HoldInvoicePaymentSettled = 'HoldInvoicePaymentSettled',
   Release = 'Release',
-  Cancel = 'Cancel'
+  Cancel = 'Cancel',
+  RateUser = 'RateUser'
 }
 
 // Peer messages
@@ -96,11 +99,14 @@ export enum OrderStatus {
   WAITING_PAYMENT = 'WaitingPayment'
 }
 
+/**
+ * An order coming from the server
+ */
 export interface Order {
   id: string,
   kind: OrderType,
   status: OrderStatus,
-  amount: number,
+  amount?: number,
   fiat_code: string,
   fiat_amount: number,
   payment_method: string,
@@ -108,4 +114,26 @@ export interface Order {
   created_at: number,
   buyer_pubkey?: string,
   seller_pubkey?: string
+  buyer_invoice?: string
+  master_seller_pubkey?: string
+  master_buyer_pubkey?: string
+}
+
+/**
+ * A new order being proposed by this client
+ */
+export interface NewOrder {
+  kind: OrderType,
+  status: OrderStatus,
+  amount?: number,
+  fiat_code: string,
+  fiat_amount: number,
+  payment_method: string,
+  premium: number,
+  buyer_invoice?: string
+}
+
+export enum OrderPricingMode {
+  MARKET = 'MARKET',
+  FIXED = 'FIXED'
 }

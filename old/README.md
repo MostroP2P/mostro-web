@@ -77,8 +77,14 @@ For detailed explanation on how things work, check out the [documentation](https
 -   [x] Posts Orders (Buy & Sell)
 -   [x] Displays order list
 -   [x] Decodes DMs from mostro
--   [ ] Buyer Takes Sell
--   [ ] Seller Takes Buy
+-   [x] Buy flow (maker / market rate)
+-   [x] Buy flow (maker / fixed price)
+-   [x] Sell flow (maker / market rate)
+-   [x] Sell flow (maker / fixed price)
+-   [ ] Buy flow (taker / market rate)
+-   [ ] Buy flow (taker / fixed price)
+-   [ ] Sell flow (taker / market rate)
+-   [ ] Sell flow (taker / fixed price)
 -   [ ] Handling multiple relays
 -   [ ] NIP-07 for key management
 -   [ ] Persisting old events?

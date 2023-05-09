@@ -7,13 +7,7 @@
     <div class="wrap-text text-message">
       <p>
         The user
-        <code>
-            <strong>
-              <a @click="() => onPubkeyClick(buyerPubkey)">
-                {{ isMobile ? truncateMiddle(buyerPubkey) : buyerPubkey  }}
-              </a>
-            </strong>
-        </code>
+        <npub :npub="buyerPubkey"/>
         has taken your order and wants to buy your sats. Get in touch and tell
         him/her how to send you {{ fiatAmount }} {{ fiatCode }} through {{ paymentMethod }}.
       </p>
@@ -27,13 +21,18 @@
 <script lang="ts">
 import Vue from 'vue'
 import type { PropType } from 'vue'
+import { mapGetters } from 'vuex'
 import { MostroMessage } from '~/store/types'
 import textMessage from '~/mixins/text-message'
+import NPub from '~/components/NPub.vue'
 import * as timeago from 'timeago.js'
 
 export default Vue.extend({
   data() {
     return { timeago }
+  },
+  components: {
+    npub: NPub
   },
   mixins: [ textMessage ],
   props: {
@@ -48,6 +47,11 @@ export default Vue.extend({
     }
   },
   computed: {
+    ...mapGetters('orders', ['getOrderById']),
+    order() {
+      // @ts-ignore
+      return this.getOrderById(this.$route.params.id)
+    },
     fiatAmount() {
       const smallOrder = this.message.content.SmallOrder
       if (smallOrder) {
@@ -63,11 +67,8 @@ export default Vue.extend({
       return NaN
     },
     paymentMethod() {
-      const smallOrder = this.message.content.SmallOrder
-      if (smallOrder) {
-        return smallOrder.payment_method
-      }
-      return NaN
+      // @ts-ignore
+      return this?.order?.payment_method
     },
     buyerPubkey() {
       const smallOrder = this.message.content.SmallOrder

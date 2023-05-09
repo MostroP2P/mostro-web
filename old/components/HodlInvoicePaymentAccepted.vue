@@ -1,29 +1,30 @@
 <template>
   <v-list-item-content>
     <v-list-item-title class="d-flex justify-space-between">
-      Sale Completed
+      Payment needed
       <div class="text-caption text--secondary">{{ timeago.format(creationDate) }}</div>
     </v-list-item-title>
-    <div class="wrap-text text-message">
+    <v-list-item-subtitle>
       <p>
-        Your sale of sats has been completed after confirming payment from
-        <npub :npub="buyerPubkey"/>
+        The escrow deposit is secured, you may now proceed to pay. Open a conversation with
+        <npub :npub="sellerPubkey"/>
+        and get the information on how to perform the fiat payment. Once this is done, press the "FIAT SENT" button below.
       </p>
-    </div>
+    </v-list-item-subtitle>
   </v-list-item-content>
 </template>
 <script lang="ts">
 import Vue from 'vue'
 import type { PropType } from 'vue'
+import { MostroMessage } from '~/store/types'
 import * as timeago from 'timeago.js'
 import textMessage from '~/mixins/text-message'
-import { MostroMessage } from '~/store/types'
-import { mapGetters } from 'vuex'
 import NPub from '~/components/NPub.vue'
-
 export default Vue.extend({
   data() {
-    return { timeago }
+    return {
+      timeago
+    }
   },
   components: {
     npub: NPub
@@ -36,17 +37,17 @@ export default Vue.extend({
     }
   },
   methods: {
-    onPubkeyClick(buyerPubkey: string) {
-      this.$router.push(`/messages/${buyerPubkey}`)
+    onPubkeyClick(sellerPubkey: string) {
+      this.$router.push(`/messages/${sellerPubkey}`)
     }
   },
   computed: {
-    ...mapGetters('orders', ['getOrderById']),
-    buyerPubkey() {
-      const { order_id } = this.message
-      // @ts-ignore
-      const buyerPubkey = this.getOrderById(order_id).buyer_pubkey
-      return buyerPubkey ? buyerPubkey : '?'
+    sellerPubkey() {
+      const smallOrder = this.message.content.SmallOrder
+      if (smallOrder) {
+        return smallOrder.seller_pubkey
+      }
+      return '?'
     },
     creationDate() {
       return this.message.created_at * 1e3

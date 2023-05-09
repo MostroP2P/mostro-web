@@ -1,10 +1,8 @@
 import Vue from 'vue'
 
 import {
-  Action,
   ThreadSummary,
   MostroMessage,
-  TextMessage,
   PeerMessage,
   PeerThreadSummary
 } from './types'
@@ -28,22 +26,23 @@ export const state = () => ({
 export const actions = {
   async addMostroMessage(context: any, message: MostroMessage) {
     const { commit, dispatch, rootGetters } = context
-    if (message.action === Action.BuyerTookOrder || message.action === Action.AddInvoice) {
-      // If the action is BuyerTookOrder we're receiving the buyer's identity
+    if (message?.content?.SmallOrder) {
+      // If we have a SmallOrder as payload we might be receiving the buyer's identity
       // so here we expand our order data with it.
       const { content } = message
       if (content.SmallOrder) {
         const { seller_pubkey, buyer_pubkey } = content.SmallOrder
         const order = await rootGetters['orders/getOrderById'](message.order_id)
-        order.seller_pubkey = seller_pubkey
-        order.buyer_pubkey = buyer_pubkey
+        if (seller_pubkey) {
+          order.seller_pubkey = seller_pubkey
+        }
+        if (buyer_pubkey) {
+          order.buyer_pubkey = buyer_pubkey
+        }
         dispatch('orders/updateOrder', order, { root: true })
       }
     }
     commit('addMostroMessage', message)
-  },
-  addMostroTextMessage(context: any, message: TextMessage) {
-    const { commit } = context
   },
   addPeerMessage(context: any, peerMessage: PeerMessage) {
     const { commit } = context
@@ -100,7 +99,7 @@ export const getters = {
       }
     })
   },
-  getMostroMessagesByOrderId(state: MessagesState ) {
+  getMostroMessagesByOrderId(state: MessagesState ) : (orderId: string) => MostroMessage[] {
     return (orderId: string) => {
       return state.messages.mostro
         .filter((message: MostroMessage) => message.order_id === orderId)

@@ -24,7 +24,8 @@
           <v-list-item-subtitle>
             <div class="d-flex justify-space-between">
               {{ order.payment_method }}
-              <take-sell-order-dialog :order="order"/>
+              <take-sell-order-dialog v-if="showTakeSell(order)" :order="order"/>
+              <take-buy-order-dialog v-if="showTakeBuy(order)" :order="order"/>
             </div>
           </v-list-item-subtitle>
         </v-list-item-content>
@@ -46,6 +47,12 @@ export default Vue.extend({
     }
   },
   methods: {
+    showTakeSell(order: Order) {
+      return order.kind === OrderType.SELL
+    },
+    showTakeBuy(order: Order) {
+      return order.kind === OrderType.BUY
+    },
     summary(order: Order) {
       if (order.kind === OrderType.SELL)
         return `Vendiendo ${this.tradeOut(order)} por ${this.tradeIn(order)}`
