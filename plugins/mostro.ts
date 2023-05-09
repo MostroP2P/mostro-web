@@ -172,7 +172,7 @@ class Mostro {
       pubkey: this.getLocalKeys().npub,
       order_id: order.id,
       action: 'TakeSell',
-      content: {
+      content: invoice === null ? null : {
         PaymentRequest: [
           null,
           invoice
