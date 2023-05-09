@@ -8,6 +8,10 @@
       v-if="message.action === action.WaitingBuyerInvoice"
       :message="message"
     />
+    <take-sell-message
+      v-if="message.action === action.TakeSell"
+      :message="message"
+    />
     <invoice-accepted-message
       v-if="message.action === action.BuyerTookOrder"
       :message="message"
