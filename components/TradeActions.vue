@@ -94,7 +94,7 @@ export default Vue.extend({
     },
     showPayInvoice() {
       // @ts-ignore
-      return this.currentOrderStatus === OrderStatus.WAITING_PAYMENT
+      return this.currentOrderStatus === OrderStatus.WAITING_PAYMENT && this.isLocalBuyer
     },
     showGiveInvoice() {
       // @ts-ignore

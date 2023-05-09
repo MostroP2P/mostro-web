@@ -76,7 +76,7 @@ export default Vue.extend({
       const smallOrder = this.message.content.SmallOrder
       try {
         // @ts-ignore
-        await this.$mostro.addInvoice(smallOrder, this.invoice)
+        await this.$mostro.takeSell(smallOrder, this.invoice)
       } catch(err) {
         console.error('Error while giving invoice for buy order: ', err)
       } finally {
