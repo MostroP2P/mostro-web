@@ -93,8 +93,12 @@ export default Vue.extend({
       return this.currentOrderStatus === OrderStatus.ACTIVE && this.isLocalBuyer
     },
     showPayInvoice() {
+      const orderId = this.$route.params.id
       // @ts-ignore
-      return this.currentOrderStatus === OrderStatus.WAITING_PAYMENT && this.isLocalBuyer
+      const messages = this.getMostroMessagesByOrderId(orderId)
+      return messages
+        .map((message: MostroMessage) => message.action)
+        .find((action: Action) => action === Action.PayInvoice) !== undefined
     },
     showGiveInvoice() {
       // @ts-ignore
