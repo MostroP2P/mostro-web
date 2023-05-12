@@ -98,7 +98,7 @@ export default Vue.extend({
       const messages = this.getMostroMessagesByOrderId(orderId)
       return messages
         .map((message: MostroMessage) => message.action)
-        .find((action: Action) => action === Action.PayInvoice) !== undefined
+        .find((action: Action) => action === Action.PayInvoice) !== undefined && messages.length === 1
     },
     showGiveInvoice() {
       // @ts-ignore
