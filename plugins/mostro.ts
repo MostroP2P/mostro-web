@@ -254,7 +254,7 @@ class Mostro {
     }
     event.id = getEventHash(event)
     event.sig = signEvent(event, mySecretKey)
-    await this.pool.send(event)
+    await this.pool.send(['EVENT', event])
   }
 
   getNpub() {
