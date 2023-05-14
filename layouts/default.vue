@@ -62,8 +62,8 @@ export default {
         },
         {
           icon: 'mdi-book',
-          title: 'My Orders',
-          to: '/my-orders'
+          title: 'My Trades',
+          to: '/my-trades'
         },
         {
           icon: 'mdi-email',

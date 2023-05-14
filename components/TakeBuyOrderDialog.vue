@@ -47,7 +47,7 @@ export default Vue.extend({
       try {
         // @ts-ignore
         await this.$mostro.takeBuy(this.order)
-        this.$router.push('/my-orders')
+        this.$router.push('/my-trades')
       } catch(err) {
         console.error('Error while taking sell order: ', err)
       } finally {

@@ -61,7 +61,7 @@ export default Vue.extend({
   },
   methods: {
     onOrderThreadHeaderClicked() {
-      this.$router.push(`/my-orders/${this.threadSummary.order.id}`)
+      this.$router.push(`/my-trades/${this.threadSummary.order.id}`)
     }
   }
 })
