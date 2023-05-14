@@ -5,7 +5,7 @@
       max-height="490"
       id="messages-container"
     >
-      <v-card-text ref="scrollingContent">
+      <v-card-text ref="scrollingContent" v-if="peerMessages && peerMessages.length > 0">
         <v-row v-for="(message, index) in peerMessages" :key="message.id">
           <v-col
             :class="message.sender === 'me' ? 'text-right' : 'text-left'"
