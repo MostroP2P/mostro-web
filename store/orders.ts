@@ -11,6 +11,12 @@ export const state = () => ({
 
 export const actions = {
   addOrder(context: any, order: Order) {
+    const { commit, state } = context
+    if (!state.orders.has(order.id)) {
+      commit('addOrder', order)
+    }
+  },
+  addUserOrder(context: any, order: Order) {
     const { commit } = context
     commit('addOrder', order)
   },
