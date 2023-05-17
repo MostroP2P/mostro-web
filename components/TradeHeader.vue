@@ -62,13 +62,11 @@ export default Vue.extend({
     },
     message() {
       const { order } = this.threadSummary
-      let operation = ''
-      if (this.orderType === 'Sell') {
-        operation = 'Selling'
+      if (order.amount) {
+        return `${order.amount} sats for ${order.fiat_amount} ${order.fiat_code.toUpperCase()}, via ${order.payment_method}`
       } else {
-        operation = 'Buying'
+         return `${order.fiat_amount} ${order.fiat_code.toUpperCase()} for sats at market price, via ${order.payment_method}`
       }
-      return `${operation} ${order.amount} sats for ${order.fiat_amount} ${order.fiat_code}, ${order.payment_method}`
     },
     creationDate() {
       const date = new Date(this.threadSummary.order.created_at * 1e3)
