@@ -1,7 +1,7 @@
 <template>
   <v-dialog width="500" v-model="showDialog">
     <template v-slot:activator="{ on, attrs }">
-      <v-btn small text rounded color="primary" v-bind="attrs" v-on="on">
+      <v-btn :disabled="order.is_mine" small text rounded color="primary" v-bind="attrs" v-on="on">
         Take
       </v-btn>
     </template>

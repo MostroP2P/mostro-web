@@ -1,6 +1,8 @@
 import Vue from 'vue'
 import { Order } from './types'
 
+const USER_ORDERS_KEY = 'user-orders-key'
+
 export interface OrderState {
   orders: Map<string, Order>
 }
@@ -9,14 +11,43 @@ export const state = () => ({
   orders: Vue.observable(new Map<string, Order>())
 })
 
+const updateLocalStorage = (order: Order) => {
+  if (order.is_mine) {
+    const userOrdersStr = localStorage.getItem(USER_ORDERS_KEY)
+    let userOrders: string[] = []
+    if (userOrdersStr) {
+      userOrders = JSON.parse(userOrdersStr) as string[]
+      userOrders.push(order.id)
+    } else {
+      userOrders = [order.id]
+    }
+    localStorage.setItem(USER_ORDERS_KEY, JSON.stringify(userOrders))
+  }
+}
+
+const readLocalStorage = (order: Order) => {
+  const userOrdersStr = localStorage.getItem(USER_ORDERS_KEY)
+  let userOrders: string[] = []
+  if (userOrdersStr) {
+    userOrders = JSON.parse(userOrdersStr) as string[]
+    userOrders.forEach((orderId: string) => {
+      if (order.id === orderId) {
+        order.is_mine = true
+      }
+    })
+  }
+}
+
 export const actions = {
   addOrder(context: any, order: Order) {
+    readLocalStorage(order)
     const { commit, state } = context
     if (!state.orders.has(order.id)) {
       commit('addOrder', order)
     }
   },
   addUserOrder(context: any, order: Order) {
+    updateLocalStorage(order)
     const { commit } = context
     commit('addOrder', order)
   },
