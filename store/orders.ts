@@ -94,7 +94,9 @@ export const getters = {
   getPendingOrders(state: OrderState) {
     const orderList: Order[] = []
     state.orders.forEach((order: Order) => orderList.push(order))
-    return orderList.filter((order: Order) => order.status === 'Pending')
+    return orderList
+      .filter((order: Order) => order.status === 'Pending')
+      .sort((orderA: Order, orderB: Order) => orderB.created_at - orderA.created_at)
   },
   getOrderStatus(state: OrderState) {
     return (orderId: string) => state.orders.get(orderId)?.status
