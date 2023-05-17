@@ -15,7 +15,12 @@
       </v-list-item-subtitle>
       <v-list-item-subtitle class="text--secondary">
         <div class="d-flex justify-space-between">
-          <div>{{ messageCount }} message{{ messageCount > 1 ? 's' : ''}}</div>
+          <div class="d-flex align-top">
+            <div class="mr-1 mb-0 pb-0">
+              {{ messageCount }}
+            </div>
+            <icon-message/>
+          </div>
           <div class="text-caption">{{ creationDate }}</div>
         </div>
       </v-list-item-subtitle>

@@ -82,6 +82,7 @@ export const getters = {
       const order = rootState.orders.orders.get(orderId)
       return { orderId, messageCount, order }
     })
+    .sort((summaryA: ThreadSummary, summaryB: ThreadSummary) => summaryB.order.created_at - summaryA.order.created_at)
   },
   getPeerThreadSummaries(
     state: MessagesState,

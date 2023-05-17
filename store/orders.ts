@@ -27,14 +27,16 @@ const updateLocalStorage = (order: Order) => {
 
 const readLocalStorage = (order: Order) => {
   const userOrdersStr = localStorage.getItem(USER_ORDERS_KEY)
-  let userOrders: string[] = []
+  let userOrderIds: string[] = []
   if (userOrdersStr) {
-    userOrders = JSON.parse(userOrdersStr) as string[]
-    userOrders.forEach((orderId: string) => {
-      if (order.id === orderId) {
+    userOrderIds = JSON.parse(userOrdersStr) as string[]
+    for (let i = 0; i < userOrderIds.length; i++) {
+      const userOrderId = userOrderIds[i]
+      if (userOrderId === order.id) {
         order.is_mine = true
+        break
       }
-    })
+    }
   }
 }
 
