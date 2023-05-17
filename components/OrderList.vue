@@ -1,35 +1,37 @@
 <template>
   <v-card class="mx-auto">
     <v-list v-if="getPendingOrders.length > 0">
-      <v-list-item v-for="order in getPendingOrders"
-        :key="order.id"
-        three-line
-        link
-      >
-        <v-list-item-content>
-          <v-list-item-title class="d-flex justify-space-between">
-            {{ order.fiat_amount }} {{ order.fiat_code.toUpperCase() }}
-            <v-chip
-              style="cursor: pointer"
-              outlined
-              :color="order.kind === 'Sell' ? 'red' : 'green'"
-              small
-            >
-              {{ order.kind.toUpperCase() }}
-            </v-chip>
-          </v-list-item-title>
-          <v-list-item-subtitle>
-            {{ summary(order) }}
-          </v-list-item-subtitle>
-          <v-list-item-subtitle>
-            <div class="d-flex justify-space-between">
-              {{ order.payment_method }}
-              <take-sell-order-dialog v-if="showTakeSell(order)" :order="order"/>
-              <take-buy-order-dialog v-if="showTakeBuy(order)" :order="order"/>
-            </div>
-          </v-list-item-subtitle>
-        </v-list-item-content>
-      </v-list-item>
+      <div v-for="order in getPendingOrders" :key="order.id">
+        <v-list-item
+          three-line
+          link
+        >
+          <v-list-item-content>
+            <v-list-item-title class="d-flex justify-space-between">
+              {{ order.fiat_amount }} {{ order.fiat_code.toUpperCase() }}
+              <v-chip
+                style="cursor: pointer"
+                outlined
+                :color="order.kind === 'Sell' ? 'red' : 'green'"
+                small
+              >
+                {{ order.kind.toUpperCase() }}
+              </v-chip>
+            </v-list-item-title>
+            <v-list-item-subtitle>
+              {{ summary(order) }}
+            </v-list-item-subtitle>
+            <v-list-item-subtitle>
+              <div class="d-flex justify-space-between">
+                {{ order.payment_method }}
+                <take-sell-order-dialog v-if="showTakeSell(order)" :order="order"/>
+                <take-buy-order-dialog v-if="showTakeBuy(order)" :order="order"/>
+              </div>
+            </v-list-item-subtitle>
+          </v-list-item-content>
+        </v-list-item>
+        <v-divider/>
+      </div>
     </v-list>
     <no-orders v-else/>
   </v-card>
