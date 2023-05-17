@@ -14,6 +14,7 @@
 <script lang="ts">
 import Vue from 'vue'
 import { mapGetters } from 'vuex'
+import { Action, MostroMessage } from '~/store/types'
 export default Vue.extend({
   props: {
     orderId: {
@@ -26,6 +27,7 @@ export default Vue.extend({
     orderMessages() {
       // @ts-ignore
       return this.getMostroMessagesByOrderId(this.orderId)
+        .filter((msg: MostroMessage) => msg.action !== Action.CantDo)
     }
   }
 })
