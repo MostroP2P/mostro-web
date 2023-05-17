@@ -2,7 +2,7 @@
   <v-card class="mx-auto" v-if="getMostroThreadSummaries.length > 0">
     <v-list>
       <div v-for="(threadSummary, index) in getMostroThreadSummaries" :key="threadSummary.orderId">
-        <thread-header :threadSummary="threadSummary"/>
+        <trade-header :threadSummary="threadSummary"/>
         <v-divider v-if="index < getMostroThreadSummaries.length - 1"/>
       </div>
     </v-list>

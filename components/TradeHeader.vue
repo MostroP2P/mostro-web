@@ -6,7 +6,7 @@
     <v-list-item-content @click="onOrderThreadHeaderClicked">
       <v-list-item-title>
         <div class="d-flex justify-space-between">
-          {{ orderType }} Order
+          {{ title }}
           <div class="text-caption text--disabled">{{ orderId }}</div>
         </div>
       </v-list-item-title>
@@ -25,7 +25,7 @@
 <script lang="ts">
 import Vue from 'vue'
 import type { PropType } from 'vue'
-import { ThreadSummary } from '~/store/types'
+import { ThreadSummary, OrderType } from '~/store/types'
 import * as timeago from 'timeago.js'
 export default Vue.extend({
   props: {
@@ -43,6 +43,22 @@ export default Vue.extend({
     },
     messageCount() {
       return this.threadSummary.messageCount
+    },
+    title() {
+      const order = this.threadSummary.order
+      if (order.is_mine) {
+        if (this.orderType === OrderType.BUY) {
+          return 'You are Buying'
+        } else {
+          return 'Your are Selling'
+        }
+      } else {
+        if (this.orderType === OrderType.BUY) {
+          return 'You are Selling'
+        } else {
+          return 'You are Buying'
+        }
+      }
     },
     message() {
       const { order } = this.threadSummary
