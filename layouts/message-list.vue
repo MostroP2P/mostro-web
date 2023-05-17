@@ -1,8 +1,9 @@
 <template>
-  <v-app dark>
+  <v-app>
     <v-app-bar
       fixed
       app
+      color="secondary"
     >
       <v-btn icon @click="onBackClicked">
         <v-icon>mdi-arrow-left</v-icon>

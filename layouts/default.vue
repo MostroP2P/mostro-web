@@ -1,10 +1,11 @@
 <template>
-  <v-app>
+  <v-app dark>
     <v-navigation-drawer
       v-model="drawer"
       :clipped="clipped"
       fixed
       app
+      color="secondary"
     >
       <v-list>
         <v-list-item
@@ -26,6 +27,8 @@
     <v-app-bar
       fixed
       app
+      dark
+      color="primary"
     >
       <v-app-bar-nav-icon v-if="isMobile" @click.stop="drawer = !drawer" />
       <v-toolbar-title>{{ title }}</v-toolbar-title>
