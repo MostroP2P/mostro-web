@@ -1,8 +1,7 @@
 <template>
-  <v-app dark>
+  <v-app>
     <v-navigation-drawer
       v-model="drawer"
-      :mini-variant="miniVariant"
       :clipped="clipped"
       fixed
       app
@@ -28,7 +27,7 @@
       fixed
       app
     >
-      <v-app-bar-nav-icon @click.stop="drawer = !drawer" />
+      <v-app-bar-nav-icon v-if="isMobile" @click.stop="drawer = !drawer" />
       <v-toolbar-title>{{ title }}</v-toolbar-title>
       <v-spacer />
     </v-app-bar>
@@ -47,8 +46,10 @@
 </template>
 
 <script>
+import mobileDetector from '~/mixins/mobile-detector'
 export default {
   name: 'DefaultLayout',
+  mixins: [mobileDetector],
   data () {
     return {
       clipped: false,
@@ -76,10 +77,13 @@ export default {
           to: '/about'
         }
       ],
-      miniVariant: false,
       right: true,
-      rightDrawer: false,
       title: 'Mostro'
+    }
+  },
+  mounted() {
+    if (!this.isMobile) {
+      this.drawer = true
     }
   }
 }
