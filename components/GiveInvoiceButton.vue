@@ -75,15 +75,6 @@ export default Vue.extend({
       // @ts-ignore
       const smallOrder = this.message.content.SmallOrder
       try {
-        // Obs: We issue these two messages because this component can be used either
-        // when the buyer is  the taker or maker, and the protocol expects 2 different
-        // messages each time.
-        // Since we're not tracking orders locally and because mostro has not
-        // yet given us the npubs of seller & buyer at this point it's not possible
-        // for us to differentiate which situation we're in, so we're going with
-        // this "hackish" way instead.
-        // @ts-ignore
-        this.$mostro.takeSell(smallOrder, this.invoice)
         // @ts-ignore
         this.$mostro.addInvoice(smallOrder, this.invoice)
       } catch(err) {
