@@ -23,7 +23,7 @@
           <v-list-item-subtitle>
             <div class="d-flex justify-space-between">
               <div>{{ peerThread.lastMessage.text }}</div>
-              <div>{{ timeago.format(peerThread.lastMessage.created_at) }}</div>
+              <div>{{ timeago.format(peerThread.lastMessage.created_at * 1e3) }}</div>
             </div>
           </v-list-item-subtitle>
         </v-list-item-content>
@@ -45,7 +45,6 @@ export default Vue.extend({
     title(npub: string) {
       return this.isMobile ? this.truncateMiddle(npub) :  npub
     }
-
   },
   computed: {
     ...mapGetters('messages', ['getPeerThreadSummaries']),
