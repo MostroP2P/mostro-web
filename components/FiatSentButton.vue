@@ -1,5 +1,5 @@
 <template>
-  <v-dialog v-model="showDialog" width="500">
+  <v-dialog v-model="showDialog" width="600">
     <template v-slot:activator="{ on, attrs }">
       <v-btn v-bind="attrs" v-on="on" text color="accent">
         <v-icon left>mdi-cash</v-icon>
