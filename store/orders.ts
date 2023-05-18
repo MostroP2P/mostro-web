@@ -86,6 +86,10 @@ export const mutations = {
       if (oldOrder?.seller_pubkey) {
         newOrder.seller_pubkey = oldOrder?.seller_pubkey
       }
+      // Or the 'is_mine' attribute
+      if (oldOrder?.is_mine) {
+        newOrder.is_mine = true
+      }
     }
     updatedOrders.set(orderId, newOrder)
     Vue.set(state, 'orders', updatedOrders)
