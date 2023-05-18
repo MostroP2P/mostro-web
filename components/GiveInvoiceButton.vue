@@ -28,7 +28,7 @@
           Cancel
         </v-btn>
         <v-spacer></v-spacer>
-        <v-btn :disabled="submitDisabled" color="primary" text @click="submitInvoice">
+        <v-btn :disabled="submitDisabled" color="accent" text @click="submitInvoice">
           Submit
           <v-icon right small>
             mdi-send mdi-rotate-315

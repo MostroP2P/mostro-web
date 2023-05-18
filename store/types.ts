@@ -62,6 +62,7 @@ export enum Action {
   HoldInvoicePaymentSettled = 'HoldInvoicePaymentSettled',
   Release = 'Release',
   Cancel = 'Cancel',
+  PurchaseCompleted = 'PurchaseCompleted',
   RateUser = 'RateUser',
   CantDo = 'CantDo'
 }

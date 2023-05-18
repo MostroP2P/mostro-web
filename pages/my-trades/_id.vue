@@ -39,7 +39,7 @@ const steps = {
   [`${OrderStatus.ACTIVE}`]: 2,
   [`${OrderStatus.FIAT_SENT}`]: 3,
   [`${OrderStatus.SETTLE_HODL_INVOICE}`]: 4,
-  [`${OrderStatus.SUCCESS}`]: 5
+  [`${OrderStatus.SUCCESS}`]: 4
 }
 export default Vue.extend({
   layout: 'message-list',

@@ -5,9 +5,9 @@
         Sats Released!
         <div class="text-caption text--secondary">{{ timeago.format(creationDate) }}</div>
       </v-list-item-title>
-      <div class="wrap-text text-message">
+      <v-list-item-subtitle class="wrap-text text-message">
         🕐 <npub v-if="sellerPubkey" :npub="sellerPubkey"/> already released the satoshis, expect your invoice to be paid any time, remember your wallet needs to be online to receive through lighntning network.
-      </div>
+      </v-list-item-subtitle>
     </v-list-item-content>
   </div>
 </template>

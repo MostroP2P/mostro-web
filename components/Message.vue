@@ -44,6 +44,10 @@
       v-if="message.action === action.Release"
       :message="message"
     />
+    <purchase-completed-message
+      v-if="message.action === action.PurchaseCompleted"
+      :message="message"
+    />
     <rate-user-message
       v-if="message.action === action.RateUser"
       :message="message"
