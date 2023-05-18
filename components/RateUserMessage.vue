@@ -5,18 +5,21 @@
         Rate User
         <div class="text-caption text--secondary">{{ timeago.format(creationDate) }}</div>
       </v-list-item-title>
-      <div class="wrap-text text-message">
-        <p>Please rate your peer</p>
-        <v-rating
-          color="warning"
-          length="5"
-          size="32"
-          hover
-          dense
-          light
-          :value="3"
-        >
-        </v-rating>
+      <v-list-item-subtitle class="wrap-text text-message">
+        <p>Please rate your peer.</p>
+      </v-list-item-subtitle>
+      <v-rating
+        color="warning"
+        length="5"
+        size="32"
+        hover
+        dense
+        light
+        :value="3"
+      >
+      </v-rating>
+      <div>
+        <v-btn text>Rate</v-btn>
       </div>
     </v-list-item-content>
   </div>
