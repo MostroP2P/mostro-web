@@ -56,21 +56,28 @@ export default Vue.extend({
       return order.kind === OrderType.BUY
     },
     summary(order: Order) {
-      if (order.kind === OrderType.SELL)
-        return `Vendiendo ${this.tradeOut(order)} por ${this.tradeIn(order)}`
-      else
-        return `Comprando ${this.tradeIn(order)} por ${this.tradeOut(order)}`
+      if (order.amount === 0) {
+        if (order.kind === OrderType.SELL)
+          return `Selling sats for ${this.tradeIn(order)}`
+        else
+          return `Buying sats for ${this.tradeOut(order)}`
+      } else {
+        if (order.kind === OrderType.SELL)
+          return `Selling ${this.tradeOut(order)} for ${this.tradeIn(order)}`
+        else
+          return `Buying ${this.tradeIn(order)} por ${this.tradeOut(order)}`
+      }
     },
     tradeIn(order: Order) {
       if (order.kind === OrderType.SELL) {
         return `${order.fiat_amount} ${order.fiat_code.toUpperCase()}`
       } else {
-        return `${order.amount} Sats`
+        return `${order.amount} sats`
       }
     },
     tradeOut(order: Order) {
       if (order.kind === OrderType.SELL) {
-        return `${order.amount} Sats`
+        return `${order.amount} sats`
       } else {
         return `${order.fiat_amount} ${order.fiat_code.toUpperCase()}`
       }
