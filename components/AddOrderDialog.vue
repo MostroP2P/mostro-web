@@ -9,7 +9,7 @@
       <v-card-title class="text-h5">
         Add Order
       </v-card-title>
-      <v-tabs v-model="tabs">
+      <v-tabs v-model="tabs" color="accent">
         <v-tab>Sell</v-tab>
         <v-tab>Buy</v-tab>
       </v-tabs>
