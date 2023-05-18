@@ -1,7 +1,7 @@
 <template>
   <code>
     <strong>
-      <a @click="() => onPubkeyClick(npub)">
+      <a @click="() => onPubkeyClick(npub)" class="npub">
         {{ isMobile ? truncateMiddle(npub) : npub }}
       </a>
     </strong>
@@ -10,8 +10,9 @@
 <script lang="ts">
 import Vue from 'vue'
 import textMessage from '~/mixins/text-message'
+import mobileDetector from '~/mixins/mobile-detector'
 export default Vue.extend({
-  mixins: [textMessage],
+  mixins: [mobileDetector, textMessage],
   name: 'Npub',
   props: {
     npub: {
@@ -26,3 +27,8 @@ export default Vue.extend({
   }
 })
 </script>
+<style scoped>
+.npub {
+  color: #38efd0;
+}
+</style>

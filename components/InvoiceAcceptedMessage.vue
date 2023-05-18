@@ -4,17 +4,13 @@
       Invoice Accepted
       <div class="text-caption text--secondary">{{ timeago.format(creationDate) }}</div>
     </v-list-item-title>
-    <div class="wrap-text text-message">
-      <p>
-        The user
-        <npub :npub="buyerPubkey"/>
-        has taken your order and wants to buy your sats. Get in touch and tell
-        him/her how to send you {{ fiatAmount }} {{ fiatCode }} through {{ paymentMethod }}.
-      </p>
-      <p>
-         Once you verify you have received the full amount you have to release the sats.
-      </p>
-    </div>
+    <v-list-item-subtitle class="wrap-text text-message">
+      The user
+      <npub :npub="buyerPubkey"/>
+      has taken your order and wants to buy your sats. Get in touch and tell
+      him/her how to send you {{ fiatAmount }} {{ fiatCode }} through {{ paymentMethod }}.
+      Once you verify you have received the full amount you have to release the sats.
+  </v-list-item-subtitle>
   </v-list-item-content>
 </template>
 

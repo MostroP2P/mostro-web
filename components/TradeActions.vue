@@ -96,9 +96,8 @@ export default Vue.extend({
       const orderId = this.$route.params.id
       // @ts-ignore
       const messages = this.getMostroMessagesByOrderId(orderId)
-      return messages
-        .map((message: MostroMessage) => message.action)
-        .find((action: Action) => action === Action.PayInvoice) !== undefined && messages.length === 1
+      if (!messages || messages.length === 0) return false
+      return messages[messages.length - 1]?.action === Action.PayInvoice
     },
     showGiveInvoice() {
       // @ts-ignore
