@@ -8,7 +8,7 @@
         >
           <v-list-item-content>
             <v-list-item-title class="d-flex justify-space-between">
-              {{ order.fiat_amount }} {{ order.fiat_code.toUpperCase() }}
+              {{ order.fiat_amount }} {{ order.fiat_code.toUpperCase() }} {{ getFlag(order.fiat_code) }}
               <v-chip
                 style="cursor: pointer"
                 outlined
@@ -23,7 +23,7 @@
             </v-list-item-subtitle>
             <v-list-item-subtitle>
               <div class="d-flex justify-space-between">
-                {{ order.payment_method }}
+                Payment via: {{ order.payment_method }}
                 <take-sell-order-dialog v-if="showTakeSell(order)" :order="order"/>
                 <take-buy-order-dialog v-if="showTakeBuy(order)" :order="order"/>
               </div>
@@ -41,14 +41,20 @@
 import Vue from 'vue'
 import { mapGetters } from 'vuex'
 import { Order, OrderType } from '../store/types'
+// @ts-ignore
+import fiat from '~/assets/fiat.json'
 
 export default Vue.extend({
   data() {
     return {
+      fiatMap: fiat,
       headerHeight: 64
     }
   },
   methods: {
+    getFlag(fiatCode: string) {
+      return this.fiatMap[fiatCode?.toUpperCase()]?.emoji
+    },
     showTakeSell(order: Order) {
       return order.kind === OrderType.SELL
     },
