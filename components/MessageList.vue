@@ -5,7 +5,7 @@
         v-for="(message, index) in orderMessages"
         :key="`${message.id}-${index}`"
       >
-        <message :message="message"/>
+        <message :message="message" :disabled="index < orderMessages.length - 1"/>
         <v-divider v-if="index < orderMessages.length - 1"/>
       </div>
     </v-list>

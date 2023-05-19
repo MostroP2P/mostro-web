@@ -1,5 +1,5 @@
 <template>
-  <v-list-item three-line>
+  <v-list-item three-line :disabled="disabled">
     <pay-invoice-message
       v-if="message.action === action.PayInvoice"
       :message="message"
@@ -71,6 +71,10 @@ export default Vue.extend({
     message: {
       type: Object as PropType<MostroMessage>,
       required: true
+    },
+    disabled: {
+      type: Boolean,
+      default: false
     }
   },
   computed: {
