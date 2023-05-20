@@ -40,7 +40,7 @@ class Mostro {
         // Most of the orders that we receive via kind events are not ours,
         // so we set the `is_mine` field as false here.
         content = {...JSON.parse(content), is_mine: false}
-        console.log(`> order update. sub_id: ${sub_id}, ev: `, ev)
+        console.log(`< Mostro 3000. sub_id: ${sub_id}, ev: `, ev)
         if (this.orderMap.has(content.id)) {
           // Updates existing order
           this.store.dispatch('orders/updateOrder', content)
@@ -62,7 +62,7 @@ class Mostro {
           try {
             const plaintext = await nip04.decrypt(mySecretKey, ev.pubkey, ev.content)
             if (ev.pubkey === mostroPubKey) {
-              console.log('> Mostro DM: ', plaintext, ', ev: ', ev)
+              console.log('< Mostro DM: ', plaintext, ', ev: ', ev)
               const msg = { ...JSON.parse(plaintext), created_at: ev.created_at }
               if (msg.action === Action.Order) {
                 this.handleNewOrder(msg)
@@ -126,6 +126,7 @@ class Mostro {
     }
     event.id = getEventHash(event)
     event.sig = signEvent(event, secretKey)
+    console.log('> ', event)
     return ['EVENT', event]
   }
 
