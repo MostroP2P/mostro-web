@@ -105,7 +105,8 @@ export const getters = {
   },
   getMostroMessagesByOrderId(state: MessagesState ) : (orderId: string) => MostroMessage[] {
     return (orderId: string) => {
-      return state.messages.mostro
+      const messageSlice = state.messages.mostro.slice(0)
+      return messageSlice
         .filter((message: MostroMessage) => message.order_id === orderId)
         .sort((a: MostroMessage, b: MostroMessage) => a.created_at - b.created_at)
     }
