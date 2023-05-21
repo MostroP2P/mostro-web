@@ -183,3 +183,8 @@ export enum OrderPricingMode {
   MARKET = 'MARKET',
   FIXED = 'FIXED'
 }
+
+export interface ScheduledOrderUpdatePayload {
+  orderId: string,
+  toUpdate: object
+}
