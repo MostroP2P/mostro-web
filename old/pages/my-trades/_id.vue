@@ -31,13 +31,14 @@
 <script lang="ts">
 import Vue from 'vue'
 import { mapGetters, mapState } from 'vuex'
-import { OrderStatus, Order, OrderType } from '~/store/types'
+import { OrderStatus } from '~/store/types'
 
 const steps = {
   [`${OrderStatus.PENDING}`]: 0,
   [`${OrderStatus.WAITING_PAYMENT}`]: 1,
   [`${OrderStatus.ACTIVE}`]: 2,
   [`${OrderStatus.FIAT_SENT}`]: 3,
+  [`${OrderStatus.SETTLE_HODL_INVOICE}`]: 4,
   [`${OrderStatus.SUCCESS}`]: 4
 }
 export default Vue.extend({

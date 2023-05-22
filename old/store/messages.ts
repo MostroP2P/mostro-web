@@ -69,7 +69,9 @@ export const getters = {
     getters: any,
     rootState : any
   ) : ThreadSummary[] {
+    // Map from order-id -> message count
     const messageMap = new Map<string, number>()
+    // Loop that fills the map
     for (const message of state.messages.mostro) {
       if (!messageMap.has(message.order_id)) {
         messageMap.set(message.order_id, 1)
@@ -82,6 +84,8 @@ export const getters = {
       const order = rootState.orders.orders.get(orderId)
       return { orderId, messageCount, order }
     })
+    .filter((summary: ThreadSummary) => summary.order !== undefined)
+    .sort((summaryA: ThreadSummary, summaryB: ThreadSummary) => summaryB.order.created_at - summaryA.order.created_at)
   },
   getPeerThreadSummaries(
     state: MessagesState,

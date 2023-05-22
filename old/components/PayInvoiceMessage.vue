@@ -1,14 +1,14 @@
 <template>
   <v-list-item-content>
     <v-list-item-title class="d-flex justify-space-between">
-      Order taken
+      You need to Pay
       <div class="text-caption text--secondary">{{ timeago.format(creationDate) }}</div>
     </v-list-item-title>
     <v-list-item-subtitle>
-      {{ messageText }}
+      You're selling {{ satsAmount }} sats for {{ fiatCode?.toUpperCase() }} {{fiatAmount }}.
     </v-list-item-subtitle>
     <v-list-item-subtitle class="d-flex justify-space-between">
-      Please press the "SHOW INVOICE" button below to display the invoice you're expected to pay. It will expire in 15 minutes
+      Please press the button below to display a Lightning Network invoice and pay it to proceed. Your payment will be held in escrow. You have 15 minutes before this order expires.
     </v-list-item-subtitle>
   </v-list-item-content>
 </template>

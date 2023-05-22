@@ -34,7 +34,8 @@ export type MostroMessage = {
   content: {
     PaymentRequest?: PaymentRequest,
     SmallOrder?: SmallOrder,
-    Peer?: Peer
+    Peer?: Peer,
+    Order?: Order
   },
   created_at: number
 }
@@ -61,7 +62,9 @@ export enum Action {
   HoldInvoicePaymentSettled = 'HoldInvoicePaymentSettled',
   Release = 'Release',
   Cancel = 'Cancel',
-  RateUser = 'RateUser'
+  PurchaseCompleted = 'PurchaseCompleted',
+  RateUser = 'RateUser',
+  CantDo = 'CantDo'
 }
 
 // Peer messages
@@ -102,21 +105,64 @@ export enum OrderStatus {
 /**
  * An order coming from the server
  */
-export interface Order {
-  id: string,
-  kind: OrderType,
-  status: OrderStatus,
-  amount?: number,
-  fiat_code: string,
-  fiat_amount: number,
-  payment_method: string,
-  premium: number,
-  created_at: number,
-  buyer_pubkey?: string,
+export class Order {
+  id: string
+  kind: OrderType
+  status: OrderStatus
+  amount?: number
+  fiat_code: string
+  fiat_amount: number
+  payment_method: string
+  premium: number
+  created_at: number
+  buyer_pubkey?: string
   seller_pubkey?: string
   buyer_invoice?: string
   master_seller_pubkey?: string
   master_buyer_pubkey?: string
+  is_mine?: boolean = false
+
+  constructor(
+    id: string,
+    kind: OrderType,
+    status: OrderStatus,
+    fiat_code: string,
+    fiat_amount: number,
+    payment_method: string,
+    premium: number,
+    created_at: number
+  ) {
+    this.id = id;
+    this.kind = kind;
+    this.status = status;
+    this.fiat_code = fiat_code;
+    this.fiat_amount = fiat_amount;
+    this.payment_method = payment_method;
+    this.premium = premium;
+    this.created_at = created_at;
+  }
+  static deepEqual(order1: Order | NewOrder, order2: Order): boolean {
+
+    if (order1?.kind !== order2?.kind) {
+      return false
+    }
+    if (order1?.amount !== order2?.amount) {
+      return false
+    }
+    if (order1?.fiat_code !== order2?.fiat_code) {
+      return false
+    }
+    if (order1?.fiat_amount !== order2?.fiat_amount) {
+      return false
+    }
+    if (order1?.payment_method !== order2?.payment_method) {
+      return false
+    }
+    if (order1?.premium !== order2?.premium) {
+      return false
+    }
+    return true;
+  }
 }
 
 /**

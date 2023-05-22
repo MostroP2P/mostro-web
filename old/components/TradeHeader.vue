@@ -6,7 +6,7 @@
     <v-list-item-content @click="onOrderThreadHeaderClicked">
       <v-list-item-title>
         <div class="d-flex justify-space-between">
-          {{ orderType }} Order
+          {{ title }}
           <div class="text-caption text--disabled">{{ orderId }}</div>
         </div>
       </v-list-item-title>
@@ -15,7 +15,12 @@
       </v-list-item-subtitle>
       <v-list-item-subtitle class="text--secondary">
         <div class="d-flex justify-space-between">
-          <div>{{ messageCount }} message{{ messageCount > 1 ? 's' : ''}}</div>
+          <div class="d-flex align-top">
+            <div class="mr-1 mb-0 pb-0">
+              {{ messageCount }}
+            </div>
+            <icon-message/>
+          </div>
           <div class="text-caption">{{ creationDate }}</div>
         </div>
       </v-list-item-subtitle>
@@ -25,7 +30,7 @@
 <script lang="ts">
 import Vue from 'vue'
 import type { PropType } from 'vue'
-import { ThreadSummary } from '~/store/types'
+import { ThreadSummary, OrderType } from '~/store/types'
 import * as timeago from 'timeago.js'
 export default Vue.extend({
   props: {
@@ -44,15 +49,29 @@ export default Vue.extend({
     messageCount() {
       return this.threadSummary.messageCount
     },
+    title() {
+      const order = this.threadSummary.order
+      if (order.is_mine) {
+        if (this.orderType === OrderType.BUY) {
+          return 'You are Buying'
+        } else {
+          return 'Your are Selling'
+        }
+      } else {
+        if (this.orderType === OrderType.BUY) {
+          return 'You are Selling'
+        } else {
+          return 'You are Buying'
+        }
+      }
+    },
     message() {
       const { order } = this.threadSummary
-      let operation = ''
-      if (this.orderType === 'Sell') {
-        operation = 'Selling'
+      if (order.amount) {
+        return `${order.amount} sats for ${order.fiat_amount} ${order.fiat_code.toUpperCase()}, via ${order.payment_method}`
       } else {
-        operation = 'Buying'
+         return `${order.fiat_amount} ${order.fiat_code.toUpperCase()} for sats at market price, via ${order.payment_method}`
       }
-      return `${operation} ${order.amount} sats for ${order.fiat_amount} ${order.fiat_code}, ${order.payment_method}`
     },
     creationDate() {
       const date = new Date(this.threadSummary.order.created_at * 1e3)
@@ -61,7 +80,7 @@ export default Vue.extend({
   },
   methods: {
     onOrderThreadHeaderClicked() {
-      this.$router.push(`/my-orders/${this.threadSummary.order.id}`)
+      this.$router.push(`/my-trades/${this.threadSummary.order.id}`)
     }
   }
 })

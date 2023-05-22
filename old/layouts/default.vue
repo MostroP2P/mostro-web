@@ -2,10 +2,10 @@
   <v-app dark>
     <v-navigation-drawer
       v-model="drawer"
-      :mini-variant="miniVariant"
       :clipped="clipped"
       fixed
       app
+      color="secondary"
     >
       <v-list>
         <v-list-item
@@ -27,8 +27,10 @@
     <v-app-bar
       fixed
       app
+      dark
+      color="primary"
     >
-      <v-app-bar-nav-icon @click.stop="drawer = !drawer" />
+      <v-app-bar-nav-icon v-if="isMobile" @click.stop="drawer = !drawer" />
       <v-toolbar-title>{{ title }}</v-toolbar-title>
       <v-spacer />
     </v-app-bar>
@@ -47,8 +49,10 @@
 </template>
 
 <script>
+import mobileDetector from '~/mixins/mobile-detector'
 export default {
   name: 'DefaultLayout',
+  mixins: [mobileDetector],
   data () {
     return {
       clipped: false,
@@ -62,8 +66,8 @@ export default {
         },
         {
           icon: 'mdi-book',
-          title: 'My Orders',
-          to: '/my-orders'
+          title: 'My Trades',
+          to: '/my-trades'
         },
         {
           icon: 'mdi-email',
@@ -76,10 +80,13 @@ export default {
           to: '/about'
         }
       ],
-      miniVariant: false,
       right: true,
-      rightDrawer: false,
       title: 'Mostro'
+    }
+  },
+  mounted() {
+    if (!this.isMobile) {
+      this.drawer = true
     }
   }
 }

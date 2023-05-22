@@ -1,7 +1,7 @@
 <template>
-  <v-dialog v-model="showDialog" width="500">
+  <v-dialog v-model="showDialog" width="600">
     <template v-slot:activator="{ on, attrs }">
-      <v-btn v-bind="attrs" v-on="on" text color="primary">
+      <v-btn v-bind="attrs" v-on="on" text color="accent">
         <v-icon left>mdi-cash</v-icon>
         Fiat Sent
       </v-btn>
@@ -11,7 +11,7 @@
         Confirm
       </v-card-title>
       <v-card-text>
-        I confirm that I've sent {{ fiatAmount }} {{ fiatCode }} to
+        I confirm that I've sent {{ fiatAmount }} {{ fiatCode?.toUpperCase() }} to
         <npub :npub="sellerPubkey"/>
         .
       </v-card-text>
@@ -20,7 +20,7 @@
         <v-btn text color="warning" @click="showDialog = false">
           Cancel
         </v-btn>
-        <v-btn text color="primary" @click="onConfirm">
+        <v-btn text color="accent" @click="onConfirm">
           Confirm
         </v-btn>
       </v-card-actions>

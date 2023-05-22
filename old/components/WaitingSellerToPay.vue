@@ -4,11 +4,11 @@
       Waiting Seller to Pay
       <div class="text-caption text--secondary">{{ timeago.format(creationDate) }}</div>    
     </v-list-item-title>
-    <div class="wrap-text text-message">
+    <v-list-item-subtitle class="wrap-text text-message">
       <p>
         I have sent a payment request to the seller so he sends your sats for the order Id: <strong>{{ orderId }}</strong>, as soon as payment is made I will put you both in touch.
       </p>
-    </div>
+    </v-list-item-subtitle>
   </v-list-item-content>
 </template>
 <script lang="ts">

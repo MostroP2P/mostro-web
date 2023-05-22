@@ -39,7 +39,7 @@ export default Vue.extend({
       const orderId = this.$route.params.id
       // @ts-ignore
       const messages = this.getMostroMessagesByOrderId(orderId)
-      return messages.find((msg: MostroMessage) => msg.action === Action.AddInvoice)
+      return messages.find((msg: MostroMessage) => msg.action === Action.AddInvoice || msg.action === Action.TakeSell)
     },
     currentOrderStatus() {
       // @ts-ignore
@@ -93,8 +93,11 @@ export default Vue.extend({
       return this.currentOrderStatus === OrderStatus.ACTIVE && this.isLocalBuyer
     },
     showPayInvoice() {
+      const orderId = this.$route.params.id
       // @ts-ignore
-      return this.currentOrderStatus === OrderStatus.WAITING_PAYMENT
+      const messages = this.getMostroMessagesByOrderId(orderId)
+      if (!messages || messages.length === 0) return false
+      return messages[messages.length - 1]?.action === Action.PayInvoice
     },
     showGiveInvoice() {
       // @ts-ignore

@@ -1,6 +1,5 @@
-import 'bigint-polyfill'
 import { RelayPool }  from 'nostr'
-import { Order, SmallOrder } from '../store/types'
+import { Action, MostroMessage, Order, SmallOrder } from '../store/types'
 
 type MostroOptions = {
   mostroPubKey: string,
@@ -15,12 +14,14 @@ class Mostro {
   secretKey: string
   store: any
   orderMap: Map<string, string> // Maps order id -> event id
+  pendingOrders: Set<Order>
   constructor(opts: MostroOptions) {
     this.pool = RelayPool(opts.relays)
     this.mostro = opts.mostroPubKey
     this.secretKey = opts.secretKey
     this.store = opts.store
     this.orderMap = new Map<string, string>
+    this.pendingOrders = new Set<Order>()
     this.init()
   }
 
@@ -36,8 +37,10 @@ class Mostro {
       if (kind === 30000) {
         // Order
         let { content } = ev
-        content = JSON.parse(content)
-        // console.log(`> order update. sub_id: ${sub_id}, ev: `, ev)
+        // Most of the orders that we receive via kind events are not ours,
+        // so we set the `is_mine` field as false here.
+        content = {...JSON.parse(content), is_mine: false}
+        console.log(`< Mostro 3000. sub_id: ${sub_id}, ev: `, ev)
         if (this.orderMap.has(content.id)) {
           // Updates existing order
           this.store.dispatch('orders/updateOrder', content)
@@ -59,19 +62,12 @@ class Mostro {
           try {
             const plaintext = await nip04.decrypt(mySecretKey, ev.pubkey, ev.content)
             if (ev.pubkey === mostroPubKey) {
-              console.log('> Mostro DM: ', plaintext, ', ev: ', ev)
-              // Mostro DMs
-              // For now, some messages from mostro are just plain text. With time it
-              // is expected for them all to migrate to JSON objects. But in order to
-              // distinguish them at this point we're taking advantage of the fact that
-              // all text messages contain the 🧌 emoji :)
-              const emojiIndex = plaintext.indexOf('🧌')
-              if (emojiIndex !== -1) {
-                console.warn('Potential text message not handled')
-              } else {
-                const msg = { ...JSON.parse(plaintext), created_at: ev.created_at }
-                this.store.dispatch('messages/addMostroMessage', msg)
+              console.log('< Mostro DM: ', plaintext, ', ev: ', ev)
+              const msg = { ...JSON.parse(plaintext), created_at: ev.created_at }
+              if (msg.action === Action.Order) {
+                this.handleNewOrder(msg)
               }
+              this.store.dispatch('messages/addMostroMessage', msg)
             } else {
               // Peer DMs
               const peerNpub = nip19.npubEncode(ev.pubkey)
@@ -130,7 +126,8 @@ class Mostro {
     }
     event.id = getEventHash(event)
     event.sig = signEvent(event, secretKey)
-    return event
+    console.log('> ', event)
+    return ['EVENT', event]
   }
 
   getLocalKeys() {
@@ -146,27 +143,30 @@ class Mostro {
     }
   }
 
+  handleNewOrder(msg: MostroMessage) {
+    if (!msg?.content?.Order) return
+    const order: Order = msg.content.Order
+    this.pendingOrders.forEach((pending: Order) => {
+      if (Order.deepEqual(order, pending)) {
+        order.is_mine = true
+        this.store.dispatch('orders/addUserOrder', order)
+        this.pendingOrders.delete(pending)
+      }
+    })
+  }
+
   async submitOrder(order: Order) {
     const payload = {
       version: 0,
       pubkey: this.getLocalKeys().npub,
       action: 'Order',
       content: {
-        Order: {
-          kind: order.kind,
-          status: order.status,
-          amount: order.amount,
-          fiat_code: order.fiat_code,
-          fiat_amount: order.fiat_amount,
-          payment_method: order.payment_method,
-          premium: order.premium,
-          buyer_invoice: order.buyer_invoice
-        }
+        Order: order
       }
     }
+    this.pendingOrders.add(order)
     const event = await this.createEvent(payload)
-    const msg = ['EVENT', event]
-    await this.pool.send(msg)
+    await this.pool.send(event)
   }
   async takeSell(order: Order, invoice: string) {
     const payload = {
@@ -174,7 +174,7 @@ class Mostro {
       pubkey: this.getLocalKeys().npub,
       order_id: order.id,
       action: 'TakeSell',
-      content: {
+      content: invoice === null ? null : {
         PaymentRequest: [
           null,
           invoice
@@ -182,8 +182,7 @@ class Mostro {
       }
     }
     const event = await this.createEvent(payload)
-    const msg = ['EVENT', event]
-    await this.pool.send(msg)
+    await this.pool.send(event)
   }
   async takeBuy(order: Order) {
     const payload = {
@@ -198,8 +197,7 @@ class Mostro {
       }
     }
     const event = await this.createEvent(payload)
-    const msg = ['EVENT', event]
-    await this.pool.send(msg)
+    await this.pool.send(event)
   }
   async addInvoice(order: SmallOrder, invoice: string) {
     const payload = {
@@ -215,8 +213,7 @@ class Mostro {
       }
     }
     const event = await this.createEvent(payload)
-    const msg = ['EVENT', event]
-    await this.pool.send(msg)
+    await this.pool.send(event)
   }
   async release(order: Order) {
     const payload = {
@@ -226,8 +223,7 @@ class Mostro {
       order_id: order.id
     }
     const event = await this.createEvent(payload)
-    const msg = ['EVENT', event]
-    await this.pool.send(msg)
+    await this.pool.send(event)
   }
   async fiatSent(order: Order) {
     const payload = {
@@ -237,8 +233,7 @@ class Mostro {
       order_id: order.id
     }
     const event = await this.createEvent(payload)
-    const msg = ['EVENT', event]
-    await this.pool.send(msg)
+    await this.pool.send(event)
   }
   async submitDirectMessage(message: string, npub: string, replyTo: string) {
     const { nip04, nip19, getPublicKey, getEventHash, signEvent } = window.NostrTools
@@ -261,8 +256,7 @@ class Mostro {
     }
     event.id = getEventHash(event)
     event.sig = signEvent(event, mySecretKey)
-    const msg = ['EVENT', event]
-    await this.pool.send(msg)
+    await this.pool.send(['EVENT', event])
   }
 
   getNpub() {

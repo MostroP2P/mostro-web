@@ -21,7 +21,8 @@
     <v-divider></v-divider>
     <v-switch class="ml-2 mb-3"
       v-model="isMarketPricing"
-      inset light
+      inset
+      color="accent"
       hint="The pricing mechanism of this order"
       :label="isMarketPricing ? 'Market' : 'Fixed'"
     >

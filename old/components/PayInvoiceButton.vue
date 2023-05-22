@@ -1,7 +1,7 @@
 <template>
   <v-dialog v-model="showDialog" max-width="500">
     <template v-slot:activator="{ on, attrs}">
-      <v-btn text color="primary" v-bind="attrs" v-on="on">
+      <v-btn text color="accent" v-bind="attrs" v-on="on">
         <v-icon left>
           mdi-qrcode-scan
         </v-icon>
@@ -34,7 +34,7 @@
       <v-card-actions>
         <v-spacer></v-spacer>
         <v-btn
-          color="primary"
+          color="accent"
           text
           @click="showDialog = false"
         >

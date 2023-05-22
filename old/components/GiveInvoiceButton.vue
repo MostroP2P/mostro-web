@@ -1,7 +1,7 @@
 <template>
   <v-dialog v-model="showDialog" max-width="500">
     <template v-slot:activator="{ on, attrs }">
-      <v-btn text color="primary" v-bind="attrs" v-on="on">
+      <v-btn text color="accent" v-bind="attrs" v-on="on">
         <v-icon left>
           fa-sharp fa-solid fa-bolt
         </v-icon>
@@ -28,7 +28,7 @@
           Cancel
         </v-btn>
         <v-spacer></v-spacer>
-        <v-btn :disabled="submitDisabled" color="primary" text @click="submitInvoice">
+        <v-btn :disabled="submitDisabled" color="accent" text @click="submitInvoice">
           Submit
           <v-icon right small>
             mdi-send mdi-rotate-315
@@ -76,7 +76,7 @@ export default Vue.extend({
       const smallOrder = this.message.content.SmallOrder
       try {
         // @ts-ignore
-        await this.$mostro.addInvoice(smallOrder, this.invoice)
+        this.$mostro.addInvoice(smallOrder, this.invoice)
       } catch(err) {
         console.error('Error while giving invoice for buy order: ', err)
       } finally {
