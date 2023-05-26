@@ -38,21 +38,23 @@
         offset-y
         content-class="pa-0"
         v-model="menuOpen"
+        :disabled="isMenuDisabled"
+        open-on-hover
         :close-on-click="false"
         :close-on-content-click="false"
-        :close-delay="5000"
+        :close-delay="menuCloseDelay"
       >
         <template v-slot:activator="{ on }">
           <v-btn icon v-on="on">
-            <v-badge dot color="accent">
+            <v-badge dot color="accent" :value="!isMenuDisabled">
               <v-icon>mdi-bell-outline</v-icon>
             </v-badge>
           </v-btn>
         </template>
-        <v-list>
+        <transition-group name="list" tag="v-list">
           <v-list-item
-            v-for="(notification, i) in notifications"
-            :key="i"
+            v-for="(notification) in notifications"
+            :key="notification.id"
             class="notification-item"
           >
             <v-list-item-content>
@@ -64,12 +66,13 @@
               </v-list-item-subtitle>
             </v-list-item-content>
           </v-list-item>
-          <v-list-item>
+
+          <v-list-item :key="1000">
             <v-btn text block @click.prevent="clearNotifications">
               <v-icon>mdi-notification-clear-all</v-icon>
             </v-btn>
           </v-list-item>
-        </v-list>
+        </transition-group>
       </v-menu>
     </v-app-bar>
     <v-main>
@@ -122,8 +125,10 @@ export default {
       title: 'Mostro',
       menuOpen: false,
       notifications: [
-        { title: 'Order taken', subtitle: 'Your sell order was taken, click here to proceed'},
-        { title: 'Order taken', subtitle: 'Your buy order was taken, click here to proceed'}
+        { id: '1', title: 'Order taken 1', subtitle: 'Your sell order was taken, click here to proceed'},
+        { id: '2', title: 'Order taken 2', subtitle: 'Your buy order was taken, click here to proceed'},
+        { id: '3', title: 'Order taken 3', subtitle: 'Your sell order was taken, click here to proceed'},
+        { id: '4', title: 'Order taken 4', subtitle: 'Your buy order was taken, click here to proceed'}
       ]
     }
   },
@@ -136,9 +141,21 @@ export default {
     clearNotifications() {
       this.notifications.forEach((_, index) => {
         setTimeout(() => {
-          this.notifications.splice(index, 1);
+          const lastIndex = this.notifications.length - 1
+          this.notifications.splice(lastIndex, 1);
         }, index * 200);  // Delay each removal by 200ms
       });
+    },
+  },
+  computed: {
+    menuCloseDelay() {
+      return this.notifications.length * 200 + 1e3
+    },
+    isMenuDisabled() {
+      if (!this.notifications || this.notifications.length === 0) {
+        return true
+      }
+      return false
     }
   },
   watch: {
@@ -151,11 +168,11 @@ export default {
 }
 </script>
 <style scoped>
-.notification-item {
-  transition: all 0.5s ease;
+.list-leave-active {
+  position: absolute;
+  transition: all 0.5s ease-out;
 }
-
-.notification-item.leave-active {
+.list-leave-to {
   opacity: 0;
   transform: translateX(100%);
 }
