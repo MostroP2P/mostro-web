@@ -7,6 +7,10 @@ export interface OrderState {
   orders: Map<string, Order>
 }
 
+type OrderMapType = {
+  [key: string]: boolean;
+}
+
 export const state = () => ({
   orders: Vue.observable(new Map<string, Order>())
 })
@@ -14,12 +18,12 @@ export const state = () => ({
 const updateLocalStorage = (order: Order) => {
   if (order.is_mine) {
     const userOrdersStr = localStorage.getItem(USER_ORDERS_KEY)
-    let userOrders: string[] = []
+    let userOrders: OrderMapType = {}
     if (userOrdersStr) {
-      userOrders = JSON.parse(userOrdersStr) as string[]
-      userOrders.push(order.id)
+      userOrders = JSON.parse(userOrdersStr) as OrderMapType
+      userOrders[order.id] = true
     } else {
-      userOrders = [order.id]
+      userOrders[order.id] = true
     }
     localStorage.setItem(USER_ORDERS_KEY, JSON.stringify(userOrders))
   }
@@ -27,15 +31,11 @@ const updateLocalStorage = (order: Order) => {
 
 const readLocalStorage = (order: Order) => {
   const userOrdersStr = localStorage.getItem(USER_ORDERS_KEY)
-  let userOrderIds: string[] = []
+  let userOrderMap: OrderMapType = {}
   if (userOrdersStr) {
-    userOrderIds = JSON.parse(userOrdersStr) as string[]
-    for (let i = 0; i < userOrderIds.length; i++) {
-      const userOrderId = userOrderIds[i]
-      if (userOrderId === order.id) {
-        order.is_mine = true
-        break
-      }
+    userOrderMap = JSON.parse(userOrdersStr) as OrderMapType
+    if (userOrderMap[order.id]) {
+      order.is_mine = true
     }
   }
 }
