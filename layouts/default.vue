@@ -56,6 +56,7 @@
             v-for="(notification) in notifications"
             :key="notification.id"
             class="notification-item"
+            href="/my-trades"
           >
             <v-list-item-content>
               <v-list-item-title>

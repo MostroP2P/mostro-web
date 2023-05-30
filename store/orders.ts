@@ -1,64 +1,37 @@
 import Vue from 'vue'
-import { Order } from './types'
-
-const USER_ORDERS_KEY = 'user-orders-key'
-
-export interface OrderState {
-  orders: Map<string, Order>
-}
-
-type OrderMapType = {
-  [key: string]: boolean;
-}
+import { Order, OrderMapType, OrderState } from './types'
 
 export const state = () => ({
-  orders: Vue.observable(new Map<string, Order>())
+  orders: Vue.observable(new Map<string, Order>()),
+  userOrders: {} as OrderMapType
 })
-
-const updateLocalStorage = (order: Order) => {
-  if (order.is_mine) {
-    const userOrdersStr = localStorage.getItem(USER_ORDERS_KEY)
-    let userOrders: OrderMapType = {}
-    if (userOrdersStr) {
-      userOrders = JSON.parse(userOrdersStr) as OrderMapType
-      userOrders[order.id] = true
-    } else {
-      userOrders[order.id] = true
-    }
-    localStorage.setItem(USER_ORDERS_KEY, JSON.stringify(userOrders))
-  }
-}
-
-const readLocalStorage = (order: Order) => {
-  const userOrdersStr = localStorage.getItem(USER_ORDERS_KEY)
-  let userOrderMap: OrderMapType = {}
-  if (userOrdersStr) {
-    userOrderMap = JSON.parse(userOrdersStr) as OrderMapType
-    if (userOrderMap[order.id]) {
-      order.is_mine = true
-    }
-  }
-}
 
 export const actions = {
   addOrder(context: any, order: Order) {
-    readLocalStorage(order)
     const { commit, state } = context
     if (!state.orders.has(order.id)) {
       commit('addOrder', order)
     }
   },
   addUserOrder(context: any, order: Order) {
-    updateLocalStorage(order)
+    context.dispatch('addOrder', order)
     const { commit } = context
-    commit('addOrder', order)
+    order.is_mine = true
+    commit('updateOrder', order)
+    commit('addUserOrder', order)
+  },
+  setUserOrders(context: any, userOrders: OrderMapType) {
+    const { commit } = context
+    Object.keys(userOrders).forEach(orderId => commit('setAsMine', orderId))
+    commit('setUserOrders', userOrders)
   },
   removeOrder(context: any, order: Order) {
     const { commit } = context
     commit('removeOrder', order)
   },
   updateOrder(context: any, order: Order) {
-    const { commit } = context
+    const { commit, dispatch } = context
+    dispatch('checkNotification', order)
     commit('updateOrder', order)
   }
 }
@@ -68,6 +41,21 @@ export const mutations = {
     const newOrders = new Map<string, Order>(state.orders)
     newOrders.set(order.id, order)
     Vue.set(state, 'orders', newOrders)
+  },
+  setUserOrders(state: OrderState, userOrders: OrderMapType) {
+    Vue.set(state, 'userOrders', userOrders)
+  },
+  addUserOrder(state: OrderState, order: Order) {
+    Vue.set(state.userOrders, `${order.id}`, true)
+  },
+  setAsMine(state: OrderState, orderId: string) {
+    const updatedOrders = new Map<string, Order>(state.orders)
+    const existingOrder = updatedOrders.get(orderId)
+    if (existingOrder) {
+      existingOrder.is_mine = true
+      updatedOrders.set(orderId, existingOrder)
+    }
+    Vue.set(state, 'orders', updatedOrders)
   },
   removeOrder(state: OrderState, order: Order) {
     const newOrders = new Map<string, Order>()
@@ -109,5 +97,8 @@ export const getters = {
   },
   getOrderById(state: OrderState) {
     return (orderId: string) => state.orders.get(orderId)
+  },
+  getUserOrderIds(state: OrderState) {
+    return state.userOrders
   }
 }

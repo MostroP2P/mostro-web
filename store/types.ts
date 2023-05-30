@@ -183,3 +183,22 @@ export enum OrderPricingMode {
   MARKET = 'MARKET',
   FIXED = 'FIXED'
 }
+
+export const USER_ORDERS_KEY = 'user-orders-key'
+
+export interface OrderState {
+  orders: Map<string, Order>,
+  userOrders: OrderMapType
+}
+
+export type OrderMapType = {
+  [key: string]: boolean;
+}
+
+export interface RootState {
+  orders: {
+    orders: Map<string, Order>;
+    userOrders: OrderMapType;
+  };
+  // other modules...
+}
