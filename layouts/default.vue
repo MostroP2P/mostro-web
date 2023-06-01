@@ -54,9 +54,10 @@
         <transition-group name="list" tag="v-list">
           <v-list-item
             v-for="(notification) in notifications"
-            :key="notification.id"
+            :key="notification.orderId"
             class="notification-item"
-            href="/my-trades"
+            :href="`/my-trades/${notification.orderId}`"
+            @click="() => handleNotificationClick(notification)"
           >
             <v-list-item-content>
               <v-list-item-title>
@@ -90,8 +91,10 @@
   </v-app>
 </template>
 
-<script>
+<script lang="ts">
+import { mapGetters } from 'vuex'
 import mobileDetector from '~/mixins/mobile-detector'
+import { Notification } from '~/store/types'
 export default {
   name: 'DefaultLayout',
   mixins: [mobileDetector],
@@ -124,13 +127,7 @@ export default {
       ],
       right: true,
       title: 'Mostro',
-      menuOpen: false,
-      notifications: [
-        { id: '1', title: 'Order taken 1', subtitle: 'Your sell order was taken, click here to proceed'},
-        { id: '2', title: 'Order taken 2', subtitle: 'Your buy order was taken, click here to proceed'},
-        { id: '3', title: 'Order taken 3', subtitle: 'Your sell order was taken, click here to proceed'},
-        { id: '4', title: 'Order taken 4', subtitle: 'Your buy order was taken, click here to proceed'}
-      ]
+      menuOpen: false
     }
   },
   mounted() {
@@ -140,17 +137,23 @@ export default {
   },
   methods: {
     clearNotifications() {
-      this.notifications.forEach((_, index) => {
+      this.notifications.forEach(( _: any, index: number) => {
         setTimeout(() => {
           const lastIndex = this.notifications.length - 1
           this.notifications.splice(lastIndex, 1);
         }, index * 200);  // Delay each removal by 200ms
       });
     },
+    handleNotificationClick(notification: Notification) {
+      console.log('handleNotification.notification: ', notification)
+    }
   },
   computed: {
+    ...mapGetters({
+      notifications: 'notifications/getActiveNotifications'
+    }),
     menuCloseDelay() {
-      return this.notifications.length * 200 + 1e3
+      return this.notifications ? this.notifications.length * 200 + 1e3 : 0
     },
     isMenuDisabled() {
       if (!this.notifications || this.notifications.length === 0) {

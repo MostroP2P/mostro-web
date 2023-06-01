@@ -10,14 +10,20 @@ export const actions = {
   addOrder(context: any, order: Order) {
     const { commit, state } = context
     if (!state.orders.has(order.id)) {
+      // Because of the asynchronous nature of messages, we can
+      // have an order being added from the network which we already know
+      // is ours from the local storage data. So here we check the
+      // `userOrders` map
+      if (state.userOrders[order.id]) {
+        order.is_mine = true
+      }
       commit('addOrder', order)
     }
   },
   addUserOrder(context: any, order: Order) {
-    context.dispatch('addOrder', order)
-    const { commit } = context
+    const { commit, dispatch } = context
     order.is_mine = true
-    commit('updateOrder', order)
+    dispatch('addOrder', order)
     commit('addUserOrder', order)
   },
   setUserOrders(context: any, userOrders: OrderMapType) {
@@ -31,7 +37,7 @@ export const actions = {
   },
   updateOrder(context: any, order: Order) {
     const { commit, dispatch } = context
-    dispatch('checkNotification', order)
+    dispatch('notifications/checkOrderForNotification', order, { root: true })
     commit('updateOrder', order)
   }
 }

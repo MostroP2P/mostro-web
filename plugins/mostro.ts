@@ -62,11 +62,6 @@ class Mostro {
             if (ev.pubkey === mostroPubKey) {
               console.log('< Mostro DM: ', plaintext, ', ev: ', ev)
               const msg = { ...JSON.parse(plaintext), created_at: ev.created_at }
-              if (msg.action === Action.Order) {
-                const order: Order = msg.content.Order
-                order.is_mine = true
-                this.store.dispatch('orders/addUserOrder', order)
-              }
               this.store.dispatch('messages/addMostroMessage', msg)
             } else {
               // Peer DMs

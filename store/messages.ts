@@ -4,7 +4,9 @@ import {
   ThreadSummary,
   MostroMessage,
   PeerMessage,
-  PeerThreadSummary
+  PeerThreadSummary,
+  Order,
+  Action
 } from './types'
 
 export interface MessagesState {
@@ -32,7 +34,7 @@ export const actions = {
       const { content } = message
       if (content.SmallOrder) {
         const { seller_pubkey, buyer_pubkey } = content.SmallOrder
-        const order = await rootGetters['orders/getOrderById'](message.order_id)
+        const order = await rootGetters['orders/getOrderById'](message.order_id) as Order
         if (seller_pubkey) {
           order.seller_pubkey = seller_pubkey
         }
@@ -41,6 +43,10 @@ export const actions = {
         }
         dispatch('orders/updateOrder', order, { root: true })
       }
+    }
+    if (message?.action === Action.Order) {
+      const order: Order = message.content.Order as Order
+      dispatch('orders/addUserOrder', order, { root: true })
     }
     commit('addMostroMessage', message)
   },

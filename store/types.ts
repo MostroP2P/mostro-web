@@ -195,10 +195,25 @@ export type OrderMapType = {
   [key: string]: boolean;
 }
 
+// Define the state type
+export interface NotificationState {
+  notifications: Notification[];
+}
+
+export interface Notification {
+  title: string,
+  subtitle: string,
+  orderId: string,
+  dismissed: boolean
+}
+
 export interface RootState {
   orders: {
     orders: Map<string, Order>;
     userOrders: OrderMapType;
-  };
+  },
+  notifications: {
+    notifications: Notification[]
+  }
   // other modules...
 }
