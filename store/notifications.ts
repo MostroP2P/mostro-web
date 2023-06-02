@@ -16,7 +16,6 @@ export const actions = {
     if (userOrders[order.id]) {
       // This is a user's order
       const storedOrder = rootGetters['orders/getOrderById'](order.id)
-      console.log('>> stored order: ', storedOrder)
       if (storedOrder.status === OrderStatus.PENDING || true) {
         const notification: Notification = {
           title: `Your ${order.kind === OrderType.SELL ? 'Sell' : 'Buy'} order was taken!`,
@@ -27,6 +26,12 @@ export const actions = {
         commit('addNotification', notification)
       }
     }
+  },
+  dismiss({ state, commit }: NotificationActionContext, notification: Notification) {
+    const targetNotification = state.notifications.findIndex(n => n.orderId === notification.orderId)
+    if (targetNotification !== -1) {
+      commit('dismiss', notification)
+    }
   }
 }
 
@@ -35,6 +40,11 @@ export const mutations = {
     const notifications = [...state.notifications]
     notifications.push(notification)
     Vue.set(state, 'notifications', notifications)
+  },
+  dismiss(state: NotificationState, index: number) {
+    const updatedNotifications = [...state.notifications]
+    updatedNotifications[index].dismissed = true
+    Vue.set(state, 'notifications', updatedNotifications)
   }
 }
 

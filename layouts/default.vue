@@ -58,13 +58,17 @@
             class="notification-item"
             :href="`/my-trades/${notification.orderId}`"
             @click="() => handleNotificationClick(notification)"
+            three-line
           >
             <v-list-item-content>
               <v-list-item-title>
-                {{ notification.title }}
+                📣 {{ notification.title }}
               </v-list-item-title>
               <v-list-item-subtitle>
                 {{ notification.subtitle }}
+              </v-list-item-subtitle>
+              <v-list-item-subtitle class="text-caption text--disabled" style="max-width: 25em">
+                Order: {{ notification.orderId }}
               </v-list-item-subtitle>
             </v-list-item-content>
           </v-list-item>
@@ -92,10 +96,11 @@
 </template>
 
 <script lang="ts">
+import Vue from 'vue'
 import { mapGetters } from 'vuex'
 import mobileDetector from '~/mixins/mobile-detector'
 import { Notification } from '~/store/types'
-export default {
+export default Vue.extend( {
   name: 'DefaultLayout',
   mixins: [mobileDetector],
   data () {
@@ -137,10 +142,9 @@ export default {
   },
   methods: {
     clearNotifications() {
-      this.notifications.forEach(( _: any, index: number) => {
+      this.notifications.forEach((notification: Notification, index: number) => {
         setTimeout(() => {
-          const lastIndex = this.notifications.length - 1
-          this.notifications.splice(lastIndex, 1);
+          this.$store.dispatch('notifications/dismiss', notification)
         }, index * 200);  // Delay each removal by 200ms
       });
     },
@@ -169,7 +173,7 @@ export default {
       }
     }
   }
-}
+})
 </script>
 <style scoped>
 .list-leave-active {
