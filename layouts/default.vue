@@ -56,7 +56,6 @@
             v-for="(notification) in notifications"
             :key="notification.orderId"
             class="notification-item"
-            :href="`/my-trades/${notification.orderId}`"
             @click="() => handleNotificationClick(notification)"
             three-line
           >
@@ -150,6 +149,8 @@ export default Vue.extend( {
     },
     handleNotificationClick(notification: Notification) {
       console.log('handleNotification.notification: ', notification)
+      this.$store.dispatch('notifications/dismiss', notification)
+      this.$router.push(`/my-trades/${notification.orderId}`)
     }
   },
   computed: {
