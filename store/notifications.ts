@@ -41,9 +41,12 @@ export const mutations = {
     notifications.push(notification)
     Vue.set(state, 'notifications', notifications)
   },
-  dismiss(state: NotificationState, index: number) {
+  dismiss(state: NotificationState, notification: Notification) {
     const updatedNotifications = [...state.notifications]
-    updatedNotifications[index].dismissed = true
+    const index = updatedNotifications.findIndex((not: Notification) => not.orderId === notification.orderId)
+    if (index !== -1) {
+      updatedNotifications[index].dismissed = true
+    }
     Vue.set(state, 'notifications', updatedNotifications)
   }
 }
