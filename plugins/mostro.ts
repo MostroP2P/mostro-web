@@ -1,5 +1,5 @@
 import { RelayPool }  from 'nostr'
-import { Action, MostroMessage, Order, SmallOrder } from '../store/types'
+import { Order, SmallOrder } from '../store/types'
 
 type MostroOptions = {
   mostroPubKey: string,
@@ -14,14 +14,12 @@ class Mostro {
   secretKey: string
   store: any
   orderMap: Map<string, string> // Maps order id -> event id
-  pendingOrders: Set<Order>
   constructor(opts: MostroOptions) {
     this.pool = RelayPool(opts.relays)
     this.mostro = opts.mostroPubKey
     this.secretKey = opts.secretKey
     this.store = opts.store
     this.orderMap = new Map<string, string>
-    this.pendingOrders = new Set<Order>()
     this.init()
   }
 
@@ -43,10 +41,10 @@ class Mostro {
         console.log(`< Mostro 3000. sub_id: ${sub_id}, ev: `, ev)
         if (this.orderMap.has(content.id)) {
           // Updates existing order
-          this.store.dispatch('orders/updateOrder', content)
+          this.store.dispatch('orders/updateOrder', { order: content, eventId: ev.id })
         } else {
           // Adds new order
-          this.store.dispatch('orders/addOrder', content)
+          this.store.dispatch('orders/addOrder', { order: content, eventId: ev.id })
           this.orderMap.set(content.id, ev.id)
         }
       } else if (kind === 4) {
@@ -64,10 +62,7 @@ class Mostro {
             if (ev.pubkey === mostroPubKey) {
               console.log('< Mostro DM: ', plaintext, ', ev: ', ev)
               const msg = { ...JSON.parse(plaintext), created_at: ev.created_at }
-              if (msg.action === Action.Order) {
-                this.handleNewOrder(msg)
-              }
-              this.store.dispatch('messages/addMostroMessage', msg)
+              this.store.dispatch('messages/addMostroMessage', { message: msg, eventId: ev.id })
             } else {
               // Peer DMs
               const peerNpub = nip19.npubEncode(ev.pubkey)
@@ -143,18 +138,6 @@ class Mostro {
     }
   }
 
-  handleNewOrder(msg: MostroMessage) {
-    if (!msg?.content?.Order) return
-    const order: Order = msg.content.Order
-    this.pendingOrders.forEach((pending: Order) => {
-      if (Order.deepEqual(order, pending)) {
-        order.is_mine = true
-        this.store.dispatch('orders/addUserOrder', order)
-        this.pendingOrders.delete(pending)
-      }
-    })
-  }
-
   async submitOrder(order: Order) {
     const payload = {
       version: 0,
@@ -164,7 +147,6 @@ class Mostro {
         Order: order
       }
     }
-    this.pendingOrders.add(order)
     const event = await this.createEvent(payload)
     await this.pool.send(event)
   }

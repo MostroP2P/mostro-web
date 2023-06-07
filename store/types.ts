@@ -184,7 +184,46 @@ export enum OrderPricingMode {
   FIXED = 'FIXED'
 }
 
+export const USER_ORDERS_KEY = 'user-orders-key'
+export const DISMISSED_NOTIFICATION_KEY = 'dismissed-notification-key'
+
+export interface OrderState {
+  orders: Map<string, Order>,
+  userOrders: OrderMapType
+}
+
+export type OrderMapType = {
+  [key: string]: boolean;
+}
+
+// Define the state type
+export interface NotificationState {
+  notifications: Notification[];
+  dismissedNotifications: DismissedNotificationMap
+}
+
+export type DismissedNotificationMap = { [eventId: string] : boolean }
+
+export interface Notification {
+  eventId: string,
+  title: string,
+  subtitle: string,
+  orderId: string,
+  dismissed: boolean
+}
+
+export interface RootState {
+  orders: {
+    orders: Map<string, Order>;
+    userOrders: OrderMapType;
+  },
+  notifications: {
+    notifications: Notification[]
+  }
+  // other modules...
+}
 export interface ScheduledOrderUpdatePayload {
   orderId: string,
+  eventId: string,
   toUpdate: object
 }

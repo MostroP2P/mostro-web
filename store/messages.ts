@@ -5,7 +5,8 @@ import {
   MostroMessage,
   PeerMessage,
   PeerThreadSummary,
-  Order
+  Order,
+  Action
 } from './types'
 
 export interface MessagesState {
@@ -25,7 +26,10 @@ export const state = () => ({
 })
 
 export const actions = {
-  async addMostroMessage(context: any, message: MostroMessage) {
+  async addMostroMessage(
+    context: any,
+    { message, eventId } : { message: MostroMessage, eventId: string }
+  ) {
     const { commit, dispatch, rootGetters } = context
     if (message?.content?.SmallOrder) {
       // If we have a SmallOrder as payload we might be receiving the buyer's identity
@@ -33,19 +37,23 @@ export const actions = {
       const { content } = message
       if (content.SmallOrder) {
         const { seller_pubkey, buyer_pubkey } = content.SmallOrder
-        const order = await rootGetters['orders/getOrderById'](message.order_id)
+        const order = await rootGetters['orders/getOrderById'](message.order_id) as Order
         if (seller_pubkey && buyer_pubkey) {
           if (order) {
-            dispatch('orders/updateOrder', order, { root: true })
+            dispatch('orders/updateOrder', {order, eventId }, { root: true })
           } else {
             dispatch(
               'orders/scheduleOrderUpdate',
-              { orderId: message.order_id, seller_pubkey, buyer_pubkey },
+              { orderId: message.order_id, seller_pubkey, buyer_pubkey, eventId },
               { root: true }
             )
           }
         }
       }
+    }
+    if (message?.action === Action.Order) {
+      const order: Order = message.content.Order as Order
+      dispatch('orders/addUserOrder', { order, eventId }, { root: true })
     }
     commit('addMostroMessage', message)
   },
