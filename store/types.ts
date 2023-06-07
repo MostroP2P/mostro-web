@@ -222,3 +222,8 @@ export interface RootState {
   }
   // other modules...
 }
+export interface ScheduledOrderUpdatePayload {
+  orderId: string,
+  eventId: string,
+  toUpdate: object
+}

@@ -33,6 +33,7 @@ export default Vue.extend({
       return this.getOrderById(this.$route.params.id)
     },
     orderTakenMessage() {
+      if (!this.order) return 'Loading...'
       if (this.order.is_mine) {
         return 'Your sell order was taken'
       } else {

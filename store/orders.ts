@@ -1,5 +1,5 @@
 import Vue from 'vue'
-import { Order, OrderMapType, OrderState } from './types'
+import { Order, OrderMapType, OrderState, ScheduledOrderUpdatePayload } from './types'
 
 export const state = () => ({
   orders: Vue.observable(new Map<string, Order>()),
@@ -40,6 +40,38 @@ export const actions = {
     const { commit, dispatch } = context
     dispatch('notifications/checkOrderForNotification', { order, eventId }, { root: true })
     commit('updateOrder', order)
+  },
+  // Sometimes we'll get messages out of order, and because of this
+  // an order update might come before the order itself. For these
+  // cases we want to schedule the order update for later.
+  // A simple polling mechanism is used for now, a more sophisticated
+  // callback registration mechanism could also be used.
+  scheduleOrderUpdate(context: any, payload: ScheduledOrderUpdatePayload) {
+    const RETRY_INTERVAL = 1E3
+    const { getters, dispatch, commit } = context
+    const { orderId, eventId } = payload
+    const order = getters.getOrderById(orderId)
+    if (!order) {
+      // If there's no order, we just schedule the dispatch of the same
+      // action after RETRY_INTERVAL milliseconds
+      setTimeout(async () => {
+        dispatch('scheduleOrderUpdate', payload)
+      }, RETRY_INTERVAL)
+    } else {
+      // If we finally found an order, we update it by calling the mutation,
+      // but not before we remove the 'orderId' key
+      const toUpdate = Object.assign({}, payload)
+      // @ts-ignore
+      delete toUpdate.orderId
+      // @ts-ignore
+      delete toUpdate.eventId
+      Object.keys(toUpdate).forEach(key => {
+        // @ts-ignore
+        order[key] = toUpdate[key]
+      })
+      commit('updateOrder', order)
+      dispatch('notifications/checkOrderForNotification', { order, eventId }, { root: true })
+    }
   }
 }
 
