@@ -1,64 +1,44 @@
 import Vue from 'vue'
-import { Order } from './types'
-
-const USER_ORDERS_KEY = 'user-orders-key'
-
-export interface OrderState {
-  orders: Map<string, Order>
-}
+import { Order, OrderMapType, OrderState } from './types'
 
 export const state = () => ({
-  orders: Vue.observable(new Map<string, Order>())
+  orders: Vue.observable(new Map<string, Order>()),
+  userOrders: {} as OrderMapType
 })
 
-const updateLocalStorage = (order: Order) => {
-  if (order.is_mine) {
-    const userOrdersStr = localStorage.getItem(USER_ORDERS_KEY)
-    let userOrders: string[] = []
-    if (userOrdersStr) {
-      userOrders = JSON.parse(userOrdersStr) as string[]
-      userOrders.push(order.id)
-    } else {
-      userOrders = [order.id]
-    }
-    localStorage.setItem(USER_ORDERS_KEY, JSON.stringify(userOrders))
-  }
-}
-
-const readLocalStorage = (order: Order) => {
-  const userOrdersStr = localStorage.getItem(USER_ORDERS_KEY)
-  let userOrderIds: string[] = []
-  if (userOrdersStr) {
-    userOrderIds = JSON.parse(userOrdersStr) as string[]
-    for (let i = 0; i < userOrderIds.length; i++) {
-      const userOrderId = userOrderIds[i]
-      if (userOrderId === order.id) {
-        order.is_mine = true
-        break
-      }
-    }
-  }
-}
-
 export const actions = {
-  addOrder(context: any, order: Order) {
-    readLocalStorage(order)
-    const { commit, state } = context
+  addOrder(context: any, { order, eventId }: {order: Order, eventId: string }) {
+    const { dispatch, commit, state } = context
     if (!state.orders.has(order.id)) {
+      // Because of the asynchronous nature of messages, we can
+      // have an order being added from the network which we already know
+      // is ours from the local storage data. So here we check the
+      // `userOrders` map
+      if (state.userOrders[order.id]) {
+        order.is_mine = true
+      }
       commit('addOrder', order)
     }
+    dispatch('notifications/checkOrderForNotification', { order, eventId }, { root: true })
   },
   addUserOrder(context: any, order: Order) {
-    updateLocalStorage(order)
+    const { commit, dispatch } = context
+    order.is_mine = true
+    dispatch('addOrder', order)
+    commit('addUserOrder', order)
+  },
+  setUserOrders(context: any, userOrders: OrderMapType) {
     const { commit } = context
-    commit('addOrder', order)
+    Object.keys(userOrders).forEach(orderId => commit('setAsMine', orderId))
+    commit('setUserOrders', userOrders)
   },
   removeOrder(context: any, order: Order) {
     const { commit } = context
     commit('removeOrder', order)
   },
-  updateOrder(context: any, order: Order) {
-    const { commit } = context
+  updateOrder(context: any, { order, eventId }: {order: Order, eventId: string }) {
+    const { commit, dispatch } = context
+    dispatch('notifications/checkOrderForNotification', { order, eventId }, { root: true })
     commit('updateOrder', order)
   }
 }
@@ -68,6 +48,21 @@ export const mutations = {
     const newOrders = new Map<string, Order>(state.orders)
     newOrders.set(order.id, order)
     Vue.set(state, 'orders', newOrders)
+  },
+  setUserOrders(state: OrderState, userOrders: OrderMapType) {
+    Vue.set(state, 'userOrders', userOrders)
+  },
+  addUserOrder(state: OrderState, order: Order) {
+    Vue.set(state.userOrders, `${order.id}`, true)
+  },
+  setAsMine(state: OrderState, orderId: string) {
+    const updatedOrders = new Map<string, Order>(state.orders)
+    const existingOrder = updatedOrders.get(orderId)
+    if (existingOrder) {
+      existingOrder.is_mine = true
+      updatedOrders.set(orderId, existingOrder)
+    }
+    Vue.set(state, 'orders', updatedOrders)
   },
   removeOrder(state: OrderState, order: Order) {
     const newOrders = new Map<string, Order>()
@@ -109,5 +104,8 @@ export const getters = {
   },
   getOrderById(state: OrderState) {
     return (orderId: string) => state.orders.get(orderId)
+  },
+  getUserOrderIds(state: OrderState) {
+    return state.userOrders
   }
 }
