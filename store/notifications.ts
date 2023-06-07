@@ -1,18 +1,25 @@
 import Vue from 'vue'
 import { ActionContext } from 'vuex'
 import { NotificationState, OrderStatus, OrderType } from '~/store/types'
-import { RootState, Notification } from './types'
+import { RootState, Notification, DismissedNotificationMap } from './types'
 import { Order } from './types'
 
 type NotificationActionContext = ActionContext<NotificationState, RootState>
 
 export const state = (): NotificationState => ({
-  notifications: []
+  notifications: [],
+  dismissedNotifications: {} as DismissedNotificationMap
 })
 
 export const actions = {
+  setDismissedNotifications(
+    { commit }: NotificationActionContext,
+    dismissedNotifications: DismissedNotificationMap
+  ) {
+    commit('setDismissedNotifications', dismissedNotifications)
+  },
   checkOrderForNotification(
-    { rootGetters, commit }: NotificationActionContext,
+    { state, rootGetters, commit }: NotificationActionContext,
     { order, eventId } : { order: Order, eventId: string }
   ) {
     const userOrders = rootGetters['orders/getUserOrderIds']
@@ -25,7 +32,7 @@ export const actions = {
           title: `Your ${order.kind === OrderType.SELL ? 'Sell' : 'Buy'} order was taken!`,
           subtitle: 'Click here to see more details',
           orderId: order.id,
-          dismissed: false
+          dismissed: state.dismissedNotifications[eventId] !== undefined
         }
         commit('addNotification', notification)
       }
@@ -40,6 +47,9 @@ export const actions = {
 }
 
 export const mutations = {
+  setDismissedNotifications(state: NotificationState, dismissedNotifications: DismissedNotificationMap) {
+    state.dismissedNotifications = dismissedNotifications
+  },
   addNotification(state: NotificationState, notification: Notification) {
     const notifications = [...state.notifications]
     notifications.push(notification)

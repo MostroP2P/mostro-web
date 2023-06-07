@@ -44,7 +44,7 @@ class Mostro {
           this.store.dispatch('orders/updateOrder', { order: content, eventId: ev.id })
         } else {
           // Adds new order
-          this.store.dispatch('orders/addOrder', content)
+          this.store.dispatch('orders/addOrder', { order: content, eventId: ev.id })
           this.orderMap.set(content.id, ev.id)
         }
       } else if (kind === 4) {

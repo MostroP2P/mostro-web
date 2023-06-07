@@ -185,6 +185,7 @@ export enum OrderPricingMode {
 }
 
 export const USER_ORDERS_KEY = 'user-orders-key'
+export const DISMISSED_NOTIFICATION_KEY = 'dismissed-notification-key'
 
 export interface OrderState {
   orders: Map<string, Order>,
@@ -198,7 +199,10 @@ export type OrderMapType = {
 // Define the state type
 export interface NotificationState {
   notifications: Notification[];
+  dismissedNotifications: DismissedNotificationMap
 }
+
+export type DismissedNotificationMap = { [eventId: string] : boolean }
 
 export interface Notification {
   eventId: string,

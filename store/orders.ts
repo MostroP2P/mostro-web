@@ -7,8 +7,8 @@ export const state = () => ({
 })
 
 export const actions = {
-  addOrder(context: any, order: Order) {
-    const { commit, state } = context
+  addOrder(context: any, { order, eventId }: {order: Order, eventId: string }) {
+    const { dispatch, commit, state } = context
     if (!state.orders.has(order.id)) {
       // Because of the asynchronous nature of messages, we can
       // have an order being added from the network which we already know
@@ -19,6 +19,7 @@ export const actions = {
       }
       commit('addOrder', order)
     }
+    dispatch('notifications/checkOrderForNotification', { order, eventId }, { root: true })
   },
   addUserOrder(context: any, order: Order) {
     const { commit, dispatch } = context
