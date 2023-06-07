@@ -51,33 +51,35 @@
             </v-badge>
           </v-btn>
         </template>
-        <transition-group name="list" tag="v-list">
-          <v-list-item
-            v-for="(notification) in notifications"
-            :key="notification.eventId"
-            class="notification-item"
-            @click="() => handleNotificationClick(notification)"
-            three-line
-          >
-            <v-list-item-content>
-              <v-list-item-title>
-                📣 {{ notification.title }}
-              </v-list-item-title>
-              <v-list-item-subtitle>
-                {{ notification.subtitle }}
-              </v-list-item-subtitle>
-              <v-list-item-subtitle class="text-caption text--disabled" style="max-width: 25em">
-                Order: {{ notification.orderId }}
-              </v-list-item-subtitle>
-            </v-list-item-content>
-          </v-list-item>
+        <div class="scrollable-menu">
+          <transition-group name="list" tag="v-list">
+            <v-list-item
+              v-for="(notification) in notifications"
+              :key="notification.eventId"
+              class="notification-item"
+              @click="() => handleNotificationClick(notification)"
+              three-line
+            >
+              <v-list-item-content>
+                <v-list-item-title>
+                  📣 {{ notification.title }}
+                </v-list-item-title>
+                <v-list-item-subtitle>
+                  {{ notification.subtitle }}
+                </v-list-item-subtitle>
+                <v-list-item-subtitle class="text-caption text--disabled" style="max-width: 25em">
+                  Order: {{ notification.orderId }}
+                </v-list-item-subtitle>
+              </v-list-item-content>
+            </v-list-item>
 
-          <v-list-item :key="1000">
-            <v-btn text block @click.prevent="clearNotifications">
-              <v-icon>mdi-notification-clear-all</v-icon>
-            </v-btn>
-          </v-list-item>
-        </transition-group>
+            <v-list-item :key="1000">
+              <v-btn text block @click.prevent="clearNotifications">
+                <v-icon>mdi-notification-clear-all</v-icon>
+              </v-btn>
+            </v-list-item>
+          </transition-group>
+        </div>
       </v-menu>
     </v-app-bar>
     <v-main>
@@ -183,5 +185,9 @@ export default Vue.extend( {
 .list-leave-to {
   opacity: 0;
   transform: translateX(100%);
+}
+.scrollable-menu {
+  max-height: 80vh;
+  overflow-y: auto;
 }
 </style>
