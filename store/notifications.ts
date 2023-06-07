@@ -57,7 +57,7 @@ export const mutations = {
   },
   dismiss(state: NotificationState, notification: Notification) {
     const updatedNotifications = [...state.notifications]
-    const index = updatedNotifications.findIndex((not: Notification) => not.orderId === notification.orderId)
+    const index = updatedNotifications.findIndex((not: Notification) => not.eventId === notification.eventId)
     if (index !== -1) {
       updatedNotifications[index].dismissed = true
     }

@@ -62,7 +62,7 @@ class Mostro {
             if (ev.pubkey === mostroPubKey) {
               console.log('< Mostro DM: ', plaintext, ', ev: ', ev)
               const msg = { ...JSON.parse(plaintext), created_at: ev.created_at }
-              this.store.dispatch('messages/addMostroMessage', msg, ev.id)
+              this.store.dispatch('messages/addMostroMessage', { message: msg, eventId: ev.id })
             } else {
               // Peer DMs
               const peerNpub = nip19.npubEncode(ev.pubkey)

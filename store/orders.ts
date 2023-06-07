@@ -21,10 +21,10 @@ export const actions = {
     }
     dispatch('notifications/checkOrderForNotification', { order, eventId }, { root: true })
   },
-  addUserOrder(context: any, order: Order) {
+  addUserOrder(context: any, { order, eventId }: {order: Order, eventId: string}) {
     const { commit, dispatch } = context
     order.is_mine = true
-    dispatch('addOrder', order)
+    dispatch('addOrder', { order, eventId })
     commit('addUserOrder', order)
   },
   setUserOrders(context: any, userOrders: OrderMapType) {
