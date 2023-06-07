@@ -35,9 +35,9 @@ export const actions = {
     const { commit } = context
     commit('removeOrder', order)
   },
-  updateOrder(context: any, order: Order) {
+  updateOrder(context: any, { order, eventId }: {order: Order, eventId: string }) {
     const { commit, dispatch } = context
-    dispatch('notifications/checkOrderForNotification', order, { root: true })
+    dispatch('notifications/checkOrderForNotification', { order, eventId }, { root: true })
     commit('updateOrder', order)
   }
 }

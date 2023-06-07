@@ -26,7 +26,7 @@ export const state = () => ({
 })
 
 export const actions = {
-  async addMostroMessage(context: any, message: MostroMessage) {
+  async addMostroMessage(context: any, message: MostroMessage, eventId: string) {
     const { commit, dispatch, rootGetters } = context
     if (message?.content?.SmallOrder) {
       // If we have a SmallOrder as payload we might be receiving the buyer's identity
@@ -41,7 +41,7 @@ export const actions = {
         if (buyer_pubkey) {
           order.buyer_pubkey = buyer_pubkey
         }
-        dispatch('orders/updateOrder', order, { root: true })
+        dispatch('orders/updateOrder', { order, eventId }, { root: true })
       }
     }
     if (message?.action === Action.Order) {

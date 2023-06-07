@@ -1,5 +1,5 @@
 import { RelayPool }  from 'nostr'
-import { Action, MostroMessage, Order, SmallOrder } from '../store/types'
+import { Order, SmallOrder } from '../store/types'
 
 type MostroOptions = {
   mostroPubKey: string,
@@ -41,7 +41,7 @@ class Mostro {
         console.log(`< Mostro 3000. sub_id: ${sub_id}, ev: `, ev)
         if (this.orderMap.has(content.id)) {
           // Updates existing order
-          this.store.dispatch('orders/updateOrder', content)
+          this.store.dispatch('orders/updateOrder', { order: content, eventId: ev.id })
         } else {
           // Adds new order
           this.store.dispatch('orders/addOrder', content)
@@ -62,7 +62,7 @@ class Mostro {
             if (ev.pubkey === mostroPubKey) {
               console.log('< Mostro DM: ', plaintext, ', ev: ', ev)
               const msg = { ...JSON.parse(plaintext), created_at: ev.created_at }
-              this.store.dispatch('messages/addMostroMessage', msg)
+              this.store.dispatch('messages/addMostroMessage', msg, ev.id)
             } else {
               // Peer DMs
               const peerNpub = nip19.npubEncode(ev.pubkey)

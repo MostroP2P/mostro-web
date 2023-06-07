@@ -201,6 +201,7 @@ export interface NotificationState {
 }
 
 export interface Notification {
+  eventId: string,
   title: string,
   subtitle: string,
   orderId: string,
