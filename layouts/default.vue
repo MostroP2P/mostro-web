@@ -8,6 +8,7 @@
       color="secondary"
     >
       <v-list>
+        <auth-status/>
         <v-list-item
           v-for="(item, i) in items"
           :key="i"
