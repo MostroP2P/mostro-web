@@ -4,11 +4,11 @@
     <template v-slot:activator="{ on, attrs}">
       <v-btn v-on="on" v-bind="attrs" outlined class="mt-4">
         <KeyIcon class="mr-3"/>
-        Login
+        Register
       </v-btn>
     </template>
     <v-card>
-      <v-card-title>Login method</v-card-title>
+      <v-card-title>Registration method</v-card-title>
       <v-tabs v-model="tab">
         <v-tab>Nsec</v-tab>
         <v-tab>Alby</v-tab>
@@ -16,6 +16,22 @@
       <v-tabs-items v-model="tab">
         <v-tab-item style="min-height: 5em">
           <v-row class="mx-4 mt-5">
+            <v-text-field
+              v-model="nsec"
+              outlined
+              :rules="[
+                (v) => rules.isNotEmpty(v),
+                (v) => rules.isValidNsec(v) || rules.isValidHex(v) || 'Not a valid NSEC or HEX'
+              ]"
+              label="Enter your nsec or hex"
+              :disabled="isProcessing"
+              :type="nsecVisible ? 'text' : 'password'"
+              :append-icon="nsecVisible ? 'mdi-eye' : 'mdi-eye-off'"
+              @click:append="toggleNsecVisibility"
+            >
+            </v-text-field>
+          </v-row>
+          <v-row class="mx-4">
             <v-text-field
               v-model="password"
               outlined
@@ -29,13 +45,27 @@
             >
             </v-text-field>
           </v-row>
+          <v-row class="mx-4">
+            <v-text-field
+              v-model="confirmation"
+              outlined
+              label="Password confirmation"
+              type="password"
+              :disabled="isProcessing"
+              :rules="[
+                v => !!v || 'You must confirm your password',
+                v => v === password || 'Your confirmation must match the password'
+              ]"
+            >
+            </v-text-field>
+          </v-row>
           <v-row class="mx-4 mb-5">
             <v-btn
               color="primary"
-              :disabled="!validPassword || isProcessing"
-              @click="onPassword"
+              :disabled="!validSecret || !validPassword || !validConfirmation || isProcessing"
+              @click="onPrivateKeyConfirmed"
             >
-              Enter
+              Confirm
             </v-btn>
           </v-row>
         </v-tab-item>
@@ -57,10 +87,10 @@
 
 <script lang="ts">
 import Vue from 'vue'
-import { mapState } from 'vuex'
 import secretValidator from '~/mixins/secret-validator'
 import crypto from '~/mixins/crypto'
 import * as CryptoJS from 'crypto-js'
+import { ENCRYPTED_PRIVATE_KEY } from '~/store/types'
 
 // Minimum password length
 const MIN_PASSWORD_LENGTH = 10
@@ -71,27 +101,35 @@ export default Vue.extend({
       MIN_PASSWORD_LENGTH,
       showDialog: false,
       tab: null,
-      password: '',
+      nsec: 'nsec1uzf89mphzk3cjknqrwetcst93f7hzstx8kxt5um2p50jhh35uqes48pjxy',
+      nsecVisible: false,
+      password: 'pppppppppp',
+      confirmation: 'pppppppppp',
+      worker: null,
       isProcessing: false
     }
   },
   mixins: [secretValidator, crypto],
   methods: {
-    async onPassword() {
+    toggleNsecVisibility() {
+      this.nsecVisible = !this.nsecVisible
+    },
+    async onPrivateKeyConfirmed() {
       this.isProcessing = true
       try {
-        const salt = Buffer.from(this.encryptedPrivateKey.salt, 'base64')
-        const ciphertext = this.encryptedPrivateKey.ciphertext
+        // @ts-ignore
+        const salt = this.generateSalt()
         // @ts-ignore
         const key = await this.deriveKey(this.password, salt, ['encrypt', 'decrypt'])
         let rawKey = await window.crypto.subtle.exportKey('raw', key)
         let rawKeyBytes = Buffer.from(rawKey)
         let base64Key = rawKeyBytes.toString('base64')
-        console.log('Decrypting with key: ', base64Key)
-        const plaintext = CryptoJS.AES.decrypt(ciphertext, base64Key).toString()
-        const nsec = Buffer.from(plaintext, 'hex').toString('utf8')
-        this.$store.dispatch('auth/setKey', { nsec })
-        this.showDialog = false
+        const ciphertext = CryptoJS.AES.encrypt(this.nsec, base64Key).toString()
+        localStorage.setItem(
+          ENCRYPTED_PRIVATE_KEY,
+          JSON.stringify({ ciphertext, salt: salt.toString('base64') })
+        )
+        this.$store.dispatch('auth/setKey', { nsec: this.nsec })
       } catch(err) {
         console.error('Error while generating encryption key. Err: ', err)
       } finally {
@@ -104,10 +142,17 @@ export default Vue.extend({
       // @ts-ignore
       return window && window.nostr
     },
+    validSecret() {
+      const v = this.nsec
+      // @ts-ignore
+      return this.rules.isNotEmpty(v) && this.rules.isValidNsec(v) || this.rules.isValidHex(v)
+    },
     validPassword() {
       return this.password && this.password.length >= this.MIN_PASSWORD_LENGTH
     },
-    ...mapState('auth', ['encryptedPrivateKey'])
+    validConfirmation() {
+      return this.confirmation && this.confirmation === this.password
+    }
   }
 })
 </script>

@@ -186,6 +186,7 @@ export enum OrderPricingMode {
 
 export const USER_ORDERS_KEY = 'user-orders-key'
 export const DISMISSED_NOTIFICATION_KEY = 'dismissed-notification-key'
+export const ENCRYPTED_PRIVATE_KEY = 'encrypted-private-key'
 
 export interface OrderState {
   orders: Map<string, Order>,
@@ -226,4 +227,9 @@ export interface ScheduledOrderUpdatePayload {
   orderId: string,
   eventId: string,
   toUpdate: object
+}
+
+export interface EncryptedPrivateKey {
+  ciphertext: string,
+  salt: string
 }
