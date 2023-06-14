@@ -1,5 +1,6 @@
 <template>
   <v-dialog v-model="showDialog" width="500">
+    <v-progress-linear v-if="isProcessing" indeterminate/>
     <template v-slot:activator="{ on, attrs}">
       <v-btn v-on="on" v-bind="attrs" outlined class="mt-4">
         <KeyIcon class="mr-3"/>
@@ -23,6 +24,7 @@
                 (v) => rules.isValidNsec(v) || rules.isValidHex(v) || 'Not a valid NSEC or HEX'
               ]"
               label="Enter your nsec or hex"
+              :disabled="isProcessing"
               :type="nsecVisible ? 'text' : 'password'"
               :append-icon="nsecVisible ? 'mdi-eye' : 'mdi-eye-off'"
               @click:append="toggleNsecVisibility"
@@ -35,6 +37,7 @@
               outlined
               label="Password"
               type="password"
+              :disabled="isProcessing"
               :rules="[
                 v => !!v || 'You need a password',
                 v => validPassword || `Your password cannot be shorter than ${MIN_PASSWORD_LENGTH}`
@@ -48,6 +51,7 @@
               outlined
               label="Password confirmation"
               type="password"
+              :disabled="isProcessing"
               :rules="[
                 v => !!v || 'You must confirm your password',
                 v => v === password || 'Your confirmation must match the password'
@@ -58,7 +62,7 @@
           <v-row class="mx-4 mb-5">
             <v-btn
               color="primary"
-              :disabled="!validSecret || !validPassword || !validConfirmation"
+              :disabled="!validSecret || !validPassword || !validConfirmation || isProcessing"
               @click="onPrivateKeyConfirmed"
             >
               Confirm
@@ -97,7 +101,9 @@ export default Vue.extend({
       nsec: '',
       nsecVisible: false,
       password: '',
-      confirmation: ''
+      confirmation: '',
+      worker: null,
+      isProcessing: false
     }
   },
   mixins: [secretValidator],
@@ -106,7 +112,16 @@ export default Vue.extend({
       this.nsecVisible = !this.nsecVisible
     },
     onPrivateKeyConfirmed() {
-
+      this.isProcessing = true
+      // @ts-ignore
+      // Instruction assigned in web-worker plugin
+      const worker = this.$worker.createWorker()
+      worker.postMessage({ password: this.password })
+      worker.addEventListener('message', (event: any) => {
+        this.isProcessing = false
+        const { hash } = event.data
+        // TODO: use hash to encrypt nsec
+      })
     }
   },
   computed: {
