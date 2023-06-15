@@ -1,31 +1,57 @@
+import { Store } from 'vuex'
 import { RelayPool }  from 'nostr'
-import { Order, SmallOrder } from '../store/types'
+import { Order, SmallOrder, RootState } from '../store/types'
 
 type MostroOptions = {
   mostroPubKey: string,
-  secretKey: string,
   relays: string[]
   store: any
 }
 
 class Mostro {
+  _secretKey: string | undefined
   pool: any
   mostro: string
-  secretKey: string
+  relays: string[]
   store: any
   orderMap: Map<string, string> // Maps order id -> event id
+  sub_id: string
   constructor(opts: MostroOptions) {
-    this.pool = RelayPool(opts.relays)
+    this.relays = opts.relays
     this.mostro = opts.mostroPubKey
-    this.secretKey = opts.secretKey
     this.store = opts.store
     this.orderMap = new Map<string, string>
-    this.init()
+    this.sub_id = this.generateRandomSubId()
+  }
+
+  get secretKey(): string | undefined {
+    return this._secretKey
+  }
+
+  set secretKey(value: string) {
+    this._secretKey = value
+    if (!value) {
+      // We'll issue unsubscribe notices to all relays and close the
+      // connection CONNECTION_CLOSE_TIMEOUT milliseconds later.
+      const CONNECTION_CLOSE_TIMEOUT =  800
+      this.pool.unsubscribe(this.sub_id)
+      setTimeout(() => this.pool.close(), CONNECTION_CLOSE_TIMEOUT)
+    } else {
+      this.init()
+    }
+  }
+
+  private generateRandomSubId() {
+    const RANDOM_CHAR_COUNT = 15
+    // This will generate a subscription id of the form `mostro-xxx...xxx`
+    return 'mostro-'+[...Array(RANDOM_CHAR_COUNT)]
+      .map(() => Math.random().toString(36)[2]).join('')
   }
 
   init() {
+    this.pool = RelayPool(this.relays)
     this.pool.on('open', (relay: any) => {
-      relay.subscribe('mostro', {limit: 100, kinds:[4, 30000]})
+      relay.subscribe(this.sub_id, {limit: 100, kinds:[4, 30000]})
     })
     this.pool.on('close', (relay: any) => {
       relay.close()
@@ -247,8 +273,15 @@ class Mostro {
     return nip19.npubEncode(getPublicKey(decodedSecretKey))
   }
 }
-
-export default ( { env, store }: any, inject: Function) => {
+export default ( { env, store }: { store: Store<RootState>, env: any }, inject: Function) => {
+  // Watching store for changes in the nsec
+  store.subscribe((mutation) => {
+    if (mutation.type.startsWith('auth')) {
+      if (mutation.type === 'auth/setKey') {
+        mostro.secretKey = mutation.payload
+      }
+    }
+  })
   const opts = {
     relays: env.RELAYS.split(','),
     mostroPubKey: env.MOSTRO_PUB_KEY,
