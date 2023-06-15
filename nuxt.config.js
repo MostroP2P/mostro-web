@@ -32,7 +32,7 @@ export default {
   plugins: [
     { src: '~/plugins/mostro.ts', mode: 'client'},
     { src: '~/plugins/vuex-persistence.ts', mode: 'client' },
-    { src: '~/plugins/nuxtClientInit.ts', mode: 'client' }
+    { src: '~/plugins/nuxt-client-init.ts', mode: 'client' }
   ],
 
   env: {
