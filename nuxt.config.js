@@ -32,7 +32,6 @@ export default {
   plugins: [
     { src: '~/plugins/mostro.ts', mode: 'client'},
     { src: '~/plugins/vuex-persistence.ts', mode: 'client' },
-    { src: '~/plugins/web-workers.js', mode: 'client' },
     { src: '~/plugins/nuxtClientInit.ts', mode: 'client' }
   ],
 
@@ -99,15 +98,5 @@ export default {
       'nostr-tools',
       '@noble/curves'
     ],
-    extend (config, ctx) {
-      if (ctx.isClient) {
-        config.module.rules.push({
-          test: /\.worker\.js$/,
-          loader: 'worker-loader',
-          exclude: /(node_modules)/,
-          options: { inline: 'no-fallback' }
-        })
-      }
-     }
   }
 }
