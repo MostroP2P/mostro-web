@@ -37,7 +37,7 @@ export const actions = {
   },
   logout({ state, commit }: { state: AuthState, commit: Function}) {
     if (state.nsec) {
-      commit('setKey', null)
+      commit('setKey', undefined)
     }
   }
 }

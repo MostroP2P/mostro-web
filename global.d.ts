@@ -3,3 +3,4 @@ interface Window {
 }
 
 declare module 'qrcode.vue'
+declare module 'crypto-js'

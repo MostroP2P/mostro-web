@@ -43,7 +43,7 @@
           <v-row class="mx-4 my-5 d-flex justify-center">
             <v-btn
               color="primary"
-              :disabled="!hasAlby"
+              :disabled="!hasNIP07"
             >
               Request
             </v-btn>
@@ -61,11 +61,30 @@ import { mapState } from 'vuex'
 import secretValidator from '~/mixins/secret-validator'
 import crypto from '~/mixins/crypto'
 import * as CryptoJS from 'crypto-js'
+import { EncryptedPrivateKey } from '~/store/types'
 
 // Minimum password length
 const MIN_PASSWORD_LENGTH = 10
 
-export default Vue.extend({
+interface Data {
+  MIN_PASSWORD_LENGTH: number,
+  showDialog: boolean,
+  tab: any,
+  password: string,
+  isProcessing: boolean
+}
+
+interface Methods {
+  onPassword: Function
+}
+
+interface Computed {
+  hasNIP07: Function,
+  validPassword: boolean,
+  encryptedPrivateKey: EncryptedPrivateKey
+}
+
+export default Vue.extend<Data, Methods, Computed>({
   data() {
     return {
       MIN_PASSWORD_LENGTH,
@@ -100,12 +119,12 @@ export default Vue.extend({
     }
   },
   computed: {
-    hasAlby() {
+    hasNIP07() {
       // @ts-ignore
       return window && window.nostr
     },
     validPassword() {
-      return this.password && this.password.length >= this.MIN_PASSWORD_LENGTH
+      return this.password !== '' && this.password.length >= this.MIN_PASSWORD_LENGTH
     },
     ...mapState('auth', ['encryptedPrivateKey'])
   }

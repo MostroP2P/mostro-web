@@ -28,7 +28,7 @@ class Mostro {
     return this._secretKey
   }
 
-  set secretKey(value: string) {
+  set secretKey(value: string | undefined) {
     this._secretKey = value
     if (!value) {
       // We'll issue unsubscribe notices to all relays and close the

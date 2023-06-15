@@ -49,7 +49,7 @@ export default Vue.extend<Data, Methods, Computed>({
       return this.encryptedPrivateKey !== null && this.encryptedPrivateKey !== undefined
     },
     hasDecryptedKey(): boolean {
-      return this.nsec !== '' && this.nsec !== null
+      return !!this.nsec
     }
   }
 })
