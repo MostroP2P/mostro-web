@@ -63,17 +63,17 @@ export class ExtensionSigner extends BaseSigner {
  */
 export class LocalSigner extends BaseSigner {
   _type = SignerType.LOCAL
-  _unlocked: boolean = false
+  _locked: boolean = true
   constructor(private store: Store<RootState>) {
     super()
   }
 
-  get unlocked() {
-    return this._unlocked
+  get locked() {
+    return this._locked
   }
 
-  set unlocked(value: boolean) {
-    this._unlocked = value
+  set locked(value: boolean) {
+    this._locked = value
   }
 
   getPublicKey() {
