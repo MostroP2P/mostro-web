@@ -62,7 +62,7 @@ import { mapState } from 'vuex'
 import * as CryptoJS from 'crypto-js'
 import secretValidator from '~/mixins/secret-validator'
 import crypto from '~/mixins/crypto'
-import nip07, { NIP07Mixin } from '~/mixins/nip-07'
+import nip07 from '~/mixins/nip-07'
 import { EncryptedPrivateKey } from '~/store/types'
 
 // Minimum password length
@@ -76,7 +76,7 @@ interface Data {
   isProcessing: boolean
 }
 
-interface Methods extends NIP07Mixin{
+interface Methods {
   onPassword: Function,
   onNip07: Function
 }

@@ -1,9 +1,5 @@
 import Vue from 'vue'
 
-export interface NIP07Mixin {
-  getPublicKey: Function
-}
-
 export default Vue.extend({
   methods: {
     getPublicKey() {
