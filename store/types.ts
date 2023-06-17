@@ -1,3 +1,5 @@
+import { AuthState } from "./auth"
+
 export type ThreadSummary = {
   orderId: string,
   order: Order,
@@ -221,7 +223,7 @@ export interface RootState {
   notifications: {
     notifications: Notification[]
   }
-  // other modules...
+  auth: AuthState
 }
 export interface ScheduledOrderUpdatePayload {
   orderId: string,
