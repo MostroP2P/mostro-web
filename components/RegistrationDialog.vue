@@ -11,7 +11,7 @@
       <v-card-title>Registration method</v-card-title>
       <v-tabs v-model="tab">
         <v-tab>Nsec</v-tab>
-        <v-tab>Alby</v-tab>
+        <v-tab>NIP07</v-tab>
       </v-tabs>
       <v-tabs-items v-model="tab">
         <v-tab-item style="min-height: 5em">
@@ -73,7 +73,8 @@
           <v-row class="mx-4 my-5 d-flex justify-center">
             <v-btn
               color="primary"
-              :disabled="!hasAlby"
+              :disabled="!hasNIP07"
+              @click="onNip07"
             >
               Request
             </v-btn>
@@ -87,9 +88,10 @@
 
 <script lang="ts">
 import Vue from 'vue'
+import * as CryptoJS from 'crypto-js'
 import secretValidator from '~/mixins/secret-validator'
 import crypto from '~/mixins/crypto'
-import * as CryptoJS from 'crypto-js'
+import nip07 from '~/mixins/nip-07'
 import { ENCRYPTED_PRIVATE_KEY } from '~/store/types'
 
 // Minimum password length
@@ -109,7 +111,7 @@ export default Vue.extend({
       isProcessing: false
     }
   },
-  mixins: [secretValidator, crypto],
+  mixins: [secretValidator, crypto, nip07],
   methods: {
     toggleNsecVisibility() {
       this.nsecVisible = !this.nsecVisible
@@ -135,10 +137,15 @@ export default Vue.extend({
       } finally {
         this.isProcessing = false
       }
+    },
+    onNip07() {
+      // @ts-ignore
+      const publicKey = this.getPublicKey()
+      console.log('public key: ', publicKey)
     }
   },
   computed: {
-    hasAlby() {
+    hasNIP07() {
       // @ts-ignore
       return window && window.nostr
     },

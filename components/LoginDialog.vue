@@ -11,7 +11,7 @@
       <v-card-title>Login method</v-card-title>
       <v-tabs v-model="tab">
         <v-tab>Nsec</v-tab>
-        <v-tab>Alby</v-tab>
+        <v-tab>NIP07</v-tab>
       </v-tabs>
       <v-tabs-items v-model="tab">
         <v-tab-item style="min-height: 5em">
@@ -44,6 +44,7 @@
             <v-btn
               color="primary"
               :disabled="!hasNIP07"
+              @click="onNip07"
             >
               Request
             </v-btn>
@@ -58,9 +59,10 @@
 <script lang="ts">
 import Vue from 'vue'
 import { mapState } from 'vuex'
+import * as CryptoJS from 'crypto-js'
 import secretValidator from '~/mixins/secret-validator'
 import crypto from '~/mixins/crypto'
-import * as CryptoJS from 'crypto-js'
+import nip07, { NIP07Mixin } from '~/mixins/nip-07'
 import { EncryptedPrivateKey } from '~/store/types'
 
 // Minimum password length
@@ -74,8 +76,9 @@ interface Data {
   isProcessing: boolean
 }
 
-interface Methods {
-  onPassword: Function
+interface Methods extends NIP07Mixin{
+  onPassword: Function,
+  onNip07: Function
 }
 
 interface Computed {
@@ -94,7 +97,7 @@ export default Vue.extend<Data, Methods, Computed>({
       isProcessing: false
     }
   },
-  mixins: [secretValidator, crypto],
+  mixins: [secretValidator, crypto, nip07],
   methods: {
     async onPassword() {
       this.isProcessing = true
@@ -116,6 +119,11 @@ export default Vue.extend<Data, Methods, Computed>({
       } finally {
         this.isProcessing = false
       }
+    },
+    onNip07() {
+      // @ts-ignore
+      const publicKey = this.getPublicKey()
+      console.log('public key: ', publicKey)
     }
   },
   computed: {
