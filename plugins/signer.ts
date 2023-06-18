@@ -49,11 +49,11 @@ export class ExtensionSigner extends BaseSigner {
   }
   encrypt?(pubkey: string, plaintext: string) {
     // @ts-ignore
-    return window.nostr.encrypt(pubkey, plaintext) as Promise<string>
+    return window.nostr.nip04.encrypt(pubkey, plaintext) as Promise<string>
   }
   decrypt?(pubkey: string, ciphertext: string) {
     // @ts-ignore
-    return window.nostr.decrypt(pubkey, plaintext) as Promise<string>
+    return window.nostr.nip04.decrypt(pubkey, ciphertext) as Promise<string>
   }
 }
 
@@ -97,11 +97,11 @@ export class LocalSigner extends BaseSigner {
   signEvent(event: any) {
     return new Promise((resolve, reject) => {
       try {
-        const { nip19, signEvent } = window.NostrTools
+        const { nip19, getSignature } = window.NostrTools
         const { nsec } = this.store.state.auth
         const secretHex = nip19.decode(nsec).data
-        event.sig = signEvent(event, secretHex)
-        resolve(event)  
+        event.sig = getSignature(event, secretHex)
+        resolve(event)
       } catch(err) {
         console.error('Error in LocalSigner. err: ', err)
         reject(err)

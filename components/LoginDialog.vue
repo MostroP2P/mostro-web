@@ -41,17 +41,21 @@
         </v-tab-item>
         <v-tab-item style="min-height: 5em">
           <v-row class="mx-4 my-5 d-flex justify-center">
+            <div class="body-2">
+              If you have a browser extension that supports the NIP-07 standard, you can use it to login.
+            </div>
+          </v-row>
+          <v-row class="mx-4 my-5 d-flex justify-center">
             <v-btn
               color="primary"
               :disabled="!hasNIP07"
               @click="onNip07"
             >
-              Request
+              Authorize
             </v-btn>
           </v-row>
         </v-tab-item>
       </v-tabs-items>
-
     </v-card>
   </v-dialog>
 </template>
@@ -64,6 +68,7 @@ import secretValidator from '~/mixins/secret-validator'
 import crypto from '~/mixins/crypto'
 import nip07 from '~/mixins/nip-07'
 import { EncryptedPrivateKey } from '~/store/types'
+import { AuthMethod } from '~/store/auth'
 
 // Minimum password length
 const MIN_PASSWORD_LENGTH = 10
@@ -109,10 +114,9 @@ export default Vue.extend<Data, Methods, Computed>({
         let rawKey = await window.crypto.subtle.exportKey('raw', key)
         let rawKeyBytes = Buffer.from(rawKey)
         let base64Key = rawKeyBytes.toString('base64')
-        console.log('Decrypting with key: ', base64Key)
         const plaintext = CryptoJS.AES.decrypt(ciphertext, base64Key).toString()
         const nsec = Buffer.from(plaintext, 'hex').toString('utf8')
-        this.$store.dispatch('auth/setKey', { nsec })
+        this.$store.dispatch('auth/login', { nsec, authMethod: AuthMethod.LOCAL })
         this.showDialog = false
       } catch(err) {
         console.error('Error while generating encryption key. Err: ', err)
@@ -120,10 +124,14 @@ export default Vue.extend<Data, Methods, Computed>({
         this.isProcessing = false
       }
     },
-    onNip07() {
+    async onNip07() {
       // @ts-ignore
-      const publicKey = this.getPublicKey()
-      console.log('public key: ', publicKey)
+      const publicKey = await this.getPublicKey()
+      this.$store.dispatch('auth/login', {
+        authMethod: AuthMethod.NIP07,
+        publicKey: publicKey
+      })
+      this.showDialog = false
     }
   },
   computed: {

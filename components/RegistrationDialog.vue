@@ -71,12 +71,17 @@
         </v-tab-item>
         <v-tab-item style="min-height: 5em">
           <v-row class="mx-4 my-5 d-flex justify-center">
+            <div class="body-2">
+              If you have a browser extension that supports the NIP-07 standard, you can use it to login.
+            </div>
+          </v-row>
+          <v-row class="mx-4 my-5 d-flex justify-center">
             <v-btn
               color="primary"
               :disabled="!hasNIP07"
               @click="onNip07"
             >
-              Request
+              Authorize
             </v-btn>
           </v-row>
         </v-tab-item>
@@ -93,6 +98,7 @@ import secretValidator from '~/mixins/secret-validator'
 import crypto from '~/mixins/crypto'
 import nip07 from '~/mixins/nip-07'
 import { ENCRYPTED_PRIVATE_KEY } from '~/store/types'
+import { AuthMethod } from '~/store/auth'
 
 // Minimum password length
 const MIN_PASSWORD_LENGTH = 10
@@ -103,10 +109,10 @@ export default Vue.extend({
       MIN_PASSWORD_LENGTH,
       showDialog: false,
       tab: null,
-      nsec: 'nsec1uzf89mphzk3cjknqrwetcst93f7hzstx8kxt5um2p50jhh35uqes48pjxy',
+      nsec: '',
       nsecVisible: false,
-      password: 'pppppppppp',
-      confirmation: 'pppppppppp',
+      password: '',
+      confirmation: '',
       worker: null,
       isProcessing: false
     }
@@ -138,10 +144,14 @@ export default Vue.extend({
         this.isProcessing = false
       }
     },
-    onNip07() {
+    async onNip07() {
       // @ts-ignore
-      const publicKey = this.getPublicKey()
-      console.log('public key: ', publicKey)
+      const publicKey = await this.getPublicKey()
+      this.$store.dispatch('auth/login', {
+        authMethod: AuthMethod.NIP07,
+        publicKey: publicKey
+      })
+      this.showDialog = false
     }
   },
   computed: {

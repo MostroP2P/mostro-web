@@ -1,7 +1,15 @@
 <template>
   <v-dialog v-model="showDialog" width="600">
     <template v-slot:activator="{on, attrs}">
-      <v-btn fab absolute right bottom color="accent" class="mb-5 mr-5" v-bind="attrs" v-on="on">
+      <v-btn
+        fab
+        absolute
+        right
+        bottom
+        :disabled="isLocked"
+        color="accent"
+        class="mb-5 mr-5"
+        v-bind="attrs" v-on="on">
         <v-icon>mdi-plus</v-icon>
       </v-btn>
     </template>
@@ -39,6 +47,7 @@
 </template>
 <script lang="ts">
 import Vue from 'vue'
+import { mapGetters } from 'vuex'
 export default Vue.extend({
   data() {
     return {
@@ -51,6 +60,9 @@ export default Vue.extend({
     onProcessingUpdate(processing: boolean) {
       this.isProcessing = processing
     }
+  },
+  computed: {
+    ...mapGetters('auth', ['isLocked'])
   }
 })
 </script>

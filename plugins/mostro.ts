@@ -1,6 +1,7 @@
 import { Store } from 'vuex'
 import { RelayPool }  from 'nostr'
 import { Order, SmallOrder, RootState } from '../store/types'
+import { BaseSigner, ExtensionSigner, LocalSigner } from './signer'
 
 type MostroOptions = {
   mostroPubKey: string,
@@ -8,14 +9,20 @@ type MostroOptions = {
   store: any
 }
 
+type PublicKeyCache = {
+  npub: null | string,
+  hex: null | string
+}
+
 class Mostro {
-  _secretKey: string | undefined
+  _signer: BaseSigner | undefined
   pool: any
   mostro: string
   relays: string[]
   store: any
   orderMap: Map<string, string> // Maps order id -> event id
   sub_id: string
+  pubkeyCache: PublicKeyCache = { npub: null, hex: null }
   constructor(opts: MostroOptions) {
     this.relays = opts.relays
     this.mostro = opts.mostroPubKey
@@ -24,21 +31,38 @@ class Mostro {
     this.sub_id = this.generateRandomSubId()
   }
 
-  get secretKey(): string | undefined {
-    return this._secretKey
+  public set signer(signer: BaseSigner | undefined) {
+    this._signer = signer
+    if (this._signer) {
+      this._signer.getPublicKey()
+        .then((publicKey: string) => {
+          const { nip19 } = window.NostrTools
+          const npub = nip19.npubEncode(publicKey)
+          this.pubkeyCache = {
+            hex: publicKey,
+            npub
+          }
+        })
+        .catch(err => console.error('Error while getting public key from signer. err: ', err))
+    }
   }
 
-  set secretKey(value: string | undefined) {
-    this._secretKey = value
-    if (!value) {
-      // We'll issue unsubscribe notices to all relays and close the
-      // connection CONNECTION_CLOSE_TIMEOUT milliseconds later.
-      const CONNECTION_CLOSE_TIMEOUT =  800
-      this.pool.unsubscribe(this.sub_id)
-      setTimeout(() => this.pool.close(), CONNECTION_CLOSE_TIMEOUT)
-    } else {
-      this.init()
+  public get signer() : BaseSigner | undefined {
+    return this._signer
+  }
+
+  lock() {
+    if (this.signer instanceof LocalSigner) {
+      this.signer.locked = true
     }
+  }
+
+  close() {
+    // We'll issue unsubscribe notices to all relays and close the
+    // connection CONNECTION_CLOSE_TIMEOUT milliseconds later.
+    const CONNECTION_CLOSE_TIMEOUT =  800
+    this.pool.unsubscribe(this.sub_id)
+    setTimeout(() => this.pool.close(), CONNECTION_CLOSE_TIMEOUT)
   }
 
   private generateRandomSubId() {
@@ -57,6 +81,10 @@ class Mostro {
       relay.close()
     })
     this.pool.on('event', async (relay: any, sub_id: any, ev: any) => {
+      if (!this.signer) {
+        console.warn('dropping event due to lack of signer')
+        return
+      }
       let { kind } = ev
       if (kind === 30000) {
         // Order
@@ -78,13 +106,12 @@ class Mostro {
         // console.debug(`> DM. ev: `, ev)
         // @ts-ignore
         let recipient = ev.tags.find(([k, v]) => k === 'p' && v && v !== '')[1]
-        const { nip04, nip19, getPublicKey } = window.NostrTools
-        const mySecretKey = nip19.decode(this.secretKey).data
-        const myPubKey = getPublicKey(mySecretKey)
+        const { nip19 } = window.NostrTools
         const mostroPubKey = nip19.decode(this.mostro).data
+        const myPubKey = this.pubkeyCache.hex
         if (myPubKey === recipient) {
           try {
-            const plaintext = await nip04.decrypt(mySecretKey, ev.pubkey, ev.content)
+            const plaintext = await this.signer!.decrypt!(ev.pubkey, ev.content)
             if (ev.pubkey === mostroPubKey) {
               console.log('< Mostro DM: ', plaintext, ', ev: ', ev)
               const msg = { ...JSON.parse(plaintext), created_at: ev.created_at }
@@ -108,7 +135,7 @@ class Mostro {
           if (recipient !== mostroPubKey) {
             // This is a DM I created for a conversation
             try {
-              const plaintext = await nip04.decrypt(mySecretKey, recipient, ev.content)
+              const plaintext = await this.signer!.decrypt!(ev.pubkey, ev.content)
               const peerNpub = nip19.npubEncode(recipient)
               this.store.dispatch('messages/addPeerMessage', {
                 id: ev.id,
@@ -132,35 +159,28 @@ class Mostro {
   }
 
   async createEvent(payload: object) {
-    const { nip04, nip19, getPublicKey, getEventHash, signEvent } = window.NostrTools
-    const secretKey = nip19.decode(this.secretKey).data
+    const { nip19, getEventHash } = window.NostrTools
     const publicKey = nip19.decode(this.mostro).data
-    const ciphertext = await nip04.encrypt(secretKey, publicKey, JSON.stringify(payload))
+    const ciphertext = await this.signer!.encrypt!(publicKey, JSON.stringify(payload))
+    const myPubKey = this.pubkeyCache.hex
     let event = {
       id: undefined,
       sig: undefined,
       kind: 4,
       created_at: Math.floor(Date.now() / 1000),
       content: ciphertext,
-      pubkey: getPublicKey(secretKey),
+      pubkey: myPubKey,
       tags: [ ['p', publicKey] ]
     }
     event.id = getEventHash(event)
-    event.sig = signEvent(event, secretKey)
-    console.log('> ', event)
+    event = await this.signer?.signEvent(event)
     return ['EVENT', event]
   }
 
   getLocalKeys() {
-    const { nip19, getPublicKey } = window.NostrTools
-    const mySecretKey = nip19.decode(this.secretKey).data
-    const myPublicKey = getPublicKey(mySecretKey)
-    const npub = nip19.npubEncode(myPublicKey)
     return {
-      nsec: this.secretKey,
-      npub: npub,
-      secret: mySecretKey,
-      public: myPublicKey
+      npub: this.pubkeyCache.npub,
+      public: this.pubkeyCache.hex
     }
   }
 
@@ -244,17 +264,17 @@ class Mostro {
     await this.pool.send(event)
   }
   async submitDirectMessage(message: string, npub: string, replyTo: string) {
-    const { nip04, nip19, getPublicKey, getEventHash, signEvent } = window.NostrTools
+    const { nip19, getEventHash } = window.NostrTools
     const destinationPubKey = nip19.decode(npub).data
-    const mySecretKey = nip19.decode(this.secretKey).data
-    const ciphertext = await nip04.encrypt(mySecretKey, destinationPubKey, message)
+    const myPublicKey = await this.signer?.getPublicKey()
+    const ciphertext = await this.signer?.encrypt!(destinationPubKey, message)
     let event = {
       id: undefined,
       sig: undefined,
       kind: 4,
       created_at: Math.floor(Date.now() / 1000),
       content: ciphertext,
-      pubkey: getPublicKey(mySecretKey),
+      pubkey: myPublicKey,
       tags: [
         ['p', destinationPubKey],
       ]
@@ -263,22 +283,42 @@ class Mostro {
       event.tags.push(['e', replyTo, '', 'reply'])
     }
     event.id = getEventHash(event)
-    event.sig = signEvent(event, mySecretKey)
+    event.sig = await this.signer?.signEvent(event)
     await this.pool.send(['EVENT', event])
   }
 
   getNpub() {
-    const { getPublicKey, nip19 } = window.NostrTools
-    const decodedSecretKey = nip19.decode(this.secretKey).data
-    return nip19.npubEncode(getPublicKey(decodedSecretKey))
+    return this.pubkeyCache.npub
   }
 }
 export default ( { env, store }: { store: Store<RootState>, env: any }, inject: Function) => {
   // Watching store for changes in the nsec
   store.subscribe((mutation) => {
     if (mutation.type.startsWith('auth')) {
-      if (mutation.type === 'auth/setKey') {
-        mostro.secretKey = mutation.payload
+      if (mutation.type === 'auth/setPrivateKey') {
+        // mostro.secretKey = mutation.payload
+        if (!mutation.payload) {
+          mostro.close()
+          mostro.lock()
+        } else {
+          mostro.signer = new LocalSigner(store)
+          mostro.init()
+        }
+      }
+      if (mutation.type === 'auth/setPublicKey') {
+        if (!mutation.payload) {
+          mostro.close()
+          mostro.lock()
+        } else {
+          const { nip19 } = window.NostrTools
+          console.log('>> mutation.payload: ', mutation.payload)
+          mostro.pubkeyCache = {
+            hex: mutation.payload,
+            npub: nip19.npubEncode(mutation.payload)
+          }
+          mostro.signer = new ExtensionSigner()
+          mostro.init()
+        }
       }
     }
   })
