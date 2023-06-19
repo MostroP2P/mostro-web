@@ -29,28 +29,50 @@ export abstract class BaseSigner {
   }
 }
 
+let sharedLock = Promise.resolve()
+
+function Locked(target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+  const originalMethod = descriptor.value
+
+  descriptor.value = function (...args: any[]) {
+    sharedLock = sharedLock
+      .then(() => {
+        return originalMethod.apply(this, args)
+      })
+
+    return sharedLock
+  }
+
+  return descriptor
+}
+
 /**
  * Browser extension implementing NIP-07
  */
 export class ExtensionSigner extends BaseSigner {
   protected _type = SignerType.NIP07
 
+  @Locked
   getPublicKey() {
     // @ts-ignore
     return window.nostr.getPublicKey()
   }
+  @Locked
   signEvent(e: any) {
     // @ts-ignore
     return window.nostr.signEvent(e)
   }
+  @Locked
   getRelays?(): Promise<Relays> {
     // @ts-ignore
     return window.nostr.getRelays() as Promise<Relays>
   }
+  @Locked
   encrypt?(pubkey: string, plaintext: string) {
     // @ts-ignore
     return window.nostr.nip04.encrypt(pubkey, plaintext) as Promise<string>
   }
+  @Locked
   decrypt?(pubkey: string, ciphertext: string) {
     // @ts-ignore
     return window.nostr.nip04.decrypt(pubkey, ciphertext) as Promise<string>

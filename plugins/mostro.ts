@@ -103,7 +103,7 @@ class Mostro {
         }
       } else if (kind === 4) {
         // DM
-        // console.debug(`> DM. ev: `, ev)
+        console.debug(`< DM. ev: `, ev)
         // @ts-ignore
         let recipient = ev.tags.find(([k, v]) => k === 'p' && v && v !== '')[1]
         const { nip19 } = window.NostrTools
@@ -311,7 +311,6 @@ export default ( { env, store }: { store: Store<RootState>, env: any }, inject: 
           mostro.lock()
         } else {
           const { nip19 } = window.NostrTools
-          console.log('>> mutation.payload: ', mutation.payload)
           mostro.pubkeyCache = {
             hex: mutation.payload,
             npub: nip19.npubEncode(mutation.payload)
