@@ -31,7 +31,8 @@ export default {
   // Plugins to run before rendering page: https://go.nuxtjs.dev/config-plugins
   plugins: [
     { src: '~/plugins/mostro.ts', mode: 'client'},
-    { src: '~/plugins/vuex-persistence.ts', mode: 'client' }
+    { src: '~/plugins/vuex-persistence.ts', mode: 'client' },
+    { src: '~/plugins/nuxt-client-init.ts', mode: 'client' }
   ],
 
   env: {
@@ -96,6 +97,6 @@ export default {
     transpile: [
       'nostr-tools',
       '@noble/curves'
-    ]
+    ],
   }
 }
