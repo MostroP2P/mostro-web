@@ -138,6 +138,10 @@ export default Vue.extend({
           JSON.stringify({ ciphertext, salt: salt.toString('base64') })
         )
         this.$store.dispatch('auth/setKey', { nsec: this.nsec })
+        this.$store.dispatch('auth/login', {
+          nsec: this.nsec,
+          authMethod: AuthMethod.LOCAL
+        })
       } catch(err) {
         console.error('Error while generating encryption key. Err: ', err)
       } finally {

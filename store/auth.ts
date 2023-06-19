@@ -55,11 +55,11 @@ export const actions = {
     commit('setEncryptedPrivateKey', encryptedPrivateKey)
   },
   logout({ state, commit }: { state: AuthState, commit: Function}) {
+    commit('setAuthMethod', AuthMethod.NOT_SET)
     if (state.nsec) {
       commit('setPrivateKey', undefined)
     }
     if (state.authMethod === AuthMethod.NIP07) {
-      commit('setAuthMethod', AuthMethod.NOT_SET)
       commit('setPublicKey', null)
     }
   }

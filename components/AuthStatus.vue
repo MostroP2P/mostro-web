@@ -6,7 +6,7 @@
       </v-icon>
     </v-avatar>
     <client-only>
-      <div v-if="!hasDecryptedKey">
+      <div v-if="!isLoggedIn">
         <registration-dialog v-if="!hasEncryptedKey"/>
         <login-dialog v-if="hasEncryptedKey"/>
       </div>
@@ -22,14 +22,15 @@ import Vue from 'vue'
 import { mapState } from 'vuex'
 import { EncryptedPrivateKey } from '~/store/types'
 import RegistrationDialog from './RegistrationDialog.vue'
+import { AuthMethod } from '~/store/auth'
 
 interface Data {}
 
 interface Computed {
-  nsec: string | null
   encryptedPrivateKey: EncryptedPrivateKey,
   hasEncryptedKey: boolean,
-  hasDecryptedKey: boolean
+  authMethod: AuthMethod,
+  isLoggedIn: boolean
 }
 
 interface Methods {
@@ -44,12 +45,12 @@ export default Vue.extend<Data, Methods, Computed>({
     }
   },
   computed: {
-    ...mapState('auth', ['nsec', 'encryptedPrivateKey']),
+    ...mapState('auth', ['encryptedPrivateKey', 'authMethod']),
     hasEncryptedKey(): boolean {
       return this.encryptedPrivateKey !== null && this.encryptedPrivateKey !== undefined
     },
-    hasDecryptedKey(): boolean {
-      return !!this.nsec
+    isLoggedIn(): boolean {
+      return this.authMethod !== AuthMethod.NOT_SET
     }
   }
 })
