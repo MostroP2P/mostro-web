@@ -296,7 +296,6 @@ export default ( { env, store }: { store: Store<RootState>, env: any }, inject: 
   store.subscribe((mutation) => {
     if (mutation.type.startsWith('auth')) {
       if (mutation.type === 'auth/setPrivateKey') {
-        // mostro.secretKey = mutation.payload
         if (!mutation.payload) {
           mostro.close()
           mostro.lock()
@@ -324,7 +323,6 @@ export default ( { env, store }: { store: Store<RootState>, env: any }, inject: 
   const opts = {
     relays: env.RELAYS.split(','),
     mostroPubKey: env.MOSTRO_PUB_KEY,
-    secretKey: env.SECRET_KEY,
     store: store
   }
   const mostro = new Mostro(opts)
