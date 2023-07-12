@@ -45,7 +45,6 @@
 </template>
 <script lang="ts" setup>
 import { computed } from 'vue'
-import { mapStores } from 'pinia'
 import { useAuth } from '@/stores/auth'
 const authStore = useAuth()
 const isLocked = computed(() => authStore.isLocked)
