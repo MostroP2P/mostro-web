@@ -37,8 +37,9 @@ import { mapState } from 'pinia'
 import { useMessages } from '~/stores/messages'
 import * as timeago from 'timeago.js'
 import textMessage from '~/mixins/text-message'
+import mobileDetector from '~/mixins/mobile-detector'
 export default defineComponent({
-  mixins: [ textMessage ],
+  mixins: [ textMessage, mobileDetector ],
   data() {
     return { timeago }
   },
