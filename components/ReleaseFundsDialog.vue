@@ -1,7 +1,7 @@
 <template>
   <v-dialog v-model="showDialog" width="500">
-    <template v-slot:activator="{ on, attrs}">
-      <v-btn text color="accent" v-on="on" v-bind="attrs">
+    <template v-slot:activator="{ props }">
+      <v-btn text color="accent" v-bind="props">
         <v-icon left>fa-regular fa-dove</v-icon>
         Release
       </v-btn>
@@ -36,10 +36,10 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
-import { mapState } from 'vuex'
-import { Order } from '~/store/types'
-export default Vue.extend({
+import { mapState } from 'pinia'
+import { useOrders } from '~/stores/orders'
+import { Order } from '~/stores/types'
+export default {
   data() {
     return {
       showDialog: false
@@ -53,14 +53,18 @@ export default Vue.extend({
   },
   methods: {
     async release() {
-      const order: Order = this.orders.get(this.orderId)
-      // @ts-ignore
-      await this.$mostro.release(order)
+      const order: Order = this.orders[this.orderId]
+      if (order) {
+        // @ts-ignore
+        await this.$mostro.release(order)
+      } else {
+        console.warn('Order not found: ', this.orderId)
+      }
       this.showDialog = false
     }
   },
   computed: {
-    ...mapState('orders', ['orders']),
+    ...mapState(useOrders, ['orders']),
   }
-})
+}
 </script>

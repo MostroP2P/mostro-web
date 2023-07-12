@@ -6,29 +6,28 @@
           three-line
           link
         >
-          <v-list-item-content>
-            <v-list-item-title class="d-flex justify-space-between">
-              {{ order.fiat_amount }} {{ order.fiat_code.toUpperCase() }} {{ getFlag(order.fiat_code) }}
-              <v-chip
-                style="cursor: pointer"
-                outlined
-                :color="order.kind === 'Sell' ? 'red' : 'green'"
-                small
-              >
-                {{ order.kind.toUpperCase() }}
-              </v-chip>
-            </v-list-item-title>
-            <v-list-item-subtitle>
-              {{ summary(order) }}
-            </v-list-item-subtitle>
-            <v-list-item-subtitle>
-              <div class="d-flex justify-space-between">
-                Payment via: {{ order.payment_method }}
-                <take-sell-order-dialog v-if="showTakeSell(order)" :order="order"/>
-                <take-buy-order-dialog v-if="showTakeBuy(order)" :order="order"/>
-              </div>
-            </v-list-item-subtitle>
-          </v-list-item-content>
+          <v-list-item-title class="d-flex justify-space-between">
+            {{ order.fiat_amount }} {{ order.fiat_code.toUpperCase() }} {{ getFlag(order.fiat_code) }}
+            <v-chip
+              class="ma-2"
+              rounded
+              size="small"
+              style="cursor: pointer"
+              :color="order.kind === 'Sell' ? 'red' : 'green'"
+            >
+              {{ order.kind.toUpperCase() }}
+            </v-chip>
+          </v-list-item-title>
+          <v-list-item-subtitle>
+            {{ summary(order) }}
+          </v-list-item-subtitle>
+          <v-list-item-subtitle>
+            <div class="d-flex justify-space-between">
+              Payment via: {{ order.payment_method }}
+              <take-sell-order-dialog v-if="showTakeSell(order)" :order="order"/>
+              <take-buy-order-dialog v-if="showTakeBuy(order)" :order="order"/>
+            </div>
+          </v-list-item-subtitle>
         </v-list-item>
         <v-divider/>
       </div>
@@ -37,23 +36,45 @@
   </v-card>
 </template>
 
-<script lang="ts">
-import Vue from 'vue'
-import { mapGetters } from 'vuex'
-import { Order, OrderType } from '../store/types'
+<script lang="ts" setup>
+import { computed, ref } from 'vue'
+import { useOrders } from '@/stores/orders'
 // @ts-ignore
 import fiat from '~/assets/fiat.json'
 
-export default Vue.extend({
+type FiatData = {
+  symbol: string,
+  name: string,
+  symbol_native: string,
+  decimal_digits: number,
+  rounding: number,
+  code: string,
+  emoji: string
+  name_plural: string,
+  price: boolean
+}
+
+const ordersStore = useOrders()
+const fiatMap = ref(fiat)
+
+const getPendingOrders = computed(() => ordersStore.getPendingOrders)
+</script>
+
+
+<script lang="ts">
+import { defineComponent } from 'vue'
+import { Order, OrderType } from '@/stores/types'
+
+export default defineComponent({
   data() {
     return {
-      fiatMap: fiat,
+      fiatMap: fiat as { [key: string]: Partial<FiatData> },
       headerHeight: 64
     }
   },
   methods: {
     getFlag(fiatCode: string) {
-      return this.fiatMap[fiatCode?.toUpperCase()]?.emoji
+      return this.fiatMap[fiatCode?.toUpperCase()].emoji ?? ''
     },
     showTakeSell(order: Order) {
       return order.kind === OrderType.SELL
@@ -89,8 +110,5 @@ export default Vue.extend({
       }
     }
   },
-  computed: {
-    ...mapGetters('orders', ['getPendingOrders'])
-  }
 })
 </script>

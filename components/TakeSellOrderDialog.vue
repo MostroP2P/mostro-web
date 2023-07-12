@@ -1,7 +1,7 @@
 <template>
   <v-dialog width="500" v-model="showDialog">
-    <template v-slot:activator="{ on, attrs }">
-      <v-btn :disabled="order.is_mine" small text rounded v-bind="attrs" v-on="on">
+    <template v-slot:activator="{ props }">
+      <v-btn :disabled="order.is_mine" variant="outlined" v-bind="props">
         Take
       </v-btn>
     </template>
@@ -27,7 +27,7 @@
 import Vue from 'vue'
 import type { PropType } from 'vue'
 import { Order } from '~/store/types'
-export default Vue.extend({
+export default {
   data() {
     return {
       showDialog: false,
@@ -55,5 +55,5 @@ export default Vue.extend({
       }
     }
   }
-})
+}
 </script>

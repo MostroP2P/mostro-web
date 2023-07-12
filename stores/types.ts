@@ -1,4 +1,5 @@
-import { AuthState } from "./auth"
+import { reactive } from 'vue';
+import { AuthState } from './auth'
 
 export type ThreadSummary = {
   orderId: string,
@@ -191,11 +192,15 @@ export const DISMISSED_NOTIFICATION_KEY = 'dismissed-notification-key'
 export const ENCRYPTED_PRIVATE_KEY = 'encrypted-private-key'
 
 export interface OrderState {
-  orders: Map<string, Order>,
-  userOrders: OrderMapType
+  orders: typeof reactive<OrderMapType>,
+  userOrders: OrderOwnershipMapType
 }
 
 export type OrderMapType = {
+  [key: string]: Order
+}
+
+export type OrderOwnershipMapType = {
   [key: string]: boolean;
 }
 
@@ -228,7 +233,8 @@ export interface RootState {
 export interface ScheduledOrderUpdatePayload {
   orderId: string,
   eventId: string,
-  toUpdate: object
+  seller_pubkey?: string,
+  buyer_pubkey?: string
 }
 
 export interface EncryptedPrivateKey {

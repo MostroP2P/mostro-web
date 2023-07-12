@@ -1,36 +1,37 @@
 <template>
-  <div fluid class="h-100 d-flex flex-column">
+  <div fluid class="d-flex flex-column">
     <v-card
       class="overflow-y-auto"
-      max-height="490"
+      max-height="70vh"
       id="messages-container"
     >
-      <v-card-text ref="scrollingContent" v-if="peerMessages && peerMessages.length > 0">
-        <v-row v-for="(message, index) in peerMessages" :key="message.id">
-          <v-col
-            :class="message.sender === 'me' ? 'text-right' : 'text-left'"
-            cols="12"
-          >
-            <div class="text-caption mb-0 mx-2">{{ getMessageTime(message) }}</div>
-            <v-chip
-              :class="[
-                message.sender === 'me' ? 'primary' : 'secondary',
-                'white--text',
-                'px-4',
-                'py-2',
-                index === peerMessages.length - 1 ? 'last-peer-message' : ''
-              ]"
+      <div ref="scrollingContent">
+        <v-card-text v-if="peerMessages && peerMessages.length > 0">
+          <v-row v-for="(message, index) in peerMessages" :key="message.id">
+            <v-col
+              :class="message.sender === 'me' ? 'text-right' : 'text-left'"
+              cols="12"
             >
-              {{ message.text }}
-            </v-chip>
-          </v-col>
-        </v-row>
-      </v-card-text>
+              <div class="text-caption mb-0 mx-2">{{ getMessageTime(message) }}</div>
+              <v-chip
+                :class="[
+                  message.sender === 'me' ? 'primary' : 'secondary',
+                  'white--text',
+                  'px-4',
+                  'py-2',
+                  index === peerMessages.length - 1 ? 'last-peer-message' : ''
+                ]"
+              >
+                {{ message.text }}
+              </v-chip>
+            </v-col>
+          </v-row>
+        </v-card-text>
+      </div>
     </v-card>
     <div
       ref="inputContainer"
       class="input-container"
-      :style="{ height: `${inputContainerHeight}px` }"
     >
       <v-container fluid>
         <v-row>
@@ -55,17 +56,29 @@
 </template>
 
 <script lang="ts">
-import { mapGetters } from 'vuex'
-import * as timeago from 'timeago.js'
-import { PeerMessage } from '~/store/types'
+import { ref, onMounted, nextTick } from 'vue'
+import { mapState } from 'pinia'
+import { useMessages } from '~/stores/messages'
+import * as _timeago from 'timeago.js'
+import { PeerMessage } from '~/stores/types'
 
 export default {
-  data() {
-    return {
-      inputMessage: '',
-      inputContainerHeight: 0,
-      timeago
+  setup() {
+    const inputMessage = ref('')
+    const inputContainerHeight = ref(0)
+    const timeago = ref(_timeago)
+    const scrollingContent = ref<HTMLElement | null>(null)
+
+    const scrollToBottom = async () => {
+      await nextTick()
+      if (scrollingContent.value) {
+        scrollingContent.value.scrollIntoView({ behavior: 'smooth', block: 'end' })
+      }
     }
+
+    onMounted(scrollToBottom)
+
+    return { inputMessage, inputContainerHeight, timeago, scrollToBottom, scrollingContent }
   },
   methods: {
     async sendMessage() {
@@ -88,16 +101,6 @@ export default {
       // @ts-ignore
       return this.timeago.format(message.created_at * 1e3)
     },
-    scrollToBottom() {
-      // @ts-ignore
-      this.$nextTick(() => {
-        // @ts-ignore
-        if (this.$refs?.scrollingContent) {
-          // @ts-ignore
-          this.$refs.scrollingContent.scrollIntoView(false)
-        }
-      });
-    },
   },
   watch: {
     peerMessages: {
@@ -110,10 +113,10 @@ export default {
     }
   },
   computed: {
-    ...mapGetters('messages', ['getPeerMessagesByNpub']),
-    peerMessages() {
-      // @ts-ignore
-      const { npub } = this.$route.params
+    ...mapState(useMessages, ['getPeerMessagesByNpub']),
+    peerMessages() : PeerMessage[] {
+      const route = useRoute()
+      const { npub } = route.params
       // @ts-ignore
       return this.getPeerMessagesByNpub(npub)
     }
@@ -126,7 +129,7 @@ export default {
   background-color: white;
   width: 90%;
   position: absolute;
-  bottom: 80px;
+  bottom: 10px;
   z-index: 1;
 }
 </style>

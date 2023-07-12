@@ -1,5 +1,5 @@
 <template>
-  <v-list-item-content>
+  <div>
     <v-list-item-title class="d-flex justify-space-between">
       Sale Completed
       <div class="text-caption text--secondary">{{ timeago.format(creationDate) }}</div>
@@ -10,18 +10,18 @@
         <npub :npub="buyerPubkey"/>
       </p>
     </v-list-item-subtitle>
-  </v-list-item-content>
+  </div>
 </template>
 <script lang="ts">
-import Vue from 'vue'
 import type { PropType } from 'vue'
 import * as timeago from 'timeago.js'
 import textMessage from '~/mixins/text-message'
-import { MostroMessage } from '~/store/types'
-import { mapGetters } from 'vuex'
+import { MostroMessage } from '~/stores/types'
+import { useOrders } from '@/stores/orders'
 import NPub from '~/components/NPub.vue'
+import { mapState } from 'pinia'
 
-export default Vue.extend({
+export default {
   data() {
     return { timeago }
   },
@@ -41,7 +41,7 @@ export default Vue.extend({
     }
   },
   computed: {
-    ...mapGetters('orders', ['getOrderById']),
+    ...mapState(useOrders, ['getOrderById']),
     buyerPubkey() {
       const { order_id } = this.message
       // @ts-ignore
@@ -52,5 +52,5 @@ export default Vue.extend({
       return this.message.created_at * 1e3
     }
   }
-})
+}
 </script>

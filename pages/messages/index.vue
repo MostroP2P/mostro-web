@@ -1,16 +1,16 @@
 <template>
   <v-list three-line>
-    <template v-for="(peerThread, index) of getPeerThreadSummaries">
+    <template v-for="(peerThread, index) of getPeerThreadSummaries" :key="peerThread.lastMessage.id">
       <v-divider v-if="index !== 0" :key="`divider-${peerThread.lastMessage.id}`"/>
-      <v-list-item :key="peerThread.lastMessage.id" ripple :to="`/messages/${peerThread.lastMessage.peerNpub}`">
-        <v-list-item-avatar>
+      <v-list-item ripple :to="`/messages/${peerThread.lastMessage.peerNpub}`">
+        <div>
           <v-avatar color="secondary">
             <v-icon dark>
               mdi-account-circle
             </v-icon>
           </v-avatar>
-        </v-list-item-avatar>
-        <v-list-item-content>
+        </div>
+        <div>
           <v-list-item-title>
             <div class="d-flex justify-space-between">
               <div>{{ title(peerThread.peer) }}</div>
@@ -26,17 +26,18 @@
               <div>{{ timeago.format(peerThread.lastMessage.created_at * 1e3) }}</div>
             </div>
           </v-list-item-subtitle>
-        </v-list-item-content>
+        </div>
       </v-list-item>
     </template>
   </v-list>
 </template>
 <script lang="ts">
-import Vue from 'vue'
-import { mapGetters } from 'vuex'
+import { defineComponent } from 'vue'
+import { mapState } from 'pinia'
+import { useMessages } from '~/stores/messages'
 import * as timeago from 'timeago.js'
 import textMessage from '~/mixins/text-message'
-export default Vue.extend({
+export default defineComponent({
   mixins: [ textMessage ],
   data() {
     return { timeago }
@@ -47,7 +48,7 @@ export default Vue.extend({
     }
   },
   computed: {
-    ...mapGetters('messages', ['getPeerThreadSummaries']),
+    ...mapState(useMessages, ['getPeerThreadSummaries']),
   }
 })
 </script>

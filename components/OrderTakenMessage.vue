@@ -1,5 +1,5 @@
 <template>
-  <v-list-item-content>
+  <div>
     <v-list-item-title class="d-flex justify-space-between">
       Trade Started
       <div class="text-caption text--secondary">{{ timeago.format(creationDate) }}</div>
@@ -7,14 +7,15 @@
     <v-list-item-subtitle>
       {{ orderTakenMessage }}
     </v-list-item-subtitle>
-  </v-list-item-content>
+  </div>
 </template>
 <script lang="ts">
-import Vue, { PropType } from 'vue'
-import { mapGetters } from 'vuex'
+import { PropType } from 'vue'
+import { mapState } from 'pinia'
 import * as timeago from 'timeago.js'
-import { MostroMessage } from '~/store/types'
-export default Vue.extend({
+import { useOrders } from '~/stores/orders'
+import { MostroMessage } from '~/stores/types'
+export default {
   data() {
     return {
       timeago
@@ -27,7 +28,7 @@ export default Vue.extend({
     }
   },
   computed: {
-    ...mapGetters('orders', ['getOrderById']),
+    ...mapState(useOrders, ['getOrderById']),
     order() {
       // @ts-ignore
       return this.getOrderById(this.$route.params.id)
@@ -45,5 +46,5 @@ export default Vue.extend({
       return this.message.created_at * 1e3
     }
   }
-})
+}
 </script>

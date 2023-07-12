@@ -55,13 +55,12 @@
   </v-list-item>
 </template>
 <script lang="ts">
-import Vue from 'vue'
-import { mapGetters } from 'vuex'
+import { mapState } from 'pinia'
+import { useOrders } from '@/stores/orders'
 import type { PropType } from 'vue'
-import { MostroMessage } from '~/store/types'
-import { Action } from '~/store/types'
+import { MostroMessage, Action } from '~/stores/types'
 
-export default Vue.extend({
+export default {
   data() {
     return {
       action: Action
@@ -78,7 +77,7 @@ export default Vue.extend({
     }
   },
   computed: {
-    ...mapGetters('orders', ['getOrderById']),
+    ...mapState(useOrders, ['getOrderById']),
     order() {
       // @ts-ignore
       return this.getOrderById(this.$route.params.id)
@@ -88,5 +87,5 @@ export default Vue.extend({
       return this?.$mostro?.getNpub() === this.order?.buyer_pubkey
     },
   }
-})
+}
 </script>
