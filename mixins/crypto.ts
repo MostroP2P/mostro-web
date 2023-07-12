@@ -1,6 +1,6 @@
 import Vue from 'vue'
 
-export default Vue.extend({
+export default {
   methods: {
     generateSalt() {
       const array = Buffer.alloc(16)
@@ -33,4 +33,4 @@ export default Vue.extend({
       return key
     }
   }
-})
+}

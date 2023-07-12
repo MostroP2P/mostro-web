@@ -1,4 +1,5 @@
 <template>
+  <v-badge dot color="success" :model-value="!isMenuDisabled">
   <v-menu
     offset-y
     content-class="pa-0"
@@ -9,33 +10,29 @@
     :close-on-content-click="false"
     :close-delay="menuCloseDelay"
   >
-    <template v-slot:activator="{ on }">
-      <v-btn icon v-on="on">
-        <v-badge dot color="accent" :value="!isMenuDisabled">
-          <v-icon>mdi-bell-outline</v-icon>
-        </v-badge>
-      </v-btn>
+    <template v-slot:activator="{ props }">
+      <v-btn icon="mdi-bell-outline" color="white" variant="plain" v-bind="props"></v-btn>
     </template>
     <div class="scrollable-menu">
       <transition-group name="list" tag="v-list">
         <v-list-item
           v-for="(notification) in notifications"
           :key="notification.eventId"
-          class="notification-item"
+          class="my-1 notification-item"
           @click="() => handleNotificationClick(notification)"
           three-line
         >
-          <v-list-item-content>
+          <div>
             <v-list-item-title>
               📣 {{ notification.title }}
             </v-list-item-title>
-            <v-list-item-subtitle>
-              {{ notification.subtitle }}
+            <v-list-item-subtitle class="text-caption">
+
             </v-list-item-subtitle>
             <v-list-item-subtitle class="text-caption text--disabled" style="max-width: 25em">
               Order: {{ notification.orderId }}
             </v-list-item-subtitle>
-          </v-list-item-content>
+          </div>
         </v-list-item>
 
         <v-list-item :key="1000">
@@ -47,44 +44,46 @@
     </div>
 
   </v-menu>
+  </v-badge>
 </template>
+<script setup lang="ts">
+import { computed } from 'vue'
+import { useNotifications } from '@/stores/notifications'
+const notificationStore = useNotifications()
+const router = useRouter()
+
+const notifications = computed(() => notificationStore.getActiveNotifications)
+const menuCloseDelay = computed(() => notifications.value.length * 200 + 1e3)
+const isMenuDisabled = computed(() => {
+  if (!notifications.value || notifications.value.length === 0) {
+    return true
+  }
+  const notDismissedIndex = notifications.value.findIndex((notification: Notification) => {
+    return notification.dismissed === false
+  })
+  return notDismissedIndex === -1
+})
+
+const clearNotifications = () => {
+  notifications.value.forEach((notification: Notification, index: number) => {
+    setTimeout(() => {
+      notificationStore.dismiss(notification)
+    }, index * 200);  // Delay each removal by 200ms
+  })
+}
+const handleNotificationClick = (notification: Notification) => {
+  notificationStore.dismiss(notification)
+  router.push(`/my-trades/${notification.orderId}`)
+}
+</script>
 
 <script lang="ts">
-import Vue from 'vue'
-import { mapGetters } from 'vuex'
-import { Notification } from '~/store/types'
+import { Notification } from '~/stores/types'
 
-export default Vue.extend({
+export default {
   data() {
     return {
       menuOpen: false
-    }
-  },
-  methods: {
-    clearNotifications() {
-      this.notifications.forEach((notification: Notification, index: number) => {
-        setTimeout(() => {
-          this.$store.dispatch('notifications/dismiss', notification)
-        }, index * 200);  // Delay each removal by 200ms
-      });
-    },
-    handleNotificationClick(notification: Notification) {
-      this.$store.dispatch('notifications/dismiss', notification)
-      this.$router.push(`/my-trades/${notification.orderId}`)
-    }
-  },
-  computed: {
-    ...mapGetters({
-      notifications: 'notifications/getActiveNotifications'
-    }),
-    menuCloseDelay() {
-      return this.notifications ? this.notifications.length * 200 + 1e3 : 0
-    },
-    isMenuDisabled() {
-      if (!this.notifications || this.notifications.length === 0) {
-        return true
-      }
-      return false
     }
   },
   watch: {
@@ -94,11 +93,17 @@ export default Vue.extend({
       }
     }
   }
-})
+}
 </script>
 <style scoped>
 .scrollable-menu {
   max-height: 80vh;
   overflow-y: auto;
+}
+.notification-item {
+  background: white;
+  border-radius: 0.5em;
+  border-color: rgb(104, 104, 104);
+  border-width: 0.05em;
 }
 </style>

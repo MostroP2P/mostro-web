@@ -1,5 +1,5 @@
 <template>
-  <v-list-item class="d-flex justify-center align-center flex-column mt-0 pt-2">
+  <div class="d-flex justify-center align-center flex-column mt-0 pt-2 mb-3">
     <v-avatar color="primary">
       <v-icon dark large>
         mdi-account-circle
@@ -14,40 +14,33 @@
         <v-btn outlined @click="onLogout">Logout</v-btn>
       </div>
     </client-only>
-  </v-list-item>
+  </div>
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
-import { mapState } from 'vuex'
-import { EncryptedPrivateKey } from '~/store/types'
-import RegistrationDialog from './RegistrationDialog.vue'
-import { AuthMethod } from '~/store/auth'
+import { defineComponent } from 'vue'
+import { mapState } from 'pinia'
+import { useLocalStorage } from '@vueuse/core'
+import { useAuth, AuthMethod, AUTH_LOCAL_STORAGE_KEY } from '@/stores/auth'
 
-interface Data {}
-
-interface Computed {
-  encryptedPrivateKey: EncryptedPrivateKey,
-  hasEncryptedKey: boolean,
-  authMethod: AuthMethod,
-  isLoggedIn: boolean
-}
-
-interface Methods {
-  onLogout: Function
-}
-
-export default Vue.extend<Data, Methods, Computed>({
-  components: { RegistrationDialog },
+export default defineComponent({
+  setup() {
+    const authStore = useAuth()
+    const encryptedPrivKey = useLocalStorage(AUTH_LOCAL_STORAGE_KEY, '')
+    return {
+      authStore,
+      encryptedPrivKey
+    }
+  },
   methods: {
     onLogout() {
-      this.$store.dispatch('auth/logout')
+      this.authStore.logout()
     }
   },
   computed: {
-    ...mapState('auth', ['encryptedPrivateKey', 'authMethod']),
+    ...mapState(useAuth, ['authMethod']),
     hasEncryptedKey(): boolean {
-      return this.encryptedPrivateKey !== null && this.encryptedPrivateKey !== undefined
+      return this.encryptedPrivKey !== ''
     },
     isLoggedIn(): boolean {
       return this.authMethod !== AuthMethod.NOT_SET

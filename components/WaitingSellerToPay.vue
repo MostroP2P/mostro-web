@@ -1,5 +1,5 @@
 <template>
-  <v-list-item-content>
+  <div>
     <v-list-item-title class="d-flex justify-space-between">
       Waiting Seller to Pay
       <div class="text-caption text--secondary">{{ timeago.format(creationDate) }}</div>    
@@ -9,16 +9,15 @@
         I have sent a payment request to the seller so he sends your sats for the order Id: <strong>{{ orderId }}</strong>, as soon as payment is made I will put you both in touch.
       </p>
     </v-list-item-subtitle>
-  </v-list-item-content>
+  </div>
 </template>
 <script lang="ts">
-import Vue from 'vue'
 import type { PropType } from 'vue'
 import * as timeago from 'timeago.js'
-import { MostroMessage } from '~/store/types'
+import { MostroMessage } from '~/stores/types'
 import textMessage from '~/mixins/text-message'
 
-export default Vue.extend({
+export default {
   data() {
     return { timeago }
   },
@@ -37,5 +36,5 @@ export default Vue.extend({
       return this.message.created_at * 1e3
     }
   }
-})
+}
 </script>

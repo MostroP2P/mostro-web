@@ -3,7 +3,7 @@
     three-line
     link
   >
-    <v-list-item-content @click="onOrderThreadHeaderClicked">
+    <div @click="onOrderThreadHeaderClicked">
       <v-list-item-title>
         <div class="d-flex justify-space-between">
           {{ title }}
@@ -24,15 +24,14 @@
           <div class="text-caption">{{ creationDate }}</div>
         </div>
       </v-list-item-subtitle>
-    </v-list-item-content>
+    </div>
   </v-list-item>
 </template>
 <script lang="ts">
-import Vue from 'vue'
 import type { PropType } from 'vue'
-import { ThreadSummary, OrderType } from '~/store/types'
+import { ThreadSummary, OrderType } from '~/stores/types'
 import * as timeago from 'timeago.js'
-export default Vue.extend({
+export default {
   props: {
     threadSummary: {
       type: Object as PropType<ThreadSummary>,
@@ -83,5 +82,5 @@ export default Vue.extend({
       this.$router.push(`/my-trades/${this.threadSummary.order.id}`)
     }
   }
-})
+}
 </script>

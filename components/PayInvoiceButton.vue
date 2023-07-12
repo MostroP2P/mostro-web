@@ -1,7 +1,7 @@
 <template>
   <v-dialog v-model="showDialog" max-width="500">
-    <template v-slot:activator="{ on, attrs}">
-      <v-btn text color="accent" v-bind="attrs" v-on="on">
+    <template v-slot:activator="{ props }">
+      <v-btn text color="accent" v-bind="props">
         <v-icon left>
           mdi-qrcode-scan
         </v-icon>
@@ -46,12 +46,11 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
 import type { PropType } from 'vue'
 import QrcodeVue from 'qrcode.vue'
-import { MostroMessage } from '~/store/types'
+import { MostroMessage } from '~/stores/types'
 
-export default Vue.extend({
+export default {
   components: {
     QrcodeVue
   },
@@ -74,5 +73,5 @@ export default Vue.extend({
         this.message.content.PaymentRequest !== undefined
     }
   }
-})
+}
 </script>

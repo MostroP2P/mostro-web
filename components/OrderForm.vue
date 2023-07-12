@@ -78,11 +78,12 @@
   </v-form>
 </template>
 <script lang="ts">
-import Vue from 'vue'
-import lightningPayReq from 'bolt11'
+import { defineComponent } from 'vue'
+import type { PropType } from 'vue'
+import * as bolt11 from 'light-bolt11-decoder'
 import invoiceValidator from '~/mixins/invoice-validator'
-import { OrderStatus, OrderPricingMode, OrderType, NewOrder } from '../store/types'
-export default Vue.extend({
+import { OrderStatus, OrderPricingMode, OrderType, NewOrder } from '@/stores/types'
+export default defineComponent({
   data() {
     return {
       valid: false,
@@ -108,15 +109,14 @@ export default Vue.extend({
       required: true
     },
     onProcessingUpdate: {
-      type: Function,
-      default: () => (arg: boolean) => false
+      type: Function as PropType<(arg: boolean) => boolean>,
+      default: () => (arg: boolean) => false,
+      required: true
     },
     orderType: {
       type: String,
       required: true,
-      validator(value: string) {
-        return ['Sell', 'Buy'].includes(value)
-      }
+      validator: (value: string) => ['Sell', 'Buy'].includes(value)
     }
   },
   mixins: [ invoiceValidator ],
@@ -126,7 +126,7 @@ export default Vue.extend({
       this.decodedInvoice = {}
       try {
         // @ts-ignore
-        this.decodedInvoice = lightningPayReq.decode(newValue)
+        this.decodedInvoice = bolt11.decode(newValue)
       } catch(err) {}
     }
   },
@@ -162,10 +162,15 @@ export default Vue.extend({
           order.amount = satsAmount
         }
       }
-      // @ts-ignore
-      await this.$mostro.submitOrder(order)
-      this.onProcessingUpdate(false)
-      this.onClose()
+      try {
+        // @ts-ignore
+        await this.$mostro.submitOrder(order)
+        this.onClose()
+      } catch(err) {
+        console.error('Error while submitting order: ', err)
+      } finally {
+        this.onProcessingUpdate(false)
+      }
     }
   },
   computed: {

@@ -1,5 +1,5 @@
 <template>
-  <v-list-item-content>
+  <div>
     <v-list-item-title class="d-flex justify-space-between">
       Payment needed
       <div class="text-caption text--secondary">{{ timeago.format(creationDate) }}</div>
@@ -11,16 +11,15 @@
         and get the information on how to perform the fiat payment. Once this is done, press the "FIAT SENT" button below.
       </p>
     </v-list-item-subtitle>
-  </v-list-item-content>
+  </div>
 </template>
 <script lang="ts">
-import Vue from 'vue'
 import type { PropType } from 'vue'
-import { MostroMessage } from '~/store/types'
+import { MostroMessage } from '~/stores/types'
 import * as timeago from 'timeago.js'
 import textMessage from '~/mixins/text-message'
 import NPub from '~/components/NPub.vue'
-export default Vue.extend({
+export default {
   data() {
     return {
       timeago
@@ -53,5 +52,5 @@ export default Vue.extend({
       return this.message.created_at * 1e3
     }
   }
-})
+}
 </script>

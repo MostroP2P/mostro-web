@@ -1,6 +1,3 @@
-interface Window {
-  NostrTools: any
-}
-
-declare module 'qrcode.vue'
-declare module 'crypto-js'
+declare module 'light-bolt11-decoder'
+declare module 'nostr-tools'
+declare module 'nostr'

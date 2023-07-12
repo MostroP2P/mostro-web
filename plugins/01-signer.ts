@@ -1,5 +1,5 @@
-import { Store } from 'vuex'
-import { RootState } from '../store/types'
+import { nip04, nip19, getPublicKey, getSignature } from 'nostr-tools'
+import { useAuth } from '@/stores/auth'
 
 export interface Relays {
   [url: string]: { read: boolean; write: boolean }
@@ -31,7 +31,7 @@ export abstract class BaseSigner {
 
 let sharedLock = Promise.resolve()
 
-function Locked(target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+function Locked(_target: any, _propertyKey: string, descriptor: PropertyDescriptor) {
   const originalMethod = descriptor.value
 
   descriptor.value = function (...args: any[]) {
@@ -39,6 +39,7 @@ function Locked(target: any, propertyKey: string, descriptor: PropertyDescriptor
       .then(() => {
         return originalMethod.apply(this, args)
       })
+      .catch(() => { })
 
     return sharedLock
   }
@@ -52,26 +53,31 @@ function Locked(target: any, propertyKey: string, descriptor: PropertyDescriptor
 export class ExtensionSigner extends BaseSigner {
   protected _type = SignerType.NIP07
 
+  // @ts-ignore
   @Locked
   getPublicKey() {
     // @ts-ignore
     return window.nostr.getPublicKey()
   }
+  // @ts-ignore
   @Locked
   signEvent(e: any) {
     // @ts-ignore
     return window.nostr.signEvent(e)
   }
+  // @ts-ignore
   @Locked
   getRelays?(): Promise<Relays> {
     // @ts-ignore
     return window.nostr.getRelays() as Promise<Relays>
   }
+  // @ts-ignore
   @Locked
   encrypt?(pubkey: string, plaintext: string) {
     // @ts-ignore
     return window.nostr.nip04.encrypt(pubkey, plaintext) as Promise<string>
   }
+  // @ts-ignore
   @Locked
   decrypt?(pubkey: string, ciphertext: string) {
     // @ts-ignore
@@ -86,8 +92,10 @@ export class ExtensionSigner extends BaseSigner {
 export class LocalSigner extends BaseSigner {
   _type = SignerType.LOCAL
   _locked: boolean = true
-  constructor(private store: Store<RootState>) {
+  private store: ReturnType<typeof useAuth>
+  constructor() {
     super()
+    this.store = useAuth()
   }
 
   get locked() {
@@ -100,14 +108,13 @@ export class LocalSigner extends BaseSigner {
 
   getPublicKey() {
     return new Promise<string>((resolve, reject) => {
-      if (this.store.state.auth.nsec) {
-        const { nsec } = this.store.state.auth
-        const { nip19, getPublicKey } = window.NostrTools
+      if (this.store.nsec) {
+        const { nsec } = this.store
         const secretHex = nip19.decode(nsec).data
         const publicKey = getPublicKey(secretHex)
         resolve(publicKey)
       } else {
-        const { encryptedPrivateKey } = this.store.state.auth
+        const { encryptedPrivateKey } = this.store
         if (encryptedPrivateKey) {
           reject('Private key is locked')
         } else {
@@ -119,8 +126,7 @@ export class LocalSigner extends BaseSigner {
   signEvent(event: any) {
     return new Promise((resolve, reject) => {
       try {
-        const { nip19, getSignature } = window.NostrTools
-        const { nsec } = this.store.state.auth
+        const { nsec } = this.store
         const secretHex = nip19.decode(nsec).data
         event.sig = getSignature(event, secretHex)
         resolve(event)
@@ -134,17 +140,19 @@ export class LocalSigner extends BaseSigner {
     throw new Error('Method not implemented.');
   }
   encrypt?(pubkey: string, plaintext: string): Promise<string> {
-    const { nip04, nip19 } = window.NostrTools
     const destinationPubKey = pubkey.startsWith('npub') ? nip19.decode(pubkey).data : pubkey
-    const { nsec } = this.store.state.auth
+    const { nsec } = this.store
     const secretHex = nip19.decode(nsec).data
     return nip04.encrypt(secretHex, destinationPubKey, plaintext)
   }
   decrypt?(pubkey: string, ciphertext: string): Promise<string> {
-    const { nip04, nip19 } = window.NostrTools
     const destinationPubKey = pubkey.startsWith('npub') ? nip19.decode(pubkey).data : pubkey
-    const { nsec } = this.store.state.auth
+    const { nsec } = this.store
     const secretHex = nip19.decode(nsec).data
     return nip04.decrypt(secretHex, destinationPubKey, ciphertext)
   }
 }
+
+export default defineNuxtPlugin((nuxtApp) => {
+  nuxtApp.provide('localSigner', new LocalSigner())
+})

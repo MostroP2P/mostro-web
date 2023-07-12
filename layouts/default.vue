@@ -1,11 +1,11 @@
 <template>
-  <v-app dark>
+  <v-app dark elevation="4" border="3">
     <v-navigation-drawer
       v-model="drawer"
       :clipped="clipped"
       fixed
       app
-      color="secondary"
+      color="secondary-darken-1"
     >
       <v-list>
         <auth-status/>
@@ -16,12 +16,10 @@
           router
           exact
         >
-          <v-list-item-action>
-            <v-icon>{{ item.icon }}</v-icon>
-          </v-list-item-action>
-          <v-list-item-content>
+          <div class="d-flex">
+            <v-icon class="mr-3">{{ item.icon }}</v-icon>
             <v-list-item-title>{{ item.title }}</v-list-item-title>
-          </v-list-item-content>
+          </div>
         </v-list-item>
       </v-list>
     </v-navigation-drawer>
@@ -39,7 +37,7 @@
     </v-app-bar>
     <v-main>
       <v-container>
-        <Nuxt />
+        <slot />
       </v-container>
     </v-main>
     <v-footer
@@ -52,11 +50,9 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
-import Notifications from '~/components/Notifications.vue'
+import { defineComponent } from 'vue'
 import mobileDetector from '~/mixins/mobile-detector'
-export default Vue.extend( {
-  components: { Notifications },
+export default defineComponent( {
   name: 'DefaultLayout',
   mixins: [mobileDetector],
   data () {

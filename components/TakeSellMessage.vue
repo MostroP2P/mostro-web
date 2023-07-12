@@ -1,5 +1,5 @@
 <template>
-  <v-list-item-content>
+  <div>
     <v-list-item-title class="d-flex justify-space-between">
       Waiting for your Invoice
       <div class="text-caption text--secondary">{{ creationDate }}</div>
@@ -7,12 +7,12 @@
     <v-list-item-subtitle>
       Please provide us with an invoice for {{ amount }} sats in order to continue.
     </v-list-item-subtitle>
-  </v-list-item-content>
+  </div>
 </template>
 <script lang="ts">
 import { defineComponent } from 'vue'
 import type { PropType } from 'vue'
-import { MostroMessage } from '~/store/types'
+import { MostroMessage } from '~/stores/types'
 import * as timeago from 'timeago.js'
 export default defineComponent({
   props: {

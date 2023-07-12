@@ -1,12 +1,15 @@
-import { Store } from 'vuex'
-import { RelayPool }  from 'nostr'
-import { Order, SmallOrder, RootState } from '../store/types'
-import { BaseSigner, ExtensionSigner, LocalSigner } from './signer'
+import { watch } from 'vue'
+import { RelayPool } from 'nostr'
+import { nip19, getEventHash } from 'nostr-tools'
+import { useAuth } from '@/stores/auth'
+import { useOrders } from '@/stores/orders'
+import { useMessages } from '@/stores/messages'
+import { Order, SmallOrder } from '../stores/types'
+import { BaseSigner, ExtensionSigner, LocalSigner } from './01-signer'
 
 type MostroOptions = {
   mostroPubKey: string,
   relays: string[]
-  store: any
 }
 
 type PublicKeyCache = {
@@ -19,16 +22,18 @@ class Mostro {
   pool: any
   mostro: string
   relays: string[]
-  store: any
   orderMap: Map<string, string> // Maps order id -> event id
   sub_id: string
   pubkeyCache: PublicKeyCache = { npub: null, hex: null }
+  orderStore: ReturnType<typeof useOrders>
+  messageStore: ReturnType<typeof useMessages>
   constructor(opts: MostroOptions) {
     this.relays = opts.relays
     this.mostro = opts.mostroPubKey
-    this.store = opts.store
     this.orderMap = new Map<string, string>
     this.sub_id = this.generateRandomSubId()
+    this.orderStore = useOrders()
+    this.messageStore = useMessages()
   }
 
   public set signer(signer: BaseSigner | undefined) {
@@ -36,7 +41,6 @@ class Mostro {
     if (this._signer) {
       this._signer.getPublicKey()
         .then((publicKey: string) => {
-          const { nip19 } = window.NostrTools
           const npub = nip19.npubEncode(publicKey)
           this.pubkeyCache = {
             hex: publicKey,
@@ -95,18 +99,17 @@ class Mostro {
         console.log(`< Mostro 3000. sub_id: ${sub_id}, ev: `, ev)
         if (this.orderMap.has(content.id)) {
           // Updates existing order
-          this.store.dispatch('orders/updateOrder', { order: content, eventId: ev.id })
+          this.orderStore.updateOrder({ order: content, eventId: ev.id })
+          // this.store.dispatch('orders/updateOrder', { order: content, eventId: ev.id })
         } else {
           // Adds new order
-          this.store.dispatch('orders/addOrder', { order: content, eventId: ev.id })
+          this.orderStore.addOrder({ order: content, eventId: ev.id })
+          // this.store.dispatch('orders/addOrder', { order: content, eventId: ev.id })
           this.orderMap.set(content.id, ev.id)
         }
       } else if (kind === 4) {
-        // DM
-        console.debug(`< DM. ev: `, ev)
         // @ts-ignore
         let recipient = ev.tags.find(([k, v]) => k === 'p' && v && v !== '')[1]
-        const { nip19 } = window.NostrTools
         const mostroPubKey = nip19.decode(this.mostro).data
         const myPubKey = this.pubkeyCache.hex
         if (myPubKey === recipient) {
@@ -115,11 +118,12 @@ class Mostro {
             if (ev.pubkey === mostroPubKey) {
               console.log('< Mostro DM: ', plaintext, ', ev: ', ev)
               const msg = { ...JSON.parse(plaintext), created_at: ev.created_at }
-              this.store.dispatch('messages/addMostroMessage', { message: msg, eventId: ev.id })
+              this.messageStore.addMostroMessage({ message: msg, eventId: ev.id })
             } else {
+              console.log('< Peer DM: ', plaintext, ', ev: ', ev)
               // Peer DMs
               const peerNpub = nip19.npubEncode(ev.pubkey)
-              this.store.dispatch('messages/addPeerMessage', {
+              this.messageStore.addPeerMessage({
                 id: ev.id,
                 text: plaintext,
                 peerNpub: peerNpub,
@@ -131,13 +135,15 @@ class Mostro {
             console.error('Error while trying to decode DM: ', err)
           }
         } else if(ev.pubkey === myPubKey) {
+          console.log('< DM I created: ', ev)
           // DM I created
           if (recipient !== mostroPubKey) {
             // This is a DM I created for a conversation
             try {
-              const plaintext = await this.signer!.decrypt!(ev.pubkey, ev.content)
+              const [[, recipientPubKey]] = ev.tags
+              const plaintext = await this.signer!.decrypt!(recipientPubKey, ev.content)
               const peerNpub = nip19.npubEncode(recipient)
-              this.store.dispatch('messages/addPeerMessage', {
+              this.messageStore.addPeerMessage({
                 id: ev.id,
                 text: plaintext,
                 peerNpub: peerNpub,
@@ -159,7 +165,6 @@ class Mostro {
   }
 
   async createEvent(payload: object) {
-    const { nip19, getEventHash } = window.NostrTools
     const publicKey = nip19.decode(this.mostro).data
     const ciphertext = await this.signer!.encrypt!(publicKey, JSON.stringify(payload))
     const myPubKey = this.pubkeyCache.hex
@@ -264,7 +269,6 @@ class Mostro {
     await this.pool.send(event)
   }
   async submitDirectMessage(message: string, npub: string, replyTo: string) {
-    const { nip19, getEventHash } = window.NostrTools
     const destinationPubKey = nip19.decode(npub).data
     const myPublicKey = await this.signer?.getPublicKey()
     const ciphertext = await this.signer?.encrypt!(destinationPubKey, message)
@@ -283,7 +287,7 @@ class Mostro {
       event.tags.push(['e', replyTo, '', 'reply'])
     }
     event.id = getEventHash(event)
-    event.sig = await this.signer?.signEvent(event)
+    event = await this.signer?.signEvent(event)
     await this.pool.send(['EVENT', event])
   }
 
@@ -291,40 +295,41 @@ class Mostro {
     return this.pubkeyCache.npub
   }
 }
-export default ( { env, store }: { store: Store<RootState>, env: any }, inject: Function) => {
-  // Watching store for changes in the nsec
-  store.subscribe((mutation) => {
-    if (mutation.type.startsWith('auth')) {
-      if (mutation.type === 'auth/setPrivateKey') {
-        if (!mutation.payload) {
-          mostro.close()
-          mostro.lock()
-        } else {
-          mostro.signer = new LocalSigner(store)
-          mostro.init()
-        }
-      }
-      if (mutation.type === 'auth/setPublicKey') {
-        if (!mutation.payload) {
-          mostro.close()
-          mostro.lock()
-        } else {
-          const { nip19 } = window.NostrTools
-          mostro.pubkeyCache = {
-            hex: mutation.payload,
-            npub: nip19.npubEncode(mutation.payload)
-          }
-          mostro.signer = new ExtensionSigner()
-          mostro.init()
-        }
-      }
-    }
-  })
-  const opts = {
-    relays: env.RELAYS.split(','),
-    mostroPubKey: env.MOSTRO_PUB_KEY,
-    store: store
+
+export default defineNuxtPlugin((nuxtApp) => {
+  const config = useRuntimeConfig()
+  const { public: { relays, mostroPubKey } } = config
+  const opts: MostroOptions = {
+    relays: relays.split(','),
+    mostroPubKey
   }
   const mostro = new Mostro(opts)
-  inject('mostro', mostro)
-}
+  nuxtApp.provide('mostro', mostro)
+
+  // Registering a watcher for the nsec
+  const authStore = useAuth()
+  watch(() => authStore.nsec, (newValue, oldValue) => {
+    if (newValue) {
+      mostro.signer = new LocalSigner()
+      mostro.init()
+    } else {
+      mostro.close()
+      mostro.lock()
+    }
+  })
+
+  // Registering a watcher for public key
+  watch(() => authStore.publicKey, (newValue, oldValue) => {
+    if (newValue) {
+      mostro.pubkeyCache = {
+        hex: newValue,
+        npub: nip19.npubEncode(newValue)
+      }
+      mostro.signer = new ExtensionSigner()
+      mostro.init()
+    } else {
+      mostro.close()
+      mostro.lock()
+    }
+  })
+})

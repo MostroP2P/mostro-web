@@ -1,7 +1,7 @@
 <template>
   <v-dialog v-model="showDialog" width="600">
-    <template v-slot:activator="{ on, attrs }">
-      <v-btn v-bind="attrs" v-on="on" text color="accent">
+    <template v-slot:activator="{ props }">
+      <v-btn v-bind="props" text color="accent">
         <v-icon left>mdi-cash</v-icon>
         Fiat Sent
       </v-btn>
@@ -29,11 +29,11 @@
   </v-dialog>
 </template>
 <script lang="ts">
-import Vue from 'vue'
-import { mapGetters } from 'vuex'
+import { mapState } from 'pinia'
+import { useOrders } from '~/stores/orders'
 import textMessage from '~/mixins/text-message'
 import NPub from '~/components/NPub.vue'
-export default Vue.extend({
+export default {
   data() {
     return {
       showDialog: false,
@@ -62,7 +62,7 @@ export default Vue.extend({
     }
   },
   computed: {
-    ...mapGetters('orders', ['getOrderById']),
+    ...mapState(useOrders, ['getOrderById']),
     order() {
       // @ts-ignore
       return this.getOrderById(this.$route.params.id)
@@ -80,5 +80,5 @@ export default Vue.extend({
       return this.order?.seller_pubkey
     },
   }
-})
+}
 </script>

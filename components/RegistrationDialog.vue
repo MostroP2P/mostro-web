@@ -1,8 +1,8 @@
 <template>
   <v-dialog v-model="showDialog" width="500">
     <v-progress-linear v-if="isProcessing" indeterminate/>
-    <template v-slot:activator="{ on, attrs}">
-      <v-btn v-on="on" v-bind="attrs" outlined class="mt-4">
+    <template v-slot:activator="{ props }">
+      <v-btn v-bind="props" outlined class="mt-4">
         <KeyIcon class="mr-3"/>
         Register
       </v-btn>
@@ -13,8 +13,8 @@
         <v-tab>Nsec</v-tab>
         <v-tab>NIP07</v-tab>
       </v-tabs>
-      <v-tabs-items v-model="tab">
-        <v-tab-item style="min-height: 5em">
+      <v-window v-model="tab">
+        <v-window-item style="min-height: 5em">
           <v-row class="mx-4 mt-5">
             <v-text-field
               v-model="nsec"
@@ -68,8 +68,8 @@
               Confirm
             </v-btn>
           </v-row>
-        </v-tab-item>
-        <v-tab-item style="min-height: 5em">
+        </v-window-item>
+        <v-window-item style="min-height: 5em">
           <v-row class="mx-4 my-5 d-flex justify-center">
             <div class="body-2">
               If you have a browser extension that supports the NIP-07 standard, you can use it to login.
@@ -84,26 +84,25 @@
               Authorize
             </v-btn>
           </v-row>
-        </v-tab-item>
-      </v-tabs-items>
+        </v-window-item>
+      </v-window>
 
     </v-card>
   </v-dialog>
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
 import * as CryptoJS from 'crypto-js'
 import secretValidator from '~/mixins/secret-validator'
 import crypto from '~/mixins/crypto'
 import nip07 from '~/mixins/nip-07'
-import { ENCRYPTED_PRIVATE_KEY } from '~/store/types'
-import { AuthMethod } from '~/store/auth'
+import { ENCRYPTED_PRIVATE_KEY } from '~/stores/types'
+import { AuthMethod, useAuth } from '~/stores/auth'
 
 // Minimum password length
 const MIN_PASSWORD_LENGTH = 10
 
-export default Vue.extend({
+export default {
   data() {
     return {
       MIN_PASSWORD_LENGTH,
@@ -116,6 +115,10 @@ export default Vue.extend({
       worker: null,
       isProcessing: false
     }
+  },
+  setup() {
+    const authStore = useAuth()
+    return { authStore }
   },
   mixins: [secretValidator, crypto, nip07],
   methods: {
@@ -137,8 +140,8 @@ export default Vue.extend({
           ENCRYPTED_PRIVATE_KEY,
           JSON.stringify({ ciphertext, salt: salt.toString('base64') })
         )
-        this.$store.dispatch('auth/setKey', { nsec: this.nsec })
-        this.$store.dispatch('auth/login', {
+        this.authStore.setKey({ nsec: this.nsec })
+        this.authStore.login({
           nsec: this.nsec,
           authMethod: AuthMethod.LOCAL
         })
@@ -151,7 +154,7 @@ export default Vue.extend({
     async onNip07() {
       // @ts-ignore
       const publicKey = await this.getPublicKey()
-      this.$store.dispatch('auth/login', {
+      this.authStore.login({
         authMethod: AuthMethod.NIP07,
         publicKey: publicKey
       })
@@ -175,5 +178,5 @@ export default Vue.extend({
       return this.confirmation && this.confirmation === this.password
     }
   }
-})
+}
 </script>

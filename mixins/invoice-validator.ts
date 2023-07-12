@@ -1,5 +1,4 @@
-import Vue from 'vue'
-import lightningPayReq from 'bolt11'
+import * as bolt11 from 'light-bolt11-decoder'
 
 type DecodedInvoice = {
   complete: boolean,
@@ -7,7 +6,7 @@ type DecodedInvoice = {
   satoshis: number
 }
 
-export default Vue.extend({
+export default {
   data() {
     return {
       decodedInvoice: {} as DecodedInvoice,
@@ -27,7 +26,7 @@ export default Vue.extend({
   methods: {
     isInvoice(text: string) {
       try {
-        lightningPayReq.decode(text)
+        bolt11.decode(text)
         return true
       } catch(err) {
         return 'Not a valid invoice'
@@ -35,7 +34,7 @@ export default Vue.extend({
     },
   },
   computed: {
-    isValueCorrect() {
+    isValueCorrect(): boolean {
       // @ts-ignore
       if (!this.requiredSatsAmount) {
         // If a required amount has not been specified,
@@ -44,6 +43,7 @@ export default Vue.extend({
       }
       let msat = 0
       try {
+        // @ts-ignore
         const decoded = this.decodedInvoice
         if (decoded) {
           // @ts-ignore
@@ -63,7 +63,7 @@ export default Vue.extend({
         return false
       }
     },
-    isExpired() {
+    isExpired() : boolean {
       // @ts-ignore
       return this.decodedInvoice.timeExpireDate > Date.now() / 1e3
     },
@@ -84,4 +84,4 @@ export default Vue.extend({
       return amount
     }
   }
-})
+}

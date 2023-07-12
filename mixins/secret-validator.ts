@@ -1,4 +1,4 @@
-import Vue from 'vue'
+import { nip19 } from 'nostr-tools'
 
 export enum PrivateKeyType {
   NSEC,
@@ -27,7 +27,7 @@ function isValidHex(hex: string) {
   }
 }
 
-export default Vue.extend({
+export default {
   data() : DataType {
     return {
       privateKey: {
@@ -37,8 +37,7 @@ export default Vue.extend({
       rules: {
         isNotEmpty: (value: string) => !!value || 'Enter a valid private key in nsec or hex format',
         isValidNsec: (value: string) => {
-          if (typeof window !== 'undefined' && window.NostrTools) {
-            const { nip19 } = window.NostrTools
+          if (typeof window !== 'undefined') {
             let decoded = null
             try {
               decoded = nip19.decode(value)
@@ -53,4 +52,4 @@ export default Vue.extend({
       }
     }
   }
-})
+}

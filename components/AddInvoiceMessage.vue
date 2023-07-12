@@ -1,5 +1,5 @@
 <template>
-  <v-list-item-content>
+  <v-list-item>
     <v-list-item-title class="d-flex justify-space-between">
       Invoice Needed
       <div class="text-caption text--secondary">{{ timeago.format(creationDate) }}</div>
@@ -9,16 +9,15 @@
         We sent a hold invoice to the seller of order id : <strong>{{ orderId }}</strong> create a lightning invoice of {{ satsAmount }} sats to proceed.
       </p>
     </v-list-item-subtitle>
-  </v-list-item-content>
+  </v-list-item>
 </template>
 <script lang="ts">
-import Vue from 'vue'
 import type { PropType } from 'vue'
-import { MostroMessage } from '~/store/types'
+import { MostroMessage } from '~/stores/types'
 import * as timeago from 'timeago.js'
 import textMessage from '~/mixins/text-message'
 
-export default Vue.extend({
+export default {
   data() {
     return {
       timeago
@@ -54,5 +53,5 @@ export default Vue.extend({
       return this.message.created_at * 1e3
     }
   }
-})
+}
 </script>
