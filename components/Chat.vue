@@ -35,7 +35,7 @@
     >
       <v-container fluid>
         <v-row>
-          <v-col cols="10">
+          <v-col cols="10" class="ml-0 pl-0">
             <v-text-field
               v-model="inputMessage"
               @keydown.enter="sendMessage"
@@ -44,8 +44,8 @@
               single-line
             ></v-text-field>
           </v-col>
-          <v-col cols="2">
-            <v-btn fab color="primary" @click="sendMessage">
+          <v-col cols="2" class="d-flex justify-left align-center">
+            <v-btn fab color="primary" @click="sendMessage" :disabled="isLocked">
               <v-icon>mdi-send</v-icon>
             </v-btn>
           </v-col>
@@ -56,13 +56,14 @@
 </template>
 
 <script lang="ts">
-import { ref, onMounted, nextTick } from 'vue'
+import { ref, onMounted, nextTick, computed } from 'vue'
 import { mapState } from 'pinia'
+import { useAuth } from '@/stores/auth'
 import { useMessages } from '~/stores/messages'
 import * as _timeago from 'timeago.js'
 import { PeerMessage } from '~/stores/types'
 
-export default {
+export default defineComponent({
   setup() {
     const inputMessage = ref('')
     const inputContainerHeight = ref(0)
@@ -78,7 +79,10 @@ export default {
 
     onMounted(scrollToBottom)
 
-    return { inputMessage, inputContainerHeight, timeago, scrollToBottom, scrollingContent }
+    const authStore = useAuth()
+    const isLocked = computed(() => authStore.isLocked)
+
+    return { inputMessage, inputContainerHeight, timeago, scrollToBottom, scrollingContent, isLocked }
   },
   methods: {
     async sendMessage() {
@@ -121,15 +125,14 @@ export default {
       return this.getPeerMessagesByNpub(npub)
     }
   }
-}
+})
 </script>
 
 <style scoped>
 .input-container {
-  background-color: white;
   width: 90%;
   position: absolute;
-  bottom: 10px;
+  bottom: 14px;
   z-index: 1;
 }
 </style>
