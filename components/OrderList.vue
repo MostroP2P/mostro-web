@@ -36,10 +36,11 @@
   </v-card>
 </template>
 
-<script lang="ts" setup>
-import { computed, ref } from 'vue'
+<script lang="ts">
+import { defineComponent, computed, ref } from 'vue'
+import { Order, OrderType } from '@/stores/types'
 import { useOrders } from '@/stores/orders'
-// @ts-ignore
+import { useAuth } from '@/stores/auth'
 import fiat from '~/assets/fiat.json'
 
 type FiatData = {
@@ -54,33 +55,30 @@ type FiatData = {
   price: boolean
 }
 
-const ordersStore = useOrders()
-const fiatMap = ref(fiat)
-
-const getPendingOrders = computed(() => ordersStore.getPendingOrders)
-</script>
-
-
-<script lang="ts">
-import { defineComponent } from 'vue'
-import { Order, OrderType } from '@/stores/types'
-
 export default defineComponent({
-  data() {
+  setup() {
+    const authStore = useAuth()
+    const ordersStore = useOrders()
+    const getPendingOrders = computed(() => ordersStore.getPendingOrders)
+
     return {
       fiatMap: fiat as { [key: string]: Partial<FiatData> },
-      headerHeight: 64
+      headerHeight: 64,
+      authStore,
+      getPendingOrders
     }
   },
   methods: {
     getFlag(fiatCode: string) {
       return this.fiatMap[fiatCode?.toUpperCase()].emoji ?? ''
     },
-    showTakeSell(order: Order) {
-      return order.kind === OrderType.SELL
+    showTakeSell(order: Order) : boolean {
+      const isLocked: boolean = this.authStore.isLocked
+      return order.kind === OrderType.SELL && !isLocked
     },
-    showTakeBuy(order: Order) {
-      return order.kind === OrderType.BUY
+    showTakeBuy(order: Order) : boolean {
+      const isLocked = this.authStore.isLocked
+      return order.kind === OrderType.BUY && !isLocked
     },
     summary(order: Order) {
       if (order.amount === 0) {
