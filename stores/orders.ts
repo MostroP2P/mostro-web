@@ -22,9 +22,12 @@ export const useOrders = defineStore('orders', {
       notificationStore.checkOrderForNotification({ order, eventId })
     },
     addUserOrder({ order, eventId }: {order: Order, eventId: string}) {
-      if (this.orders[order.id]) {
-        this.orders[order.id].is_mine = true
+      if (!this.orders[order.id]) {
+        // If the order doesn't yet exist, we add it
+        this.orders[order.id] = order
       }
+      // We mark it as ours and add it to the `userOrders` map
+      this.orders[order.id].is_mine = true
       this.userOrders[order.id] = true
     },
     removeOrder(order: Order) {
