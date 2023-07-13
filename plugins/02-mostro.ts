@@ -76,20 +76,25 @@ class Mostro {
       .map(() => Math.random().toString(36)[2]).join('')
   }
 
+  public subscribe(kind: number) {
+    this.pool.subscribe(this.sub_id, {limit: 100, kinds:[kind]})
+  }
+
   init() {
     this.pool = RelayPool(this.relays)
     this.pool.on('open', (relay: any) => {
-      relay.subscribe(this.sub_id, {limit: 100, kinds:[4, 30000]})
+      this.subscribe(30000)
     })
     this.pool.on('close', (relay: any) => {
       relay.close()
     })
     this.pool.on('event', async (relay: any, sub_id: any, ev: any) => {
-      if (!this.signer) {
+      let { kind } = ev
+      if (!this.signer && kind !== 30000) {
+        // We shouldn't have any events other than kind 30000 at this point, but just in case
         console.warn('dropping event due to lack of signer')
         return
       }
-      let { kind } = ev
       if (kind === 30000) {
         // Order
         let { content } = ev
@@ -305,13 +310,17 @@ export default defineNuxtPlugin((nuxtApp) => {
   }
   const mostro = new Mostro(opts)
   nuxtApp.provide('mostro', mostro)
+  // We need to wait a bit before initializing the mostro object, otherwise the
+  // client & server-side rendering versions won't match for some reason.
+  setTimeout(() => mostro.init(), 1e3)
 
   // Registering a watcher for the nsec
   const authStore = useAuth()
   watch(() => authStore.nsec, (newValue, oldValue) => {
     if (newValue) {
+      // If we have a signer, we can request DMs
       mostro.signer = new LocalSigner()
-      mostro.init()
+      mostro.subscribe(4)
     } else {
       mostro.close()
       mostro.lock()
