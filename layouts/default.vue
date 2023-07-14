@@ -34,7 +34,9 @@
       <v-app-bar-nav-icon v-if="mobile" @click.stop="drawer = !drawer" />
       <v-toolbar-title>Mostro</v-toolbar-title>
       <v-spacer />
-      <notifications/>
+      <client-only>
+        <notifications/>
+      </client-only>
     </v-app-bar>
     <v-main>
       <v-container>

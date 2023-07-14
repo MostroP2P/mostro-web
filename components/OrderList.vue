@@ -23,7 +23,7 @@
           </v-list-item-subtitle>
           <v-list-item-subtitle>
             <div class="d-flex justify-space-between">
-              Payment via: {{ order.payment_method }}
+              Payment via: {{ order.payment_method }} - id: {{ order.id }}
               <take-sell-order-dialog v-if="showTakeSell(order)" :order="order"/>
               <take-buy-order-dialog v-if="showTakeBuy(order)" :order="order"/>
             </div>

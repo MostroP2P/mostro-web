@@ -1,51 +1,87 @@
 import { defineStore } from 'pinia'
-import { OrderStatus, Order, OrderType, Notification, DismissedNotificationMap } from './types'
+import { useLocalStorage } from '@vueuse/core'
+import { Event } from 'nostr-tools'
 import { useOrders } from '@/stores/orders'
+import {
+  OrderStatus,
+  Order,
+  OrderType,
+  Notification,
+  NOTIFICATIONS_KEY
+} from './types'
 
 export const useNotifications = defineStore('notifications', {
   state: () => ({
     notifications: [] as Notification[],
-    dismissedNotifications: {} as DismissedNotificationMap
   }),
   actions: {
-    setDismissedNotifications(
-      dismissedNotifications: DismissedNotificationMap
-    ) {
-      this.dismissedNotifications = dismissedNotifications
-    },
-    addNotification(notification: Notification) {
-      this.notifications.push(notification)
+    init() {
+      const storedNotifications = useLocalStorage(NOTIFICATIONS_KEY, [] as Notification[])
+      this.notifications = storedNotifications.value
+
+      watch(
+        () => this.notifications,
+        (newNotifications) => {
+          storedNotifications.value = newNotifications
+        },
+        { deep: true }
+      )
     },
     checkOrderForNotification(
-      { order, eventId } : { order: Order, eventId: string }
+      { order, event } : { order: Order, event: Event<4|30000> }
     ) {
       const orderStore = useOrders()
       const userOrders = orderStore.getUserOrderIds
       if (userOrders[order.id]) {
-        // This is a user's order
         const storedOrder = orderStore.getOrderById(order.id)
-        if (storedOrder.status === OrderStatus.PENDING || true) {
+        const index = this.notifications.findIndex(n => n.orderId === order.id)
+        if (index !== -1) {
+          // We already have a notification for this order
+          return
+        }
+
+        if (
+          storedOrder.status === OrderStatus.WAITING_BUYER_INVOICE ||
+          storedOrder.status === OrderStatus.WAITING_PAYMENT
+        ) {
+          const timestamp = Math.floor(Date.now() / 1000)
           const notification: Notification = {
-            eventId,
+            eventId: event.id,
+            timestamp: timestamp,
             title: `Your ${order.kind === OrderType.SELL ? 'Sell' : 'Buy'} order was taken!`,
-            subtitle: 'Click here to see more details',
+            subtitle: `Order for ${order.fiat_amount} ${order.fiat_code.toUpperCase()} - T: ${timestamp}, S: ${storedOrder.status}`,
             orderId: order.id,
-            dismissed: this.dismissedNotifications[eventId] !== undefined
+            dismissed: false
           }
           this.notifications.push(notification)
+        } else {
+          console.log('Skipping order: ', order)
         }
       }
     },
     dismiss(notification: Notification) {
-      const targetNotification = this.notifications.findIndex(n => n.eventId === notification.eventId)
-      if (targetNotification !== -1) {
-        this.notifications[targetNotification].dismissed = true
+      const index = this.notifications.findIndex(n => n.eventId === notification.eventId)
+      if (index !== -1) {
+        const orderStore = useOrders()
+        const storedOrder = orderStore.getOrderById(notification.orderId)
+        if (storedOrder.status === OrderStatus.EXPIRED ||
+          storedOrder.status === OrderStatus.CANCELED ||
+          storedOrder.status === OrderStatus.CANCELED_BY_ADMIN ||
+          storedOrder.status === OrderStatus.COMPLETED_BY_ADMIN ||
+          storedOrder.status === OrderStatus.SUCCESS
+        ) {
+          this.notifications.splice(index, 1)
+        } else {
+          this.notifications[index].dismissed = true
+        }
       }
     }
   },
   getters: {
     getActiveNotifications(state) {
-      return state.notifications.filter(n => !n.dismissed)
+      return state.notifications
+        .filter(n => !n.dismissed)
+        .sort((a, b) => b.timestamp - a.timestamp)
     }
   }
 })

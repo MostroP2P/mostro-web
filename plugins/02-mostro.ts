@@ -104,10 +104,10 @@ class Mostro {
         console.log(`< Mostro 30000. sub_id: ${sub_id}, ev: `, ev)
         if (this.orderMap.has(content.id)) {
           // Updates existing order
-          this.orderStore.updateOrder({ order: content, eventId: ev.id })
+          this.orderStore.updateOrder({ order: content, event: ev })
         } else {
           // Adds new order
-          this.orderStore.addOrder({ order: content, eventId: ev.id })
+          this.orderStore.addOrder({ order: content, event: ev })
           this.orderMap.set(content.id, ev.id)
         }
       } else if (kind === 4) {
@@ -121,7 +121,7 @@ class Mostro {
             if (ev.pubkey === mostroPubKey) {
               console.log('< Mostro DM: ', plaintext, ', ev: ', ev)
               const msg = { ...JSON.parse(plaintext), created_at: ev.created_at }
-              this.messageStore.addMostroMessage({ message: msg, eventId: ev.id })
+              this.messageStore.addMostroMessage({ message: msg, event: ev })
             } else {
               console.log('< Peer DM: ', plaintext, ', ev: ', ev)
               // Peer DMs

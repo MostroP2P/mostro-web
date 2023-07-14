@@ -7,6 +7,7 @@ import {
   Action
 } from './types'
 import { useOrders } from './orders'
+import { Event } from 'nostr-tools'
 
 export interface MessagesState {
   messages: {
@@ -26,7 +27,7 @@ export const useMessages = defineStore('messages', {
   }),
   actions: {
     async addMostroMessage(
-      { message, eventId } : { message: MostroMessage, eventId: string }
+      { message, event } : { message: MostroMessage, event: Event<4|30000> }
     ) {
       const orderStore = useOrders()
       if (message?.content?.SmallOrder) {
@@ -40,13 +41,13 @@ export const useMessages = defineStore('messages', {
             order.seller_pubkey = seller_pubkey
             order.buyer_pubkey = buyer_pubkey
             if (order) {
-              orderStore.updateOrder({ order, eventId })
+              orderStore.updateOrder({ order, event })
             } else {
               orderStore.scheduleOrderUpdate({
                 orderId: message.order_id,
                 seller_pubkey,
                 buyer_pubkey,
-                eventId
+                event
               })
             }
           }
@@ -54,7 +55,7 @@ export const useMessages = defineStore('messages', {
       }
       if (message?.action === Action.Order) {
         const order: Order = message.content.Order as Order
-        orderStore.addUserOrder({ order, eventId })
+        orderStore.addUserOrder({ order, event })
       }
       this.messages.mostro.splice(0, 0, message)
     },

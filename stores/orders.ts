@@ -1,5 +1,6 @@
 import { useNotifications } from '@/stores/notifications'
 import { Order, OrderMapType, OrderOwnershipMapType, ScheduledOrderUpdatePayload } from './types'
+import { Event } from 'nostr-tools'
 
 export const useOrders = defineStore('orders', {
   state: (): { orders: OrderMapType, userOrders: OrderOwnershipMapType }  => ({
@@ -7,7 +8,7 @@ export const useOrders = defineStore('orders', {
     userOrders: {}
   }),
   actions: {
-    addOrder({ order, eventId }: {order: Order, eventId: string }) {
+    addOrder({ order, event }: {order: Order, event: Event<4|30000> }) {
       if (!this.orders[order.id]) {
         // Because of the asynchronous nature of messages, we can
         // have an order being added from the network which we already know
@@ -18,10 +19,8 @@ export const useOrders = defineStore('orders', {
         }
         this.orders[order.id] = order
       }
-      const notificationStore = useNotifications()
-      notificationStore.checkOrderForNotification({ order, eventId })
     },
-    addUserOrder({ order, eventId }: {order: Order, eventId: string}) {
+    addUserOrder({ order, event }: {order: Order, event: Event<4|30000>}) {
       if (!this.orders[order.id]) {
         // If the order doesn't yet exist, we add it
         this.orders[order.id] = order
@@ -29,14 +28,14 @@ export const useOrders = defineStore('orders', {
       // We mark it as ours and add it to the `userOrders` map
       this.orders[order.id].is_mine = true
       this.userOrders[order.id] = true
+      // Check if we must notify the user
+      const notificationStore = useNotifications()
+      notificationStore.checkOrderForNotification({ order, event })
     },
     removeOrder(order: Order) {
       delete this.orders[order.id]
     },
-    updateOrder({ order, eventId }: {order: Order, eventId: string }) {
-      const notificationStore = useNotifications()
-      notificationStore.checkOrderForNotification({ order, eventId })
-
+    updateOrder({ order, event }: {order: Order, event: Event<4|30000> }) {
       const existingOrder = this.orders[order.id]      
       if (existingOrder) {
         // We just update buyer & seller pubkeys if they're not set yet
@@ -54,6 +53,10 @@ export const useOrders = defineStore('orders', {
         existingOrder.status = order.status
         // Updating the 'orders' object
         this.orders[order.id] = {...existingOrder}
+
+        // Check if we must notify the user
+        const notificationStore = useNotifications()
+        notificationStore.checkOrderForNotification({ order, event })
       } else {
         console.warn(`Could not find order with id ${order.id} to update`)
       }
@@ -65,7 +68,7 @@ export const useOrders = defineStore('orders', {
     // callback registration mechanism could also be used.
     scheduleOrderUpdate(payload: ScheduledOrderUpdatePayload) {
       const RETRY_INTERVAL = 1E3
-      const { orderId, eventId } = payload
+      const { orderId, event } = payload
       const order = this.orders[orderId]
       if (!order) {
         // If there's no order, we just schedule the dispatch of the same
@@ -85,9 +88,11 @@ export const useOrders = defineStore('orders', {
           // @ts-ignore
           order[key] = toUpdate[key]
         })
-        this.updateOrder({ order, eventId })
+        this.updateOrder({ order, event })
+
+        // Check if we must notify the user
         const notificationStore = useNotifications()
-        notificationStore.checkOrderForNotification({ order, eventId })
+        notificationStore.checkOrderForNotification({ order, event })
       }
     }
   },

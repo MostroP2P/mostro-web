@@ -1,4 +1,5 @@
-import { reactive } from 'vue';
+import { reactive } from 'vue'
+import { Event } from 'nostr-tools'
 import { AuthState } from './auth'
 
 export type ThreadSummary = {
@@ -188,7 +189,7 @@ export enum OrderPricingMode {
 }
 
 export const USER_ORDERS_KEY = 'user-orders-key'
-export const DISMISSED_NOTIFICATION_KEY = 'dismissed-notification-key'
+export const NOTIFICATIONS_KEY = 'notifications-key'
 export const ENCRYPTED_PRIVATE_KEY = 'encrypted-private-key'
 
 export interface OrderState {
@@ -206,13 +207,11 @@ export type OrderOwnershipMapType = {
 
 // Define the state type
 export interface NotificationState {
-  notifications: Notification[];
-  dismissedNotifications: DismissedNotificationMap
+  notifications: Notification[]
 }
 
-export type DismissedNotificationMap = { [eventId: string] : boolean }
-
 export interface Notification {
+  timestamp: number,
   eventId: string,
   title: string,
   subtitle: string,
@@ -232,7 +231,7 @@ export interface RootState {
 }
 export interface ScheduledOrderUpdatePayload {
   orderId: string,
-  eventId: string,
+  event: Event<4|30000>,
   seller_pubkey?: string,
   buyer_pubkey?: string
 }

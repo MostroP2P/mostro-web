@@ -13,7 +13,7 @@
     <template v-slot:activator="{ props }">
       <v-btn icon="mdi-bell-outline" color="white" variant="plain" v-bind="props"></v-btn>
     </template>
-    <div class="scrollable-menu">
+    <v-list class="scrollable-menu" three-line>
       <transition-group name="list" tag="v-list">
         <v-list-item
           v-for="(notification) in notifications"
@@ -21,27 +21,26 @@
           class="my-1 notification-item"
           @click="() => handleNotificationClick(notification)"
           three-line
+          prepend-icon="mdi-alert-circle"
         >
-          <div>
             <v-list-item-title>
               📣 {{ notification.title }}
             </v-list-item-title>
             <v-list-item-subtitle class="text-caption">
-
+              {{ notification.subtitle }}
             </v-list-item-subtitle>
             <v-list-item-subtitle class="text-caption text--disabled" style="max-width: 25em">
               Order: {{ notification.orderId }}
             </v-list-item-subtitle>
-          </div>
+            <v-divider :key="`div-${notification.eventId}`"/>
         </v-list-item>
-
         <v-list-item :key="1000">
           <v-btn text block @click.prevent="clearNotifications">
             <v-icon>mdi-notification-clear-all</v-icon>
           </v-btn>
         </v-list-item>
       </transition-group>
-    </div>
+    </v-list>
 
   </v-menu>
   </v-badge>
@@ -101,9 +100,8 @@ export default {
   overflow-y: auto;
 }
 .notification-item {
-  background: white;
-  border-radius: 0.5em;
+  /* border-radius: 0.5em;
   border-color: rgb(104, 104, 104);
-  border-width: 0.05em;
+  border-width: 0.05em; */
 }
 </style>
