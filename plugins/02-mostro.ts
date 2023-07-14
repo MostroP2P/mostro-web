@@ -76,14 +76,14 @@ class Mostro {
       .map(() => Math.random().toString(36)[2]).join('')
   }
 
-  public subscribe(kind: number) {
-    this.pool.subscribe(this.sub_id, {limit: 100, kinds:[kind]})
+  public subscribe(kinds: number[]) {
+    this.pool.subscribe(this.sub_id, {limit: 100, kinds})
   }
 
   init() {
     this.pool = RelayPool(this.relays)
     this.pool.on('open', (relay: any) => {
-      this.subscribe(30000)
+      this.subscribe([30000])
     })
     this.pool.on('close', (relay: any) => {
       relay.close()
@@ -101,15 +101,13 @@ class Mostro {
         // Most of the orders that we receive via kind events are not ours,
         // so we set the `is_mine` field as false here.
         content = {...JSON.parse(content), is_mine: false}
-        console.log(`< Mostro 3000. sub_id: ${sub_id}, ev: `, ev)
+        console.log(`< Mostro 30000. sub_id: ${sub_id}, ev: `, ev)
         if (this.orderMap.has(content.id)) {
           // Updates existing order
           this.orderStore.updateOrder({ order: content, eventId: ev.id })
-          // this.store.dispatch('orders/updateOrder', { order: content, eventId: ev.id })
         } else {
           // Adds new order
           this.orderStore.addOrder({ order: content, eventId: ev.id })
-          // this.store.dispatch('orders/addOrder', { order: content, eventId: ev.id })
           this.orderMap.set(content.id, ev.id)
         }
       } else if (kind === 4) {
@@ -160,8 +158,8 @@ class Mostro {
             }  
           }
         } else {
-          // console.log(`> DM. ev: `, ev)
-          // console.warn(`Ignoring _DM for key: ${recipient}, my pubkey is ${myPubKey}`)
+          console.log(`> DM. ev: `, ev)
+          console.warn(`Ignoring _DM for key: ${recipient}, my pubkey is ${myPubKey}`)
         }
       } else {
         console.info(`Got event with kind: ${kind}, ev: `, ev)
@@ -320,7 +318,7 @@ export default defineNuxtPlugin((nuxtApp) => {
     if (newValue) {
       // If we have a signer, we can request DMs
       mostro.signer = new LocalSigner()
-      mostro.subscribe(4)
+      mostro.subscribe([30000, 4])
     } else {
       mostro.close()
       mostro.lock()
@@ -335,7 +333,7 @@ export default defineNuxtPlugin((nuxtApp) => {
         npub: nip19.npubEncode(newValue)
       }
       mostro.signer = new ExtensionSigner()
-      mostro.init()
+      mostro.subscribe([30000, 4])
     } else {
       mostro.close()
       mostro.lock()
