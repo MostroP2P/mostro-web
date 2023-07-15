@@ -39,17 +39,17 @@ export const useOrders = defineStore('orders', {
       const existingOrder = this.orders[order.id]      
       if (existingOrder) {
         // We just update buyer & seller pubkeys if they're not set yet
-        if (!existingOrder.buyer_pubkey) {
+        if (!existingOrder.buyer_pubkey && order.buyer_pubkey) {
           existingOrder.buyer_pubkey = order.buyer_pubkey
         }
-        if (!existingOrder.seller_pubkey) {
+        if (!existingOrder.seller_pubkey && order.seller_pubkey) {
           existingOrder.seller_pubkey = order.seller_pubkey
         }
         // A similar treatment is done for the 'is_mine' flag
         if (!existingOrder.is_mine) {
           existingOrder.is_mine = order.is_mine
         }
-        // The 'status' is always updates
+        // The 'status' is always updated
         existingOrder.status = order.status
         // Updating the 'orders' object
         this.orders[order.id] = {...existingOrder}
