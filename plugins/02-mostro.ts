@@ -80,6 +80,12 @@ class Mostro {
     this.pool.subscribe(this.sub_id, {limit: 100, kinds})
   }
 
+  public resubscribe(resubscribe: number[]) {
+    this.pool.unsubscribe(this.sub_id)
+    this.sub_id = this.generateRandomSubId()
+    this.pool.subscribe(this.sub_id, {limit: 100, kinds: resubscribe})
+  }
+
   init() {
     this.pool = RelayPool(this.relays)
     this.pool.on('open', (relay: any) => {
@@ -172,7 +178,7 @@ class Mostro {
     const ciphertext = await this.signer!.encrypt!(publicKey, JSON.stringify(payload))
     const myPubKey = this.pubkeyCache.hex
     let event = {
-      id: undefined,
+      id: undefined as undefined | string,
       sig: undefined,
       kind: 4,
       created_at: Math.floor(Date.now() / 1000),
@@ -320,8 +326,8 @@ export default defineNuxtPlugin((nuxtApp) => {
       mostro.signer = new LocalSigner()
       mostro.subscribe([30000, 4])
     } else {
-      mostro.close()
       mostro.lock()
+      mostro.resubscribe([30000])
     }
   })
 
@@ -335,8 +341,8 @@ export default defineNuxtPlugin((nuxtApp) => {
       mostro.signer = new ExtensionSigner()
       mostro.subscribe([30000, 4])
     } else {
-      mostro.close()
       mostro.lock()
+      mostro.resubscribe([30000])
     }
   })
 })
