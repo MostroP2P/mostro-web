@@ -36,8 +36,16 @@ export const useNotifications = defineStore('notifications', {
         const storedOrder = orderStore.getOrderById(order.id)
         const index = this.notifications.findIndex(n => n.orderId === order.id)
         if (index !== -1) {
-          // We already have a notification for this order
-          return
+          const notification = this.notifications[index]
+          const notificationEventId = notification.eventId
+          if (notificationEventId === event.id) {
+            // The notification for this event was already added,
+            // if it's not shown it's probably dismissed
+            return
+          }
+          // If the event is different, it probably means that this is a new
+          // request the original was probably not successful and the order
+          // was just re-published
         }
 
         if (
