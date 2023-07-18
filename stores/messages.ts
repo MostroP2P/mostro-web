@@ -102,11 +102,43 @@ export const useMessages = defineStore('messages', {
         }
       })
     },
+    /**
+     * This function will return a list of mostro messages for a given order id
+     *
+     * It starts by copying all messages to a new array, that will then be
+     * manipulated so that:
+     *
+     * - Only messages for the given order id are kept
+     * - Only the last message for each action is kept
+     *
+     * We do this because sometimes if a trade is not finalized, mostro will
+     * replay the message corresponding to previous actions.
+     *
+     * @param state - The message state
+     * @returns A filtered list of messages, with only the last message for each action
+     */
     getMostroMessagesByOrderId(state: MessagesState ) : (orderId: string) => MostroMessage[] {
       return (orderId: string) => {
+        // Copying messages array
         const messageSlice = state.messages.mostro.slice(0)
-        return messageSlice
+        // Filtering messages by order id
+        const messages = messageSlice
           .filter((message: MostroMessage) => message.order_id === orderId)
+
+        // Reducing messages to only the last one for each action
+        type ReducerAcc = { [key: string]: MostroMessage }
+        const reduced = messages.reduce<ReducerAcc>((acc: ReducerAcc, message: MostroMessage) => {
+          if(acc[message.action] && acc[message.action].created_at < message.created_at) {
+            acc[message.action] = message
+          } else if (!acc[message.action]) {
+            acc[message.action] = message
+          }
+          return acc
+        }, {})
+
+        if (!reduced) return []
+        // Converting back to an array
+        return Object.values(reduced)
           .sort((a: MostroMessage, b: MostroMessage) => a.created_at - b.created_at)
       }
     },
