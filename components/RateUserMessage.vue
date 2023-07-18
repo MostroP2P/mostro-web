@@ -1,6 +1,6 @@
 <template>
   <div style="width: 100%">
-    <v-list-item-content>
+    <div>
       <v-list-item-title class="d-flex justify-space-between">
         Rate User
         <div class="text-caption text--secondary">{{ timeago.format(creationDate) }}</div>
@@ -21,15 +21,14 @@
       <div>
         <v-btn text>Rate</v-btn>
       </div>
-    </v-list-item-content>
+    </div>
   </div>
 </template>
 <script lang="ts">
-import Vue from 'vue'
 import type { PropType } from 'vue'
 import * as timeago from 'timeago.js'
-import { MostroMessage } from '~/store/types'
-export default Vue.extend({
+import { MostroMessage } from '~/stores/types'
+export default {
   data() {
     return { timeago }
   },
@@ -44,5 +43,5 @@ export default Vue.extend({
       return this.message.created_at * 1e3
     }
   }
-})
+}
 </script>

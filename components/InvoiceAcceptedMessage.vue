@@ -1,5 +1,5 @@
 <template>
-  <v-list-item-content>
+  <div>
     <v-list-item-title class="d-flex justify-space-between">
       Invoice Accepted
       <div class="text-caption text--secondary">{{ timeago.format(creationDate) }}</div>
@@ -10,20 +10,20 @@
       has taken your order and wants to buy your sats. Get in touch and tell
       him/her how to send you {{ fiatAmount }} {{ fiatCode }} through {{ paymentMethod }}.
       Once you verify you have received the full amount you have to release the sats.
-  </v-list-item-subtitle>
-  </v-list-item-content>
+    </v-list-item-subtitle>
+  </div>
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
 import type { PropType } from 'vue'
-import { mapGetters } from 'vuex'
-import { MostroMessage } from '~/store/types'
+import { mapState } from 'pinia'
+import { useOrders } from '~/stores/orders'
+import { MostroMessage } from '~/stores/types'
 import textMessage from '~/mixins/text-message'
 import NPub from '~/components/NPub.vue'
 import * as timeago from 'timeago.js'
 
-export default Vue.extend({
+export default {
   data() {
     return { timeago }
   },
@@ -43,7 +43,7 @@ export default Vue.extend({
     }
   },
   computed: {
-    ...mapGetters('orders', ['getOrderById']),
+    ...mapState(useOrders, ['getOrderById']),
     order() {
       // @ts-ignore
       return this.getOrderById(this.$route.params.id)
@@ -77,5 +77,5 @@ export default Vue.extend({
       return this.message.created_at * 1e3
     }
   }
-})
+}
 </script>

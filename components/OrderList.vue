@@ -6,29 +6,28 @@
           three-line
           link
         >
-          <v-list-item-content>
-            <v-list-item-title class="d-flex justify-space-between">
-              {{ order.fiat_amount }} {{ order.fiat_code.toUpperCase() }} {{ getFlag(order.fiat_code) }}
-              <v-chip
-                style="cursor: pointer"
-                outlined
-                :color="order.kind === 'Sell' ? 'red' : 'green'"
-                small
-              >
-                {{ order.kind.toUpperCase() }}
-              </v-chip>
-            </v-list-item-title>
-            <v-list-item-subtitle>
-              {{ summary(order) }}
-            </v-list-item-subtitle>
-            <v-list-item-subtitle>
-              <div class="d-flex justify-space-between">
-                Payment via: {{ order.payment_method }}
-                <take-sell-order-dialog v-if="showTakeSell(order)" :order="order"/>
-                <take-buy-order-dialog v-if="showTakeBuy(order)" :order="order"/>
-              </div>
-            </v-list-item-subtitle>
-          </v-list-item-content>
+          <v-list-item-title class="d-flex justify-space-between">
+            {{ order.fiat_amount }} {{ order.fiat_code.toUpperCase() }} {{ getFlag(order.fiat_code) }}
+            <v-chip
+              class="ma-2"
+              rounded
+              size="small"
+              style="cursor: pointer"
+              :color="order.kind === 'Sell' ? 'red' : 'green'"
+            >
+              {{ order.kind.toUpperCase() }}
+            </v-chip>
+          </v-list-item-title>
+          <v-list-item-subtitle>
+            {{ summary(order) }}
+          </v-list-item-subtitle>
+          <v-list-item-subtitle>
+            <div class="d-flex justify-space-between">
+              Payment via: {{ order.payment_method }} - id: {{ order.id }}
+              <take-sell-order-dialog v-if="showTakeSell(order)" :order="order"/>
+              <take-buy-order-dialog v-if="showTakeBuy(order)" :order="order"/>
+            </div>
+          </v-list-item-subtitle>
         </v-list-item>
         <v-divider/>
       </div>
@@ -38,28 +37,48 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
-import { mapGetters } from 'vuex'
-import { Order, OrderType } from '../store/types'
-// @ts-ignore
+import { defineComponent, computed, ref } from 'vue'
+import { Order, OrderType } from '@/stores/types'
+import { useOrders } from '@/stores/orders'
+import { useAuth } from '@/stores/auth'
 import fiat from '~/assets/fiat.json'
 
-export default Vue.extend({
-  data() {
+type FiatData = {
+  symbol: string,
+  name: string,
+  symbol_native: string,
+  decimal_digits: number,
+  rounding: number,
+  code: string,
+  emoji: string
+  name_plural: string,
+  price: boolean
+}
+
+export default defineComponent({
+  setup() {
+    const authStore = useAuth()
+    const ordersStore = useOrders()
+    const getPendingOrders = computed(() => ordersStore.getPendingOrders)
+
     return {
-      fiatMap: fiat,
-      headerHeight: 64
+      fiatMap: fiat as { [key: string]: Partial<FiatData> },
+      headerHeight: 64,
+      authStore,
+      getPendingOrders
     }
   },
   methods: {
     getFlag(fiatCode: string) {
-      return this.fiatMap[fiatCode?.toUpperCase()]?.emoji
+      return this.fiatMap[fiatCode?.toUpperCase()].emoji ?? ''
     },
-    showTakeSell(order: Order) {
-      return order.kind === OrderType.SELL
+    showTakeSell(order: Order) : boolean {
+      const isLocked: boolean = this.authStore.isLocked
+      return order.kind === OrderType.SELL && !isLocked
     },
-    showTakeBuy(order: Order) {
-      return order.kind === OrderType.BUY
+    showTakeBuy(order: Order) : boolean {
+      const isLocked = this.authStore.isLocked
+      return order.kind === OrderType.BUY && !isLocked
     },
     summary(order: Order) {
       if (order.amount === 0) {
@@ -89,8 +108,5 @@ export default Vue.extend({
       }
     }
   },
-  computed: {
-    ...mapGetters('orders', ['getPendingOrders'])
-  }
 })
 </script>

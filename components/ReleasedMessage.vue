@@ -1,6 +1,6 @@
 <template>
   <div style="width: 100%">
-    <v-list-item-content>
+    <div>
       <v-list-item-title class="d-flex justify-space-between">
         Sats Released!
         <div class="text-caption text--secondary">{{ timeago.format(creationDate) }}</div>
@@ -8,17 +8,18 @@
       <v-list-item-subtitle class="wrap-text text-message">
         🕐 <npub v-if="sellerPubkey" :npub="sellerPubkey"/> already released the satoshis, expect your invoice to be paid any time, remember your wallet needs to be online to receive through lighntning network.
       </v-list-item-subtitle>
-    </v-list-item-content>
+    </div>
   </div>
 </template>
 <script lang="ts">
-import Vue from 'vue'
 import type { PropType } from 'vue'
-import { mapGetters } from 'vuex'
+import { mapState } from 'pinia'
+import { useRoute } from 'vue-router'
 import * as timeago from 'timeago.js'
-import { MostroMessage } from '~/store/types'
+import { MostroMessage, Order } from '~/stores/types'
+import { useOrders } from '@/stores/orders'
 import NPub from '~/components/NPub.vue'
-export default Vue.extend({
+export default {
   data() {
     return {
       timeago
@@ -34,10 +35,11 @@ export default Vue.extend({
     }
   },
   computed: {
-    ...mapGetters('orders', ['getOrderById']),
-    order() {
+    ...mapState(useOrders, ['getOrderById']),
+    order() : Order {
+      const route = useRoute()
       // @ts-ignore
-      return this.getOrderById(this.$route.params.id)
+      return this.getOrderById(route.params.id)
     },
     sellerPubkey() {
       // @ts-ignore
@@ -47,5 +49,5 @@ export default Vue.extend({
       return this.message.created_at * 1e3
     }
   }
-})
+}
 </script>

@@ -8,10 +8,9 @@
   </code>
 </template>
 <script lang="ts">
-import Vue from 'vue'
 import textMessage from '~/mixins/text-message'
 import mobileDetector from '~/mixins/mobile-detector'
-export default Vue.extend({
+export default {
   mixins: [mobileDetector, textMessage],
   name: 'Npub',
   props: {
@@ -22,13 +21,15 @@ export default Vue.extend({
   },
   methods: {
     onPubkeyClick() {
-      this.$router.push(`/messages/${this.npub}`)
+      const router = useRouter()
+      router.push({ path: `/messages/${this.npub}` })
     }
   }
-})
+}
 </script>
 <style scoped>
 .npub {
   color: #38efd0;
+  cursor: pointer;
 }
 </style>

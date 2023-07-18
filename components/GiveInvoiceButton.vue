@@ -1,7 +1,7 @@
 <template>
   <v-dialog v-model="showDialog" max-width="500">
-    <template v-slot:activator="{ on, attrs }">
-      <v-btn text color="accent" v-bind="attrs" v-on="on">
+    <template v-slot:activator="{ props }">
+      <v-btn text color="accent" v-bind="props">
         <v-icon left>
           fa-sharp fa-solid fa-bolt
         </v-icon>
@@ -40,21 +40,32 @@
   </v-dialog>
 </template>
 <script lang="ts">
-import Vue from 'vue'
 import type { PropType } from 'vue'
-import lightningPayReq from 'bolt11'
-import { MostroMessage } from '~/store/types'
-export default Vue.extend({
+import * as bolt11 from 'light-bolt11-decoder'
+import { MostroMessage } from '~/stores/types'
+
+type InvoiceSection = {
+  letters: string
+  name: string
+  value?: string | number | Object
+}
+
+type DecodedInvoice = {
+  sections?: InvoiceSection[]
+  expiry?: number
+}
+
+export default {
   data() {
     return {
       showDialog: false,
       invoice: '',
-      decodedInvoice: {},
+      decodedInvoice: {} as DecodedInvoice,
       isProcessing: false,
       rules: {
         required: (value: string) => !!value || 'Enter a LN invoice',
         // @ts-ignore
-        isInvoice: () => this.decodedInvoice.complete || 'Not a valid invoice',
+        isInvoice: () => true, //this.decodedInvoice.complete || 'Not a valid invoice',
         // @ts-ignore
         network: () => this.isInvoiceNetwork || 'Wrong invoice network',
         // @ts-ignore
@@ -92,7 +103,7 @@ export default Vue.extend({
     },
     isInvoice(text: string) {
       try {
-        lightningPayReq.decode(text)
+        bolt11.decode(text)
         return true
       } catch(err) {
         return 'Not a valid invoice'
@@ -103,7 +114,7 @@ export default Vue.extend({
     invoice(newValue) {
       this.decodedInvoice = {}
       try {
-        this.decodedInvoice = lightningPayReq.decode(newValue)
+        this.decodedInvoice = bolt11.decode(newValue)
       } catch(err) {}
     }
   },
@@ -115,16 +126,10 @@ export default Vue.extend({
       let msat = 0
       try {
         const decoded = this.decodedInvoice
-        if (decoded) {
-          // @ts-ignore
-          if (decoded.satoshis) {
-            // @ts-ignore
-            msat = decoded.satoshis * 1e3
-            // @ts-ignore
-          } else if (decoded.millisatoshis !== null && decoded.millisatoshis !== undefined) {
-            // @ts-ignore
-            msat = parseInt(decoded.millisatoshis)
-          }
+        // @ts-ignore
+        const amountSection = decoded.sections.find(section => section.name === 'amount')
+        if (amountSection !== undefined) {
+          msat = parseInt(amountSection.value as string)
         }
         // @ts-ignore
         const requiredMsat = this.satsAmount * 1e3
@@ -135,7 +140,17 @@ export default Vue.extend({
     },
     isExpired() {
       // @ts-ignore
-      return this.decodedInvoice.timeExpireDate > Date.now() / 1e3
+      // return this.decodedInvoice.timeExpireDate > Date.now() / 1e3
+      let timestamp = 0
+      const decoded = this.decodedInvoice
+      if (decoded.expiry === undefined || decoded.sections === undefined) {
+        return false
+      }
+      const timestampSection = decoded.sections.find(section => section.name === 'timestamp')
+      if (timestampSection) {
+        timestamp = timestampSection.value as number
+      }
+      return timestamp + decoded.expiry > (Date.now() / 1e3)
     },
     isInvoiceNetwork() {
       // TODO: This should be 'bcrt' in dev mode and 'bc' in production
@@ -149,23 +164,8 @@ export default Vue.extend({
       return `Invalid amount, please provide us with ${this.satsAmount} sats`
     },
     submitDisabled() {
-      let decodeError = false
-      let decoded: {satoshis: number, millisatoshis: number } | undefined
-      let amount
-      try {
-        // @ts-ignore
-        decoded = this.decodedInvoice
-        if (decoded?.satoshis) {
-          amount = decoded.satoshis
-        } else if (decoded?.millisatoshis && decoded?.millisatoshis) {
-          // @ts-ignore
-          amount = Math.floor(decoded.millisatoshis / 1e3)
-        }
-      } catch(err) {
-        decodeError = true
-      }
-      return this.invoice.length === 0 || decodeError || !amount
+      return false//!this.isValueCorrect || this.isExpired
     }
   }
-})
+}
 </script>

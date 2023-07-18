@@ -1,8 +1,14 @@
 <template>
   <v-dialog v-model="showDialog" width="600">
-    <template v-slot:activator="{on, attrs}">
-      <v-btn fab absolute right bottom color="accent" class="mb-5 mr-5" v-bind="attrs" v-on="on">
-        <v-icon>mdi-plus</v-icon>
+    <template v-slot:activator="{ props }">
+      <v-btn
+        icon="mdi-plus"
+        size="x-large"
+        density="comfortable"
+        elevation="6"
+        :disabled="isLocked"
+        class="fixed-btn"
+        v-bind="props">
       </v-btn>
     </template>
     <v-card>
@@ -13,8 +19,8 @@
         <v-tab>Sell</v-tab>
         <v-tab>Buy</v-tab>
       </v-tabs>
-      <v-tabs-items v-model="tabs">
-        <v-tab-item>
+      <v-window v-model="tabs">
+        <v-window-item>
           <v-card-text>
             <order-form
               :onClose="() => showDialog = false"
@@ -22,8 +28,8 @@
               orderType="Sell"
             />
           </v-card-text>
-        </v-tab-item>
-        <v-tab-item>
+        </v-window-item>
+        <v-window-item>
           <v-card-text>
             <order-form
               :onClose="() => showDialog = false"
@@ -31,15 +37,21 @@
               orderType="Buy"
             />
           </v-card-text>
-        </v-tab-item>
-      </v-tabs-items>
+        </v-window-item>
+      </v-window>
       <v-progress-linear v-if="isProcessing" indeterminate/>
     </v-card>
   </v-dialog>
 </template>
+<script lang="ts" setup>
+import { computed } from 'vue'
+import { useAuth } from '@/stores/auth'
+const authStore = useAuth()
+const isLocked = computed(() => authStore.isLocked)
+</script>
+
 <script lang="ts">
-import Vue from 'vue'
-export default Vue.extend({
+export default {
   data() {
     return {
       showDialog: false,
@@ -52,5 +64,12 @@ export default Vue.extend({
       this.isProcessing = processing
     }
   }
-})
+}
 </script>
+<style scoped>
+.fixed-btn {
+  position: fixed;
+  bottom: 2.5em;
+  right: 24px;
+}
+</style>

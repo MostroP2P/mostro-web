@@ -1,6 +1,6 @@
 <template>
   <div style="width: 100%">
-    <v-list-item-content>
+    <div>
       <v-list-item-title class="d-flex justify-space-between">
         Fiat Sent
         <div class="text-caption text--secondary">{{ timeago.format(creationDate) }}</div>
@@ -13,19 +13,19 @@
           <npub :npub="buyerPubkey"/> has informed that already sent you the fiat money, once you confirmed you received it, please release funds. You will not be able to create another order until you release funds.
         </p>
       </v-list-item-subtitle>
-    </v-list-item-content>
+    </div>
   </div>
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
-import { mapGetters } from 'vuex'
+import { mapState } from 'pinia'
+import { useOrders } from '@/stores/orders'
 import type { PropType } from 'vue'
 import * as timeago from 'timeago.js'
-import { MostroMessage } from '~/store/types'
+import { MostroMessage } from '~/stores/types'
 import textMessage from '~/mixins/text-message'
 import NPub from '~/components/NPub.vue'
-export default Vue.extend({
+export default {
   data() {
     return { timeago }
   },
@@ -45,10 +45,11 @@ export default Vue.extend({
     }
   },
   computed: {
-    ...mapGetters('orders', ['getOrderById']),
+    ...mapState(useOrders, ['getOrderById']),
     order() {
+      const route = useRoute()
       // @ts-ignore
-      return this.getOrderById(this.$route.params.id)
+      return this.getOrderById(route.params.id)
     },
     buyerPubkey() {
       // @ts-ignore
@@ -66,5 +67,5 @@ export default Vue.extend({
       return this.message.created_at * 1e3
     }
   }
-})
+}
 </script>

@@ -22,13 +22,15 @@
   </div>
 </template>
 <script lang="ts">
-import Vue from 'vue'
-import { mapGetters } from 'vuex'
-import { OrderStatus, OrderType, MostroMessage, Action } from '~/store/types'
-export default Vue.extend({
+import { mapState } from 'pinia'
+import { useRoute } from 'vue-router'
+import { useMessages } from '@/stores/messages'
+import { useOrders } from '@/stores/orders'
+import { OrderStatus, OrderType, MostroMessage, Action } from '~/stores/types'
+export default {
   computed: {
-    ...mapGetters('orders', ['getOrderStatus', 'getOrderById']),
-    ...mapGetters('messages', ['getMostroMessagesByOrderId']),
+    ...mapState(useOrders, ['getOrderStatus', 'getOrderById']),
+    ...mapState(useMessages, ['getMostroMessagesByOrderId']),
     payInvoiceMessage() {
       const orderId = this.$route.params.id
       // @ts-ignore
@@ -42,8 +44,9 @@ export default Vue.extend({
       return messages.find((msg: MostroMessage) => msg.action === Action.AddInvoice || msg.action === Action.TakeSell)
     },
     currentOrderStatus() {
+      const route = useRoute()
       // @ts-ignore
-      return this.getOrderStatus(this.$route.params.id)
+      return this.getOrderStatus(route.params.id)
     },
     order() {
       // @ts-ignore
@@ -104,5 +107,5 @@ export default Vue.extend({
       return this.currentOrderStatus === OrderStatus.WAITING_BUYER_INVOICE && this.giveInvoiceMessage
     }
   }
-})
+}
 </script>

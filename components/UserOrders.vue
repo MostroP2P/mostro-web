@@ -8,15 +8,15 @@
     </v-list>
   </v-card>
   <div v-else class="text-subtitle2 d-flex justify-center align-center" style="height: 100vh">
-    No messages yet
+    No trades yet
   </div>
 </template>
 <script lang="ts">
-import Vue from 'vue'
-import { mapGetters } from 'vuex'
-export default Vue.extend({
+import { mapState } from 'pinia'
+import { useMessages } from '~/stores/messages'
+export default {
   computed: {
-    ...mapGetters('messages', ['getMostroThreadSummaries'])
+    ...mapState(useMessages, ['getMostroThreadSummaries'])
   }
-})
+}
 </script>

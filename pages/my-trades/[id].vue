@@ -4,7 +4,7 @@
       <message-list :order-id="$route.params.id"/>
     </div>
     <trade-actions></trade-actions>
-    <v-stepper alt-labels class="mt-5">
+    <!-- <v-stepper alt-labels class="mt-5">
       <v-stepper-header>
         <v-stepper-step step="1" :complete="isWaitingPayment">
           Waiting Payment
@@ -22,16 +22,17 @@
           Funds released
         </v-stepper-step>
       </v-stepper-header>
-    </v-stepper>
-    <div class="text-caption">
-      {{ getOrderStatus($route.params.id) }}
-    </div>
+    </v-stepper> -->
+    <!-- <div class="text-caption">
+      {{ getOrderStatus(route.params.id) }}
+    </div> -->
   </v-container>
 </template>
 <script lang="ts">
-import Vue from 'vue'
-import { mapGetters, mapState } from 'vuex'
-import { OrderStatus } from '~/store/types'
+import { mapState } from 'pinia'
+import { useRoute } from 'vue-router'
+import { useOrders } from '~/stores/orders'
+import { OrderStatus } from '~/stores/types'
 
 const steps = {
   [`${OrderStatus.PENDING}`]: 0,
@@ -41,17 +42,17 @@ const steps = {
   [`${OrderStatus.SETTLE_HODL_INVOICE}`]: 4,
   [`${OrderStatus.SUCCESS}`]: 4
 }
-export default Vue.extend({
+export default defineComponent({
   layout: 'message-list',
   data() {
     return {
+      route: useRoute(),
       // @ts-ignore
       OrderStatusConstant: OrderStatus
     }
   },
   computed: {
-    ...mapState('orders', ['orders']),
-    ...mapGetters('orders', ['getOrderStatus']),
+    ...mapState(useOrders, ['orders', 'getOrderStatus']),
     currentOrderStatus() {
       // @ts-ignore
       return this.getOrderStatus(this.$route.params.id)
