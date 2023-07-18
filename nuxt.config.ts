@@ -9,8 +9,8 @@ export default defineNuxtConfig({
   },
   app: {
     head: {
-      titleTemplate: '%s - mostro-web-ui',
-      title: 'mostro-web-ui',
+      titleTemplate: '%s',
+      title: 'Mostro',
       htmlAttrs: {
         lang: 'en'
       },
