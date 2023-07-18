@@ -1,24 +1,21 @@
 <template>
   <v-dialog width="500" v-model="showDialog">
-    <template v-slot:activator="{ on, attrs }">
-      <v-btn small text rounded color="primary" v-bind="attrs" v-on="on">
+    <template v-slot:activator="{ props }">
+      <v-btn :disabled="order.is_mine" variant="outlined" v-bind="props">
         Take
       </v-btn>
     </template>
     <v-card>
-      <v-card-title>Take Order</v-card-title>
+      <v-card-title>Take Sell Order</v-card-title>
       <v-card-text>
-        Please enter a lightning network invoice.
-      </v-card-text>
-      <v-card-text>
-        <v-textarea v-model="invoice" outlined/>
+        Confirm that you want to buy sats, taking this order. Mostro will contact you via DM and ask you to pay an invoice.
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
         <v-btn text color="warning" @click="() => showDialog = false">
           Cancel
         </v-btn>
-        <v-btn text color="primary" @click="onConfirm">
+        <v-btn text color="info" @click="onConfirm">
           Confirm
         </v-btn>
       </v-card-actions>
@@ -29,13 +26,12 @@
 <script lang="ts">
 import Vue from 'vue'
 import type { PropType } from 'vue'
-import { Order } from '~/store/orders' 
-export default Vue.extend({
+import { Order } from '~/store/types'
+export default {
   data() {
     return {
       showDialog: false,
-      isProcessing: false,
-      invoice: null
+      isProcessing: false
     }
   },
   props: {
@@ -49,14 +45,15 @@ export default Vue.extend({
       this.isProcessing = true
       try {
         // @ts-ignore
-        await this.$mostro.takeSell(this.order, this.invoice)
+        await this.$mostro.takeSell(this.order, null)
+        this.$router.push(`/my-trades/${this.order.id}`)
       } catch(err) {
-        console.error('Error while taking sell order: ', err)
+        console.error('Error while confirming sell order: ', err)
       } finally {
         this.isProcessing = true
         this.showDialog = false
       }
     }
   }
-})
+}
 </script>

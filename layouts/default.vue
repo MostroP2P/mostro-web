@@ -1,86 +1,95 @@
 <template>
-  <v-app dark>
+  <v-app dark elevation="4" border="3">
     <v-navigation-drawer
       v-model="drawer"
-      :mini-variant="miniVariant"
-      :clipped="clipped"
+      :clipped="false"
       fixed
       app
+      color="secondary-darken-1"
     >
       <v-list>
+        <auth-status/>
         <v-list-item
           v-for="(item, i) in items"
           :key="i"
           :to="item.to"
           router
           exact
+          :disabled="item.disabled()"
+          :prepend-icon="item.icon"
         >
-          <v-list-item-action>
-            <v-icon>{{ item.icon }}</v-icon>
-          </v-list-item-action>
-          <v-list-item-content>
+          <div class="d-flex">
             <v-list-item-title>{{ item.title }}</v-list-item-title>
-          </v-list-item-content>
+          </div>
         </v-list-item>
       </v-list>
     </v-navigation-drawer>
     <v-app-bar
       fixed
       app
+      dark
+      color="primary"
+      class="px-2"
     >
-      <v-app-bar-nav-icon @click.stop="drawer = !drawer" />
-      <v-toolbar-title>{{ title }}</v-toolbar-title>
+      <v-app-bar-nav-icon v-if="mobile" @click.stop="drawer = !drawer" />
+      <v-toolbar-title>Mostro</v-toolbar-title>
       <v-spacer />
+      <client-only>
+        <notifications/>
+      </client-only>
     </v-app-bar>
     <v-main>
       <v-container>
-        <Nuxt />
+        <slot />
       </v-container>
     </v-main>
     <v-footer
-      :absolute="!fixed"
+      :absolute="false"
       app
     >
       <span>&copy; {{ new Date().getFullYear() }}</span>
     </v-footer>
   </v-app>
 </template>
+<script setup>
+import { ref, onMounted } from 'vue'
+import { useDisplay } from 'vuetify'
+import { useAuth } from '@/stores/auth'
 
-<script>
-export default {
-  name: 'DefaultLayout',
-  data () {
-    return {
-      clipped: false,
-      drawer: false,
-      fixed: false,
-      items: [
-        {
-          icon: 'mdi-view-list',
-          title: 'Market',
-          to: '/'
-        },
-        {
-          icon: 'mdi-book',
-          title: 'My Orders',
-          to: '/my-orders'
-        },
-        {
-          icon: 'mdi-email',
-          title: 'Messages',
-          to: '/messages'
-        },
-        {
-          icon: 'mdi-information',
-          title: 'About',
-          to: '/about'
-        }
-      ],
-      miniVariant: false,
-      right: true,
-      rightDrawer: false,
-      title: 'Mostro'
-    }
+const authStore = useAuth()
+const drawer = ref(true)
+const items = ref([
+  {
+    icon: 'mdi-view-list',
+    title: 'Market',
+    to: '/',
+    disabled: () => false
+  },
+  {
+    icon: 'mdi-book',
+    title: 'My Trades',
+    to: '/my-trades',
+    disabled: () => authStore.isLocked
+  },
+  {
+    icon: 'mdi-email',
+    title: 'Messages',
+    to: '/messages',
+    disabled: () => authStore.isLocked
+  },
+  {
+    icon: 'mdi-information',
+    title: 'About',
+    to: '/about',
+    disabled: () => false
   }
-}
+])
+
+const { mobile } = useDisplay()
+
+onMounted(() => {
+  if (mobile.value) {
+    drawer.value = false
+  }
+})
 </script>

@@ -7,7 +7,7 @@
         </OrderListWrapper>
       </v-col>
     </v-row>
-    <add-order-dialog class="fixed-btn mb-6"/>
+    <add-order-dialog class="mb-6"/>
   </div>
 </template>
 <script>
@@ -15,10 +15,3 @@ export default {
   name: 'IndexPage'
 }
 </script>
-<style scoped>
-.fixed-btn {
-  position: fixed;
-  bottom: 24px;
-  right: 24px;
-}
-</style>

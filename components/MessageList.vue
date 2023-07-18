@@ -1,17 +1,21 @@
 <template>
   <v-card class="mx-auto">
-    <v-list>
-      <message v-for="(message, index) in getMessageByOrderId(this.orderId)"
+    <v-list lines="three">
+      <div
+        v-for="(message, index) in orderMessages"
         :key="`${message.id}-${index}`"
-        :message="message"
-      />
+      >
+        <message :message="message" :disabled="index < orderMessages.length - 1"/>
+        <v-divider v-if="index < orderMessages.length - 1"/>
+      </div>
     </v-list>
   </v-card>
 </template>
 <script lang="ts">
-import Vue from 'vue'
-import { mapGetters } from 'vuex'
-export default Vue.extend({
+import { mapState } from 'pinia'
+import { Action, MostroMessage } from '~/stores/types'
+import { useMessages } from '@/stores/messages'
+export default {
   props: {
     orderId: {
       type: String,
@@ -19,7 +23,12 @@ export default Vue.extend({
     }
   },
   computed: {
-    ...mapGetters('messages', ['getMessageByOrderId'])
+    ...mapState(useMessages, ['getMostroMessagesByOrderId']),
+    orderMessages() {
+      // @ts-ignore
+      return this.getMostroMessagesByOrderId(this.orderId)
+        .filter((msg: MostroMessage) => msg.action !== Action.CantDo)
+    }
   }
-})
+}
 </script>

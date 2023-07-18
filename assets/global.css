@@ -1,0 +1,8 @@
+.text-message {
+  font-size: 0.875rem;
+  line-height: 1.2;
+}
+.wrap-text {
+  white-space: normal;
+  word-wrap: break-word;
+}

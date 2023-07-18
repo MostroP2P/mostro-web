@@ -1,16 +1,17 @@
 <template>
   <v-row>
-    <v-col class="text-center">
+    <v-col class="text-center mt-6">
       <img
-        src="/v.png"
+        src="/mostro-logo.png"
         alt="Vuetify.js"
         class="mb-5"
+        height="200"
       >
       <blockquote class="blockquote">
-        &#8220;First, solve the problem. Then, write the code.&#8221;
+        &#8220;It might make sense just to get some in case it catches on.&#8221;
         <footer>
           <small>
-            <em>&mdash;John Johnson</em>
+            <em>&mdash;Satoshi Nakamoto</em>
           </small>
         </footer>
       </blockquote>
