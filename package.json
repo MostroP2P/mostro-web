@@ -1,6 +1,8 @@
 {
-  "name": "nuxt-app",
+  "name": "mostro-web",
   "private": true,
+  "version": "0.0.1",
+  "description": "Mostro web client",
   "scripts": {
     "build": "nuxt build",
     "dev": "nuxt dev",
