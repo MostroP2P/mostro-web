@@ -59,6 +59,7 @@
     </v-text-field>
     <div class="d-flex justify-end">
       <v-btn
+        class="mx-3"
         color="warning"
         text
         @click="onClose"
@@ -68,7 +69,6 @@
       <v-btn
         :disabled="!valid"
         color="success"
-        class="mr-4"
         text
         @click="onSubmit"
       >
