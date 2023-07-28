@@ -107,7 +107,7 @@ class Mostro {
         // Most of the orders that we receive via kind events are not ours,
         // so we set the `is_mine` field as false here.
         content = {...JSON.parse(content), is_mine: false}
-        console.log(`< Mostro 30000. sub_id: ${sub_id}, ev: `, ev)
+        console.log('< Mostro 30000 ', content)
         if (this.orderMap.has(content.id)) {
           // Updates existing order
           this.orderStore.updateOrder({ order: content, event: ev })
@@ -144,7 +144,6 @@ class Mostro {
             console.error('Error while trying to decode DM: ', err)
           }
         } else if(ev.pubkey === myPubKey) {
-          console.log('< DM I created: ', ev)
           // DM I created
           if (recipient !== mostroPubKey) {
             // This is a DM I created for a conversation
@@ -164,8 +163,8 @@ class Mostro {
             }  
           }
         } else {
-          console.log(`> DM. ev: `, ev)
-          console.warn(`Ignoring _DM for key: ${recipient}, my pubkey is ${myPubKey}`)
+          // console.log(`> DM. ev: `, ev)
+          // console.warn(`Ignoring _DM for key: ${recipient}, my pubkey is ${myPubKey}`)
         }
       } else {
         console.info(`Got event with kind: ${kind}, ev: `, ev)
@@ -174,6 +173,7 @@ class Mostro {
   }
 
   async createEvent(payload: object) {
+    console.log('> createEvent. payload: ', payload)
     const publicKey = nip19.decode(this.mostro).data
     const ciphertext = await this.signer!.encrypt!(publicKey, JSON.stringify(payload))
     const myPubKey = this.pubkeyCache.hex
