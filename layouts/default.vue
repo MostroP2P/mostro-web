@@ -23,6 +23,18 @@
           </div>
         </v-list-item>
       </v-list>
+      <template v-slot:append>
+        <div class="text-caption text-disabled d-flex justify-center">
+          Version: {{ version }}
+        </div>
+        <v-tooltip :text="originalText" location="top">
+          <template v-slot:activator="{ props }">
+            <div v-bind="props" class="text-caption text-disabled d-flex justify-center">
+              {{ commitHash }}
+            </div>
+          </template>
+        </v-tooltip>
+      </template>
     </v-navigation-drawer>
     <v-app-bar
       fixed
@@ -55,6 +67,13 @@
 import { ref, onMounted } from 'vue'
 import { useDisplay } from 'vuetify'
 import { useAuth } from '@/stores/auth'
+import { GIT_COMMIT } from '~/constants/version'
+import useEllipsis from '~/composables/useEllipsis'
+import pkg from '~/package.json'
+
+const { ellipsizedText, originalText } = useEllipsis(GIT_COMMIT, 10)
+const commitHash = ellipsizedText.value
+const version = ref(pkg.version)
 
 const authStore = useAuth()
 const drawer = ref(true)

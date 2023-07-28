@@ -32,9 +32,16 @@ export default defineComponent({
       encryptedPrivKey
     }
   },
+  beforeDestroy() {
+    window.removeEventListener('beforeunload', this.beforeUnloadEvent)
+  },
   methods: {
     onLogout() {
       this.authStore.logout()
+    },
+    beforeUnloadEvent(event: any) {
+      event.preventDefault()
+      event.returnValue = ''
     }
   },
   computed: {
@@ -43,7 +50,11 @@ export default defineComponent({
       return this.encryptedPrivKey !== ''
     },
     isLoggedIn(): boolean {
-      return this.authMethod !== AuthMethod.NOT_SET
+      if (this.authMethod !== AuthMethod.NOT_SET) {
+        window.addEventListener('beforeunload', this.beforeUnloadEvent)
+        return true
+      }
+      return false
     }
   }
 })

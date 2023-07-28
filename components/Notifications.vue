@@ -46,14 +46,22 @@
   </v-badge>
 </template>
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useNotifications } from '@/stores/notifications'
+import { Notification } from '~/stores/types'
+import { useAuth } from '~/stores/auth'
+
 const notificationStore = useNotifications()
 const router = useRouter()
+let menuOpen = ref(false)
+const authStore = useAuth()
 
 const notifications = computed(() => notificationStore.getActiveNotifications)
 const menuCloseDelay = computed(() => notifications.value.length * 200 + 1e3)
 const isMenuDisabled = computed(() => {
+  if (authStore.isLocked) {
+    return true
+  }
   if (!notifications.value || notifications.value.length === 0) {
     return true
   }
@@ -73,35 +81,13 @@ const clearNotifications = () => {
 const handleNotificationClick = (notification: Notification) => {
   notificationStore.dismiss(notification)
   router.push(`/my-trades/${notification.orderId}`)
+  menuOpen.value = false
 }
 </script>
 
-<script lang="ts">
-import { Notification } from '~/stores/types'
-
-export default {
-  data() {
-    return {
-      menuOpen: false
-    }
-  },
-  watch: {
-    notifications(newVal) {
-      if (newVal.length === 0) {
-        this.menuOpen = false;
-      }
-    }
-  }
-}
-</script>
 <style scoped>
 .scrollable-menu {
   max-height: 80vh;
   overflow-y: auto;
-}
-.notification-item {
-  /* border-radius: 0.5em;
-  border-color: rgb(104, 104, 104);
-  border-width: 0.05em; */
 }
 </style>

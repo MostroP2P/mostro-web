@@ -62,8 +62,6 @@ export const useNotifications = defineStore('notifications', {
             dismissed: false
           }
           this.notifications.push(notification)
-        } else {
-          console.log('Skipping order: ', order)
         }
       }
     },
