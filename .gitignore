@@ -92,3 +92,6 @@ sw.*
 
 # Nuxt dev/build outputs
 .output
+
+# Version
+constants/version.js
