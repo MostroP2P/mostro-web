@@ -4,7 +4,8 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       relays: process.env.RELAYS,
-      mostroPubKey: process.env.MOSTRO_PUB_KEY,  
+      mostroPubKey: process.env.MOSTRO_PUB_KEY,
+      nodeEnv: process.env.NODE_ENV
     }
   },
   app: {

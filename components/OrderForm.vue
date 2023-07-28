@@ -87,10 +87,10 @@ export default defineComponent({
   data() {
     return {
       valid: false,
-      fiatAmount: 100,
-      fiatCode: 'pen',
-      amount: 10000,
-      paymentMethod: 'ibk',
+      fiatAmount: 0,
+      fiatCode: '',
+      amount: 0,
+      paymentMethod: '',
       isMarketPricing: true,
       buyerInvoice: '',
       fiatAmountRules: [
@@ -128,6 +128,16 @@ export default defineComponent({
         // @ts-ignore
         this.decodedInvoice = bolt11.decode(newValue)
       } catch(err) {}
+    }
+  },
+  mounted() {
+    // For development only, this is so the dev doesn't have to
+    // keep filling the form every time
+    const config = useRuntimeConfig()
+    if (config.public.nodeEnv === 'development') {
+      this.fiatAmount = 5
+      this.fiatCode = 'USD'
+      this.paymentMethod = 'Cash'
     }
   },
   methods: {
