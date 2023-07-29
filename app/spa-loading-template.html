@@ -1,0 +1,51 @@
+<html>
+  <head>
+    <style>
+      @keyframes pulse {
+        0% {
+          transform: scale(1);
+          background-color: #a5dfa2;
+        }
+        50% {
+          transform: scale(1.5);
+          background-color: #7cb342;
+        }
+        100% {
+          transform: scale(1);
+          background-color: #a5dfa2;
+        }
+      }
+      .loading {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: #fff;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+      }
+      .loading__icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background-color: #a5dfa2;
+        animation: pulse 2s infinite;
+      }
+      .loading__text {
+        margin-top: 10px;
+        font-size: 20px;
+        font-weight: bold;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="loading">
+      <div class="loading__icon"></div>
+      <div class="loading__text">Loading...</div>
+    </div>
+  </body>
+</html>
