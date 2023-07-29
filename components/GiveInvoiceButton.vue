@@ -1,10 +1,10 @@
 <template>
   <v-dialog v-model="showDialog" max-width="500">
     <template v-slot:activator="{ props }">
-      <v-btn text color="accent" v-bind="props">
-        <v-icon left>
-          fa-sharp fa-solid fa-bolt
-        </v-icon>
+      <v-btn text color="accent" v-bind="props" prepend-icon="mdi-flash">
+        <template v-slot:prepend>
+          <v-icon color="success"></v-icon>
+        </template>
         Enter Invoice
       </v-btn>
     </template>
