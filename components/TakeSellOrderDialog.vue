@@ -24,9 +24,8 @@
   </v-dialog>
 </template>
 <script lang="ts">
-import Vue from 'vue'
 import type { PropType } from 'vue'
-import { Order } from '~/store/types'
+import { Order } from '~/stores/types'
 export default {
   data() {
     return {

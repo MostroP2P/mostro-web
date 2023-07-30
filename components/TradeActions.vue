@@ -1,21 +1,23 @@
 <template>
   <div class="d-flex justify-center align-center mt-5">
     <pay-invoice-button
+      class="mx-3"
       v-if="showPayInvoice"
       :message="payInvoiceMessage"
     />
     <give-invoice-button
+      class="mx-3"
       v-if="showGiveInvoice"
       :message="giveInvoiceMessage"
     />
-    <fiat-sent-button v-if="showFiatSent"/>
-    <div v-if="showDispute">
-      <v-btn text color="warning">
-        <v-icon left>mdi-alert-outline</v-icon>
+    <fiat-sent-button v-if="showFiatSent" class="mx-3"/>
+    <div v-if="showDispute" class="mx-3">
+      <v-btn text color="warning" prepend-icon="mdi-alert-outline">
         Dispute
       </v-btn>
     </div>
     <release-funds-dialog
+      class="mx-3"
       v-if="showRelease"
       :order-id="$route.params.id"
     />

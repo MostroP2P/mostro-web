@@ -1,8 +1,7 @@
 <template>
   <v-dialog v-model="showDialog" width="500">
     <template v-slot:activator="{ props }">
-      <v-btn text color="accent" v-bind="props">
-        <v-icon left>fa-regular fa-dove</v-icon>
+      <v-btn text color="success" v-bind="props" prepend-icon="mdi-check">
         Release
       </v-btn>
     </template>

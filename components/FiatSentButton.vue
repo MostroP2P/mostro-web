@@ -1,8 +1,7 @@
 <template>
   <v-dialog v-model="showDialog" width="600">
     <template v-slot:activator="{ props }">
-      <v-btn v-bind="props" text color="accent">
-        <v-icon left>mdi-cash</v-icon>
+      <v-btn v-bind="props" text prepend-icon="mdi-cash">
         Fiat Sent
       </v-btn>
     </template>
