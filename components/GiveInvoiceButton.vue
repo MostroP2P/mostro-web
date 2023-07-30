@@ -20,19 +20,16 @@
         rows="7"
         outlined
         class="mx-5"
-        :rules="[rules.required, rules.isInvoice, rules.network, rules.value, rules.expired]"
-        :hint="hint"
+        :rules="[rules.required, rules.isInvoice, rules.network, rules.value, !rules.expired]"
+        :hint="invoiceHint"
       />
-      <v-card-actions>
-        <v-btn color="warning" text @click="close">
+      <v-card-actions class="mx-3 mb-3">
+        <v-btn color="warning" text @click="close" class="px-3">
           Cancel
         </v-btn>
         <v-spacer></v-spacer>
-        <v-btn :disabled="submitDisabled" color="accent" text @click="submitInvoice">
+        <v-btn :disabled="submitDisabled" color="success" text @click="submitInvoice" append-icon="mdi-send" class="px-3">
           Submit
-          <v-icon right small>
-            mdi-send mdi-rotate-315
-          </v-icon>
         </v-btn>
       </v-card-actions>
       <v-progress-linear v-if="isProcessing" indeterminate/>
@@ -87,7 +84,7 @@ export default {
       const smallOrder = this.message.content.SmallOrder
       try {
         // @ts-ignore
-        this.$mostro.addInvoice(smallOrder, this.invoice)
+        await this.$mostro.addInvoice(smallOrder, this.invoice)
       } catch(err) {
         console.error('Error while giving invoice for buy order: ', err)
       } finally {
@@ -113,13 +110,14 @@ export default {
   watch: {
     invoice(newValue) {
       this.decodedInvoice = {}
+      if (!newValue) return
       try {
         this.decodedInvoice = bolt11.decode(newValue)
       } catch(err) {}
     }
   },
   computed: {
-    hint() {
+    invoiceHint() {
       return this.invoice === '' ? 'Enter a valid BOLT11 invoice' : ''
     },
     isValueCorrect() {
@@ -150,7 +148,8 @@ export default {
       if (timestampSection) {
         timestamp = timestampSection.value as number
       }
-      return timestamp + decoded.expiry > (Date.now() / 1e3)
+      const now = Math.round(Date.now() / 1e3)
+      return timestamp + decoded.expiry < now
     },
     isInvoiceNetwork() {
       // TODO: This should be 'bcrt' in dev mode and 'bc' in production
@@ -164,7 +163,7 @@ export default {
       return `Invalid amount, please provide us with ${this.satsAmount} sats`
     },
     submitDisabled() {
-      return false//!this.isValueCorrect || this.isExpired
+      return !this.isValueCorrect || this.isExpired
     }
   }
 }
