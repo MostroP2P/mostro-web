@@ -107,7 +107,7 @@ class Mostro {
         // Most of the orders that we receive via kind events are not ours,
         // so we set the `is_mine` field as false here.
         content = {...JSON.parse(content), is_mine: false}
-        console.log('< Mostro 30000 ', content)
+        console.log('< 📢', content)
         if (this.orderMap.has(content.id)) {
           // Updates existing order
           this.orderStore.updateOrder({ order: content, event: ev })
@@ -125,11 +125,11 @@ class Mostro {
           try {
             const plaintext = await this.signer!.decrypt!(ev.pubkey, ev.content)
             if (ev.pubkey === mostroPubKey) {
-              console.log('< Mostro DM: ', plaintext, ', ev: ', ev)
+              console.info('< 💬 [🧌 -> me]: ', plaintext, ', ev: ', ev)
               const msg = { ...JSON.parse(plaintext), created_at: ev.created_at }
               this.messageStore.addMostroMessage({ message: msg, event: ev })
             } else {
-              console.log('< Peer DM: ', plaintext, ', ev: ', ev)
+              console.info('< 💬 [peer -> me]: ', plaintext, ', ev: ', ev)
               // Peer DMs
               const peerNpub = nip19.npubEncode(ev.pubkey)
               this.messageStore.addPeerMessage({
@@ -143,13 +143,14 @@ class Mostro {
           } catch(err) {
             console.error('Error while trying to decode DM: ', err)
           }
-        } else if(ev.pubkey === myPubKey) {
-          // DM I created
+        } else if (ev.pubkey === myPubKey) {
+          // DMs I created
           if (recipient !== mostroPubKey) {
-            // This is a DM I created for a conversation
+            // This is a DM I created for a conversation with another peer
             try {
               const [[, recipientPubKey]] = ev.tags
               const plaintext = await this.signer!.decrypt!(recipientPubKey, ev.content)
+              console.log('< 💬 [me -> 🧌]: ', plaintext, ', ev: ', ev)
               const peerNpub = nip19.npubEncode(recipient)
               this.messageStore.addPeerMessage({
                 id: ev.id,
@@ -158,13 +159,19 @@ class Mostro {
                 sender: 'me',
                 created_at: ev.created_at
               })
-            } catch(err) {
+            } catch (err) {
               console.error('Error while decrypting message: ', err)
-            }  
+            }
+          } else if (recipient === mostroPubKey) {
+            // DM I sent to mostro
+            console.debug('< 💬 [me -> 🧌]: ', ev)
+          } else {
+            // DM I sent to someone else
+            console.debug('< 💬 [me -> ?], ev: ', ev)
           }
         } else {
-          // console.log(`> DM. ev: `, ev)
-          // console.warn(`Ignoring _DM for key: ${recipient}, my pubkey is ${myPubKey}`)
+          console.log(`> DM. ev: `, ev)
+          console.warn(`Ignoring _DM for key: ${recipient}, my pubkey is ${myPubKey}`)
         }
       } else {
         console.info(`Got event with kind: ${kind}, ev: `, ev)
@@ -173,7 +180,6 @@ class Mostro {
   }
 
   async createEvent(payload: object) {
-    console.log('> createEvent. payload: ', payload)
     const publicKey = nip19.decode(this.mostro).data
     const ciphertext = await this.signer!.encrypt!(publicKey, JSON.stringify(payload))
     const myPubKey = this.pubkeyCache.hex
@@ -188,6 +194,7 @@ class Mostro {
     }
     event.id = getEventHash(event)
     event = await this.signer?.signEvent(event)
+    console.log('> 📝 createEvent. payload: ', payload, ', ev: ', event)
     return ['EVENT', event]
   }
 
