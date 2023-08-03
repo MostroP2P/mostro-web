@@ -1,6 +1,6 @@
 import { watch } from 'vue'
 import { RelayPool } from 'nostr'
-import { nip19, getEventHash } from 'nostr-tools'
+import { nip19, getEventHash, UnsignedEvent, Kind } from 'nostr-tools'
 import { useAuth } from '@/stores/auth'
 import { useOrders } from '@/stores/orders'
 import { useMessages } from '@/stores/messages'
@@ -180,7 +180,7 @@ class Mostro {
   }
 
   async createEvent(payload: object) {
-    const publicKey = nip19.decode(this.mostro).data
+    const publicKey = nip19.decode(this.mostro).data as string
     const ciphertext = await this.signer!.encrypt!(publicKey, JSON.stringify(payload))
     const myPubKey = this.pubkeyCache.hex
     let event = {
@@ -192,7 +192,7 @@ class Mostro {
       pubkey: myPubKey,
       tags: [ ['p', publicKey] ]
     }
-    event.id = getEventHash(event)
+    event.id = getEventHash(event as UnsignedEvent<Kind.EncryptedDirectMessage>)
     event = await this.signer?.signEvent(event)
     console.log('> 📝 createEvent. payload: ', payload, ', ev: ', event)
     return ['EVENT', event]
@@ -285,12 +285,12 @@ class Mostro {
     await this.pool.send(event)
   }
   async submitDirectMessage(message: string, npub: string, replyTo: string) {
-    const destinationPubKey = nip19.decode(npub).data
+    const destinationPubKey = nip19.decode(npub).data as string
     const myPublicKey = await this.signer?.getPublicKey()
     const ciphertext = await this.signer?.encrypt!(destinationPubKey, message)
     let event = {
-      id: undefined,
-      sig: undefined,
+      id: undefined as undefined | string,
+      sig: undefined as undefined | string,
       kind: 4,
       created_at: Math.floor(Date.now() / 1000),
       content: ciphertext,
@@ -302,7 +302,7 @@ class Mostro {
     if (replyTo) {
       event.tags.push(['e', replyTo, '', 'reply'])
     }
-    event.id = getEventHash(event)
+    event.id = getEventHash(event as UnsignedEvent<Kind.EncryptedDirectMessage>)
     event = await this.signer?.signEvent(event)
     await this.pool.send(['EVENT', event])
   }
