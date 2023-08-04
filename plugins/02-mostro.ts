@@ -1,6 +1,6 @@
 import { watch } from 'vue'
 import { RelayPool } from 'nostr'
-import { nip19, getEventHash, UnsignedEvent, Kind, Relay, Event } from 'nostr-tools'
+import { nip19, getEventHash, verifySignature, UnsignedEvent, Kind, Relay, Event } from 'nostr-tools'
 import { useAuth } from '@/stores/auth'
 import { useOrders } from '@/stores/orders'
 import { useMessages } from '@/stores/messages'
@@ -126,6 +126,12 @@ class Mostro {
       relay.close()
     })
     this.pool.on('event', async (relay: Relay, sub_id: string, ev: Event) => {
+      const hasValidSignature = verifySignature(ev)
+      if (!hasValidSignature) {
+        // Discarding event with invalid signature
+        console.warn(`🗑️ dropping event due to invalid signature. id: ${ev.id}, sig: ${ev.sig}`)
+        return
+      }
       if (this.eventMap.has(ev.id)) {
         // We've already handled this event
         console.debug('< 🦜 repeated event: ', ev.id)
