@@ -1,15 +1,15 @@
 <template>
-  <v-list-item>
+  <div>
     <v-list-item-title class="d-flex justify-space-between">
       Invoice Needed
       <div class="text-caption text--secondary">{{ timeago.format(creationDate) }}</div>
     </v-list-item-title>
-    <v-list-item-subtitle>
+    <v-list-item-subtitle class="wrap-text text-message">
       <p>
         We sent a hold invoice to the seller of order id : <strong>{{ orderId }}</strong> create a lightning invoice of {{ satsAmount }} sats to proceed.
       </p>
     </v-list-item-subtitle>
-  </v-list-item>
+  </div>
 </template>
 <script lang="ts">
 import type { PropType } from 'vue'
