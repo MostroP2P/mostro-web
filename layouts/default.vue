@@ -43,8 +43,10 @@
       color="primary"
       class="px-2"
     >
-      <v-app-bar-nav-icon v-if="mobile" @click.stop="drawer = !drawer" />
-      <v-toolbar-title>Mostro</v-toolbar-title>
+      <template v-slot:prepend>
+        <v-app-bar-nav-icon v-if="mobile" @click.stop="drawer = !drawer" color="white"/>
+      </template>
+      <v-app-bar-title>Mostro</v-app-bar-title>
       <v-spacer />
       <client-only>
         <notifications/>
