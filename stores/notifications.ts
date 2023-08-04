@@ -70,7 +70,8 @@ export const useNotifications = defineStore('notifications', {
       if (index !== -1) {
         const orderStore = useOrders()
         const storedOrder = orderStore.getOrderById(notification.orderId)
-        if (storedOrder.status === OrderStatus.EXPIRED ||
+        if (!storedOrder ||
+          storedOrder.status === OrderStatus.EXPIRED ||
           storedOrder.status === OrderStatus.CANCELED ||
           storedOrder.status === OrderStatus.CANCELED_BY_ADMIN ||
           storedOrder.status === OrderStatus.COMPLETED_BY_ADMIN ||
