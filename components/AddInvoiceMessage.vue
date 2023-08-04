@@ -6,7 +6,11 @@
     </v-list-item-title>
     <v-list-item-subtitle class="wrap-text text-message">
       <p>
-        We sent a hold invoice to the seller of order id : <strong>{{ orderId }}</strong> create a lightning invoice of {{ satsAmount }} sats to proceed.
+        🧌 You took this selling order, please use a fiat payment processor that allows you to send the money immediately and in which there is no risk of freezing funds.
+
+        If, for any reason, your payment processor puts the payment on pause and the funds do not arrive in less than 22 hours, the sats will return to the seller, putting the buyer at risk and I cannot force the seller to send the sats again.
+
+        If you agree with the above, press the button to continue 👇
       </p>
     </v-list-item-subtitle>
   </div>
