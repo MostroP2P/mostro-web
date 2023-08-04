@@ -1,6 +1,6 @@
 import { watch } from 'vue'
 import { RelayPool } from 'nostr'
-import { nip19, getEventHash, UnsignedEvent, Kind } from 'nostr-tools'
+import { nip19, getEventHash, UnsignedEvent, Kind, Relay, Event } from 'nostr-tools'
 import { useAuth } from '@/stores/auth'
 import { useOrders } from '@/stores/orders'
 import { useMessages } from '@/stores/messages'
@@ -11,6 +11,11 @@ import { BaseSigner, ExtensionSigner, LocalSigner } from './01-signer'
  * Maximum number of events to be returned in the initial query
  */
 const EVENT_LIMIT = 100
+
+/**
+ * Maximum number of seconds to be returned in the initial query
+ */
+const EVENT_INTEREST_WINDOW = 60 * 60 * 24 * 7 // 7 days
 
 type MostroOptions = {
   mostroPubKey: string,
@@ -33,6 +38,10 @@ class Mostro {
   pubkeyCache: PublicKeyCache = { npub: null, hex: null }
   orderStore: ReturnType<typeof useOrders>
   messageStore: ReturnType<typeof useMessages>
+
+  // Maps id to boolean, true if we've already handled the event
+  eventMap: Map<string, boolean> = new Map<string, boolean>()
+
   constructor(opts: MostroOptions) {
     this.relays = opts.relays
     this.mostro = opts.mostroPubKey
@@ -88,6 +97,7 @@ class Mostro {
     const filters = {
       limit: EVENT_LIMIT,
       kinds: [30000],
+      since: Math.floor(Date.now() / 1e3) - EVENT_INTEREST_WINDOW,
     }
     this.pool.subscribe(this.orders_sub_id, filters)
   }
@@ -96,7 +106,8 @@ class Mostro {
     const filters = {
       limit: EVENT_LIMIT,
       kinds: [4],
-      '#p': [this.pubkeyCache.hex]
+      '#p': [this.pubkeyCache.hex],
+      since: Math.floor(Date.now() / 1e3) - EVENT_INTEREST_WINDOW,
     }
     this.pool.subscribe(this.dm_sub_id, filters)
   }
@@ -114,89 +125,99 @@ class Mostro {
       console.warn('💀 relay closed: ', relay)
       relay.close()
     })
-    this.pool.on('event', async (relay: any, sub_id: any, ev: any) => {
-      let { kind } = ev
-      if (!this.signer && kind !== 30000) {
-        // We shouldn't have any events other than kind 30000 at this point, but just in case
-        console.warn('dropping event due to lack of signer')
+    this.pool.on('event', async (relay: Relay, sub_id: string, ev: Event) => {
+      if (this.eventMap.has(ev.id)) {
+        // We've already handled this event
+        console.debug('< 🦜 repeated event: ', ev.id)
         return
       }
-      if (kind === 30000) {
-        // Order
-        let { content } = ev
-        // Most of the orders that we receive via kind events are not ours,
-        // so we set the `is_mine` field as false here.
-        content = {...JSON.parse(content), is_mine: false}
-        console.log('< 📢', content)
-        if (this.orderMap.has(content.id)) {
-          // Updates existing order
-          this.orderStore.updateOrder({ order: content, event: ev })
-        } else {
-          // Adds new order
-          this.orderStore.addOrder({ order: content, event: ev })
-          this.orderMap.set(content.id, ev.id)
-        }
-      } else if (kind === 4) {
-        // @ts-ignore
-        let recipient = ev.tags.find(([k, v]) => k === 'p' && v && v !== '')[1]
-        const mostroPubKey = nip19.decode(this.mostro).data
-        const myPubKey = this.pubkeyCache.hex
-        if (myPubKey === recipient) {
-          try {
-            const plaintext = await this.signer!.decrypt!(ev.pubkey, ev.content)
-            if (ev.pubkey === mostroPubKey) {
-              console.info('< 💬 [🧌 -> me]: ', plaintext, ', ev: ', ev)
-              const msg = { ...JSON.parse(plaintext), created_at: ev.created_at }
-              this.messageStore.addMostroMessage({ message: msg, event: ev })
-            } else {
-              console.info('< 💬 [peer -> me]: ', plaintext, ', ev: ', ev)
-              // Peer DMs
-              const peerNpub = nip19.npubEncode(ev.pubkey)
-              this.messageStore.addPeerMessage({
-                id: ev.id,
-                text: plaintext,
-                peerNpub: peerNpub,
-                sender: 'other',
-                created_at: ev.created_at
-              })
-            }
-          } catch(err) {
-            console.error('Error while trying to decode DM: ', err)
-          }
-        } else if (ev.pubkey === myPubKey) {
-          // DMs I created
-          if (recipient !== mostroPubKey) {
-            // This is a DM I created for a conversation with another peer
-            try {
-              const [[, recipientPubKey]] = ev.tags
-              const plaintext = await this.signer!.decrypt!(recipientPubKey, ev.content)
-              console.log('< 💬 [me -> 🧌]: ', plaintext, ', ev: ', ev)
-              const peerNpub = nip19.npubEncode(recipient)
-              this.messageStore.addPeerMessage({
-                id: ev.id,
-                text: plaintext,
-                peerNpub: peerNpub,
-                sender: 'me',
-                created_at: ev.created_at
-              })
-            } catch (err) {
-              console.error('Error while decrypting message: ', err)
-            }
-          } else if (recipient === mostroPubKey) {
-            // DM I sent to mostro
-            console.debug('< 💬 [me -> 🧌]: ', ev)
+      await this.handleEvent(ev)
+      this.eventMap.set(ev.id, true)
+    })
+  }
+
+  async handleEvent(ev: any) {
+    let { kind } = ev
+    if (!this.signer && kind !== 30000) {
+      // We shouldn't have any events other than kind 30000 at this point, but just in case
+      console.warn('dropping event due to lack of signer')
+      return
+    }
+    if (kind === 30000) {
+      // Order
+      let { content } = ev
+      // Most of the orders that we receive via kind events are not ours,
+      // so we set the `is_mine` field as false here.
+      content = { ...JSON.parse(content), is_mine: false }
+      console.log('< 📢', content)
+      if (this.orderMap.has(content.id)) {
+        // Updates existing order
+        this.orderStore.updateOrder({ order: content, event: ev })
+      } else {
+        // Adds new order
+        this.orderStore.addOrder({ order: content, event: ev })
+        this.orderMap.set(content.id, ev.id)
+      }
+    } else if (kind === 4) {
+      // @ts-ignore
+      let recipient = ev.tags.find(([k, v]) => k === 'p' && v && v !== '')[1]
+      const mostroPubKey = nip19.decode(this.mostro).data
+      const myPubKey = this.pubkeyCache.hex
+      if (myPubKey === recipient) {
+        try {
+          const plaintext = await this.signer!.decrypt!(ev.pubkey, ev.content)
+          if (ev.pubkey === mostroPubKey) {
+            console.info('< 💬 [🧌 -> me]: ', plaintext, ', ev: ', ev)
+            const msg = { ...JSON.parse(plaintext), created_at: ev.created_at }
+            this.messageStore.addMostroMessage({ message: msg, event: ev })
           } else {
-            // DM I sent to someone else
-            console.debug('< 💬 [me -> ?], ev: ', ev)
+            console.info('< 💬 [peer -> me]: ', plaintext, ', ev: ', ev)
+            // Peer DMs
+            const peerNpub = nip19.npubEncode(ev.pubkey)
+            this.messageStore.addPeerMessage({
+              id: ev.id,
+              text: plaintext,
+              peerNpub: peerNpub,
+              sender: 'other',
+              created_at: ev.created_at
+            })
           }
+        } catch (err) {
+          console.error('Error while trying to decode DM: ', err)
+        }
+      } else if (ev.pubkey === myPubKey) {
+        // DMs I created
+        if (recipient !== mostroPubKey) {
+          // This is a DM I created for a conversation with another peer
+          try {
+            const [[, recipientPubKey]] = ev.tags
+            const plaintext = await this.signer!.decrypt!(recipientPubKey, ev.content)
+            console.log('< 💬 [me -> 🧌]: ', plaintext, ', ev: ', ev)
+            const peerNpub = nip19.npubEncode(recipient)
+            this.messageStore.addPeerMessage({
+              id: ev.id,
+              text: plaintext,
+              peerNpub: peerNpub,
+              sender: 'me',
+              created_at: ev.created_at
+            })
+          } catch (err) {
+            console.error('Error while decrypting message: ', err)
+          }
+        } else if (recipient === mostroPubKey) {
+          // DM I sent to mostro
+          console.debug('< 💬 [me -> 🧌]: ', ev)
         } else {
-          console.log(`> DM. ev: `, ev)
-          console.warn(`Ignoring _DM for key: ${recipient}, my pubkey is ${myPubKey}`)
+          // DM I sent to someone else
+          console.debug('< 💬 [me -> ?], ev: ', ev)
         }
       } else {
-        console.info(`Got event with kind: ${kind}, ev: `, ev)
+        console.log(`> DM. ev: `, ev)
+        console.warn(`Ignoring _DM for key: ${recipient}, my pubkey is ${myPubKey}`)
       }
-    })
+    } else {
+      console.info(`Got event with kind: ${kind}, ev: `, ev)
+    }
   }
 
   async createEvent(payload: object) {
