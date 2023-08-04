@@ -1,7 +1,7 @@
 <template>
   <v-dialog width="500" v-model="showDialog">
     <template v-slot:activator="{ props }">
-      <v-btn :disabled="order.is_mine" variant="outlined" v-bind="props">
+      <v-btn :disabled="order.is_mine" color="success" variant="outlined" v-bind="props">
         Take
       </v-btn>
     </template>
@@ -15,7 +15,7 @@
         <v-btn text color="warning" @click="() => showDialog = false">
           Cancel
         </v-btn>
-        <v-btn text color="info" @click="onConfirm">
+        <v-btn text color="success" @click="onConfirm">
           Confirm
         </v-btn>
       </v-card-actions>

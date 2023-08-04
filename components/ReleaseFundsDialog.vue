@@ -21,11 +21,11 @@
         </v-btn>
         <v-spacer></v-spacer>
         <v-btn
-          color="accent"
+          color="success"
           text
+          prepend-icon="mdi-thumb-up"
           @click="release"
         >
-          <v-icon left>mdi-thumb-up</v-icon>
           Confirm
         </v-btn>
       </v-card-actions>
