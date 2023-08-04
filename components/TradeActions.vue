@@ -102,7 +102,11 @@ export default {
       // @ts-ignore
       const messages = this.getMostroMessagesByOrderId(orderId)
       if (!messages || messages.length === 0) return false
-      return messages[messages.length - 1]?.action === Action.PayInvoice
+      return messages[messages.length - 1]?.action === Action.PayInvoice &&
+        this.currentOrderStatus !== OrderStatus.CANCELED
+    },
+    isCancelled() {
+      return this.currentOrderStatus === OrderStatus.CANCELED
     },
     showGiveInvoice() {
       // @ts-ignore

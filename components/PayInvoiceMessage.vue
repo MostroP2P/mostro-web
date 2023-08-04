@@ -5,10 +5,10 @@
       <div class="text-caption text--secondary">{{ timeago.format(creationDate) }}</div>
     </v-list-item-title>
     <v-list-item-subtitle>
-      You're selling {{ satsAmount }} sats for {{ fiatCode?.toUpperCase() }} {{fiatAmount }}.
+      Somebody wants to buy you {{ satsAmount }} sats for {{ fiatCode?.toUpperCase() }} {{fiatAmount }}.
     </v-list-item-subtitle>
     <v-list-item-subtitle class="d-flex justify-space-between">
-      Please press the button below to display a Lightning Network invoice and pay it to proceed. Your payment will be held in escrow. You have 15 minutes before this order expires.
+      Please press the button below to display a Lightning Network invoice and pay it to start up your selling process, it will expire in 15 minutes.
     </v-list-item-subtitle>
   </div>
 </template>

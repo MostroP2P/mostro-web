@@ -1,4 +1,4 @@
-import { nip04, nip19, getPublicKey, getSignature } from 'nostr-tools'
+import { nip04, nip19, getPublicKey, getSignature, UnsignedEvent } from 'nostr-tools'
 import { useAuth } from '@/stores/auth'
 
 export interface Relays {
@@ -110,7 +110,7 @@ export class LocalSigner extends BaseSigner {
     return new Promise<string>((resolve, reject) => {
       if (this.store.nsec) {
         const { nsec } = this.store
-        const secretHex = nip19.decode(nsec).data
+        const secretHex = nip19.decode(nsec).data as string
         const publicKey = getPublicKey(secretHex)
         resolve(publicKey)
       } else {
@@ -123,13 +123,18 @@ export class LocalSigner extends BaseSigner {
       }
     })
   }
-  signEvent(event: any) {
+  signEvent(event: UnsignedEvent) {
     return new Promise((resolve, reject) => {
       try {
         const { nsec } = this.store
-        const secretHex = nip19.decode(nsec).data
-        event.sig = getSignature(event, secretHex)
-        resolve(event)
+        if (nsec === undefined) throw new Error('Private key is locked')
+        const secretHex = nip19.decode(nsec as string).data as string
+        const signature = getSignature(event, secretHex)
+        const signedEvent = {
+          ...event,
+          sig: signature
+        }
+        resolve(signedEvent)
       } catch(err) {
         console.error('Error in LocalSigner. err: ', err)
         reject(err)
@@ -142,14 +147,20 @@ export class LocalSigner extends BaseSigner {
   encrypt?(pubkey: string, plaintext: string): Promise<string> {
     const destinationPubKey = pubkey.startsWith('npub') ? nip19.decode(pubkey).data : pubkey
     const { nsec } = this.store
-    const secretHex = nip19.decode(nsec).data
-    return nip04.encrypt(secretHex, destinationPubKey, plaintext)
+    if (!nsec) {
+      throw new Error('Private key is locked')
+    }
+    const secretHex = nip19.decode(nsec).data as string
+    return nip04.encrypt(secretHex, destinationPubKey as string, plaintext)
   }
   decrypt?(pubkey: string, ciphertext: string): Promise<string> {
     const destinationPubKey = pubkey.startsWith('npub') ? nip19.decode(pubkey).data : pubkey
     const { nsec } = this.store
-    const secretHex = nip19.decode(nsec).data
-    return nip04.decrypt(secretHex, destinationPubKey, ciphertext)
+    if (!nsec) {
+      throw new Error('Private key is locked')
+    }
+    const secretHex = nip19.decode(nsec).data as string
+    return nip04.decrypt(secretHex, destinationPubKey as string, ciphertext)
   }
 }
 

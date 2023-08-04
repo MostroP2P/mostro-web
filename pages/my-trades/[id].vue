@@ -1,6 +1,13 @@
 <template>
   <v-container class="d-flex flex-column" style="min-height: 82vh">
     <div class="message-list-wrapper flex-grow-1">
+      <v-alert
+        class="mb-4"
+        v-if="isCancelled"
+        type="error"
+        title="Order Cancelled"
+        text="This order was cancelled"
+      />
       <message-list :order-id="$route.params.id"/>
     </div>
     <trade-actions></trade-actions>
@@ -53,7 +60,7 @@ export default defineComponent({
   },
   computed: {
     ...mapState(useOrders, ['orders', 'getOrderStatus']),
-    currentOrderStatus() {
+    currentOrderStatus() : OrderStatus {
       // @ts-ignore
       return this.getOrderStatus(this.$route.params.id)
     },
@@ -76,6 +83,9 @@ export default defineComponent({
     isFundsReleased() {
       // @ts-ignore
       return steps[this.currentOrderStatus] >= steps[OrderStatus.SUCCESS] ?? 0
+    },
+    isCancelled() {
+      return this.currentOrderStatus === OrderStatus.CANCELED
     }
   }
 })

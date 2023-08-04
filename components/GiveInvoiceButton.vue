@@ -20,7 +20,7 @@
         rows="7"
         outlined
         class="mx-5"
-        :rules="[rules.required, rules.isInvoice, rules.network, rules.value, !rules.expired]"
+        :rules="[rules.required, rules.isInvoice, rules.network, rules.value, rules.valid]"
         :hint="invoiceHint"
       />
       <v-card-actions class="mx-3 mb-3">
@@ -66,9 +66,9 @@ export default {
         // @ts-ignore
         network: () => this.isInvoiceNetwork || 'Wrong invoice network',
         // @ts-ignore
-        value: () => this.isValueCorrect || this.wrongAmountErrorMessage,
+        value: () => this.isValueCorrect || this.wrongAmountErrorMessage || 'Invalid amount',
         // @ts-ignore
-        expired: () => this.isExpired || 'Expired invoice'
+        valid: () => !this.isExpired || 'Expired invoice'
       }
     }
   },
