@@ -1,18 +1,22 @@
 <template>
   <div>
-    <v-list-item-title class="d-flex justify-space-between">
+    <v-list-item-title class="d-flex justify-space-between mb-2">
       Invoice Needed
       <div class="text-caption text--secondary">{{ timeago.format(creationDate) }}</div>
     </v-list-item-title>
-    <v-list-item-subtitle class="wrap-text text-message">
+    <div class="wrap-text text-message">
       <p>
         🧌 You took this selling order, please use a fiat payment processor that allows you to send the money immediately and in which there is no risk of freezing funds.
-
+      </p>
+      <br>
+      <p>
         If, for any reason, your payment processor puts the payment on pause and the funds do not arrive in less than 22 hours, the sats will return to the seller, putting the buyer at risk and I cannot force the seller to send the sats again.
-
+      </p>
+      <br>
+      <p>
         If you agree with the above, press the button to continue 👇
       </p>
-    </v-list-item-subtitle>
+    </div>
   </div>
 </template>
 <script lang="ts">
