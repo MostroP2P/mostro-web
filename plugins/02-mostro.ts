@@ -7,6 +7,11 @@ import { useMessages } from '@/stores/messages'
 import { Order, SmallOrder } from '../stores/types'
 import { BaseSigner, ExtensionSigner, LocalSigner } from './01-signer'
 
+/**
+ * Maximum number of events to be returned in the initial query
+ */
+const EVENT_LIMIT = 100
+
 type MostroOptions = {
   mostroPubKey: string,
   relays: string[]
@@ -23,7 +28,8 @@ class Mostro {
   mostro: string
   relays: string[]
   orderMap: Map<string, string> // Maps order id -> event id
-  sub_id: string
+  orders_sub_id: string
+  dm_sub_id: string
   pubkeyCache: PublicKeyCache = { npub: null, hex: null }
   orderStore: ReturnType<typeof useOrders>
   messageStore: ReturnType<typeof useMessages>
@@ -31,7 +37,8 @@ class Mostro {
     this.relays = opts.relays
     this.mostro = opts.mostroPubKey
     this.orderMap = new Map<string, string>
-    this.sub_id = this.generateRandomSubId()
+    this.orders_sub_id = this.generateRandomSubId()
+    this.dm_sub_id = this.generateRandomSubId()
     this.orderStore = useOrders()
     this.messageStore = useMessages()
   }
@@ -65,7 +72,8 @@ class Mostro {
     // We'll issue unsubscribe notices to all relays and close the
     // connection CONNECTION_CLOSE_TIMEOUT milliseconds later.
     const CONNECTION_CLOSE_TIMEOUT =  800
-    this.pool.unsubscribe(this.sub_id)
+    this.pool.unsubscribe(this.dm_sub_id)
+    this.pool.unsubscribe(this.orders_sub_id)
     setTimeout(() => this.pool.close(), CONNECTION_CLOSE_TIMEOUT)
   }
 
@@ -76,22 +84,34 @@ class Mostro {
       .map(() => Math.random().toString(36)[2]).join('')
   }
 
-  public subscribe(kinds: number[]) {
-    this.pool.subscribe(this.sub_id, {limit: 100, kinds})
+  subscribeOrders() {
+    const filters = {
+      limit: EVENT_LIMIT,
+      kinds: [30000],
+    }
+    this.pool.subscribe(this.orders_sub_id, filters)
   }
 
-  public resubscribe(resubscribe: number[]) {
-    this.pool.unsubscribe(this.sub_id)
-    this.sub_id = this.generateRandomSubId()
-    this.pool.subscribe(this.sub_id, {limit: 100, kinds: resubscribe})
+  subscribeDMs() {
+    const filters = {
+      limit: EVENT_LIMIT,
+      kinds: [4],
+      '#p': [this.pubkeyCache.hex]
+    }
+    this.pool.subscribe(this.dm_sub_id, filters)
+  }
+
+  unsubscribeDMs() {
+    this.pool.unsubscribe(this.dm_sub_id)
   }
 
   init() {
     this.pool = RelayPool(this.relays)
     this.pool.on('open', (relay: any) => {
-      this.subscribe([30000])
+      this.subscribeOrders()
     })
     this.pool.on('close', (relay: any) => {
+      console.warn('💀 relay closed: ', relay)
       relay.close()
     })
     this.pool.on('event', async (relay: any, sub_id: any, ev: any) => {
@@ -331,10 +351,10 @@ export default defineNuxtPlugin((nuxtApp) => {
     if (newValue) {
       // If we have a signer, we can request DMs
       mostro.signer = new LocalSigner()
-      mostro.subscribe([30000, 4])
+      mostro.subscribeDMs()
     } else {
       mostro.lock()
-      mostro.resubscribe([30000])
+      mostro.unsubscribeDMs()
     }
   })
 
@@ -346,10 +366,10 @@ export default defineNuxtPlugin((nuxtApp) => {
         npub: nip19.npubEncode(newValue)
       }
       mostro.signer = new ExtensionSigner()
-      mostro.subscribe([30000, 4])
+      mostro.subscribeDMs()
     } else {
       mostro.lock()
-      mostro.resubscribe([30000])
+      mostro.unsubscribeDMs()
     }
   })
 })
