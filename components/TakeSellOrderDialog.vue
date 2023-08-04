@@ -8,7 +8,7 @@
     <v-card>
       <v-card-title>Take Sell Order</v-card-title>
       <v-card-text>
-        Confirm that you want to buy sats, taking this order. Mostro will contact you via DM and ask you to pay an invoice.
+        Confirm that you want take this sell order. Mostro will contact you via DM and ask you to pay an invoice.
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
