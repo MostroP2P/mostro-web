@@ -75,7 +75,7 @@ const clearNotifications = () => {
   notifications.value.forEach((notification: Notification, index: number) => {
     setTimeout(() => {
       notificationStore.dismiss(notification)
-    }, index * 200);  // Delay each removal by 200ms
+    }, index * 500);  // Delay each removal by 500ms
   })
 }
 const handleNotificationClick = (notification: Notification) => {
@@ -90,4 +90,16 @@ const handleNotificationClick = (notification: Notification) => {
   max-height: 80vh;
   overflow-y: auto;
 }
+.list-leave-active,
+.list-leave-to {
+  opacity: 0;
+  transform: translateX(100px);
+  transition: all 0.5s ease-out;
+}
+
+.list-leave {
+  opacity: 1;
+  transform: translateX(0);
+}
+
 </style>
