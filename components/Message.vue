@@ -32,8 +32,12 @@
       v-if="message.action === action.WaitingSellerToPay"
       :message="message"
     />
-    <add-invoice-message
-      v-if="message.action === action.AddInvoice"
+    <add-invoice-maker-message
+      v-if="message.action === action.AddInvoice && isLocalMaker"
+      :message="message"
+    />
+    <add-invoice-taker-message
+      v-if="message.action === action.AddInvoice && !isLocalMaker"
       :message="message"
     />
     <hodl-invoice-payment-accepted
@@ -86,6 +90,10 @@ export default {
       // @ts-ignore
       return this?.$mostro?.getNpub() === this.order?.buyer_pubkey
     },
+    isLocalMaker() {
+      // @ts-ignore
+      return this.order?.is_mine
+    }
   }
 }
 </script>

@@ -8,7 +8,7 @@
     <v-card>
       <v-card-title>Take Buy Order</v-card-title>
       <v-card-text>
-        Confirm you want to sell sats for {{ order.fiat_amount }} {{ order.fiat_code}}
+        Confirm that you want to take this buy order of {{ order.fiat_amount }} {{ order.fiat_code}}
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
@@ -25,7 +25,7 @@
 </template>
 <script lang="ts">
 import type { PropType } from 'vue'
-import { Order } from '~/store/types'
+import { Order } from '~/stores/types'
 export default {
   data() {
     return {

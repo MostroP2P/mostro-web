@@ -79,7 +79,7 @@ export const useNotifications = defineStore('notifications', {
         ) {
           this.notifications.splice(index, 1)
         } else {
-          this.notifications[index].dismissed = true
+          notification.dismissed = true
         }
       }
     }

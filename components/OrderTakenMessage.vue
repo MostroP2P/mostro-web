@@ -4,9 +4,11 @@
       Trade Started
       <div class="text-caption text--secondary">{{ timeago.format(creationDate) }}</div>
     </v-list-item-title>
-    <v-list-item-subtitle>
-      {{ orderTakenMessage }}
-    </v-list-item-subtitle>
+    <div class="wrap-text text-message">
+      <p>
+        {{ orderTakenMessage }}
+      </p>
+    </div>
   </div>
 </template>
 <script lang="ts">
@@ -14,7 +16,7 @@ import { PropType } from 'vue'
 import { mapState } from 'pinia'
 import * as timeago from 'timeago.js'
 import { useOrders } from '~/stores/orders'
-import { MostroMessage } from '~/stores/types'
+import { MostroMessage, OrderType } from '~/stores/types'
 export default {
   data() {
     return {
@@ -36,11 +38,18 @@ export default {
     orderTakenMessage() {
       if (!this.order) return 'Loading...'
       if (this.order.is_mine) {
-        return 'Your sell order was taken'
+        if (this.order.kind === OrderType.BUY) {
+          return 'Your buy order was taken'
+        } else {
+          return 'Your sell order was taken'
+        }
       } else {
-        return 'You just took a sell order'
+        if (this.order.kind === OrderType.BUY) {
+          return 'You just took a buy order'
+        } else {
+          return 'You just took a sell order'
+        }
       }
-
     },
     creationDate() {
       return this.message.created_at * 1e3

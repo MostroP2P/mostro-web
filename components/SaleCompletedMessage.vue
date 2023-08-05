@@ -4,12 +4,12 @@
       Sale Completed
       <div class="text-caption text--secondary">{{ timeago.format(creationDate) }}</div>
     </v-list-item-title>
-    <v-list-item-subtitle class="wrap-text text-message">
+    <div class="wrap-text text-message">
       <p>
         Your sale of sats has been completed after confirming payment from
         <npub :npub="buyerPubkey"/>
       </p>
-    </v-list-item-subtitle>
+    </div>
   </div>
 </template>
 <script lang="ts">

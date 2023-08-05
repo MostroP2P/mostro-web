@@ -1,12 +1,18 @@
 <template>
   <div>
     <v-list-item-title class="d-flex justify-space-between">
-      Payment Accepted
+      🤑 Payment received!
       <div class="text-caption text--secondary">{{ creationDate }}</div>
     </v-list-item-title>
-    <v-list-item-subtitle>
-      Your escrow payment has been accepted, we're waiting for the buyer to provide an invoice now.
-    </v-list-item-subtitle>
+    <div class="wrap-text text-message">
+      <p>
+        Now I need the buyer to send an invoice so I can send satoshis to his/her wallet. I will put you both in touch as soon as the buyer sends the invoice
+      </p>
+      <br>
+      <p>
+        Wait a bit. The collateral will be returned to you if the buyer does not cooperate.
+      </p>
+    </div>
   </div>
 </template>
 <script lang="ts">
