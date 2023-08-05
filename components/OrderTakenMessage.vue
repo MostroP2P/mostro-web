@@ -4,7 +4,7 @@
       Trade Started
       <div class="text-caption text--secondary">{{ timeago.format(creationDate) }}</div>
     </v-list-item-title>
-    <div>
+    <div class="wrap-text text-message">
       <p>
         {{ orderTakenMessage }}
       </p>

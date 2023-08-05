@@ -4,9 +4,9 @@
       Purchase Completed!
       <div class="text-caption text--secondary">{{ timeago.format(creationDate) }}</div>
     </v-list-item-title>
-    <v-list-item-subtitle>
+    <div class="wrap-text text-message">
       🎉 Your sats sale has been completed after confirming the payment to your peer.
-    </v-list-item-subtitle>
+    </div>
   </div>
 </template>
 <script lang="ts">
