@@ -94,10 +94,12 @@ class Mostro {
   }
 
   subscribeOrders() {
+    const mostroPubKey = nip19.decode(this.mostro).data
     const filters = {
       limit: EVENT_LIMIT,
       kinds: [30000],
       since: Math.floor(Date.now() / 1e3) - EVENT_INTEREST_WINDOW,
+      authors: [mostroPubKey]
     }
     this.pool.subscribe(this.orders_sub_id, filters)
   }
