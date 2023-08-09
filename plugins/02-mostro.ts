@@ -123,9 +123,8 @@ class Mostro {
     this.pool.on('open', (relay: any) => {
       this.subscribeOrders()
     })
-    this.pool.on('close', (relay: any) => {
+    this.pool.on('close', (relay: Relay) => {
       console.warn('💀 relay closed: ', relay)
-      relay.close()
     })
     this.pool.on('event', async (relay: Relay, sub_id: string, ev: Event) => {
       const hasValidSignature = verifySignature(ev)
