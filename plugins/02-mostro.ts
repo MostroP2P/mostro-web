@@ -94,6 +94,7 @@ class Mostro {
   }
 
   subscribeOrders() {
+    console.log('📣 subscribing to orders')
     const mostroPubKey = nip19.decode(this.mostro).data
     const filters = {
       limit: EVENT_LIMIT,
@@ -105,6 +106,7 @@ class Mostro {
   }
 
   subscribeDMs() {
+    console.log('📭 subscribing to DMs')
     const filters = {
       limit: EVENT_LIMIT,
       kinds: [4],
@@ -118,10 +120,30 @@ class Mostro {
     this.pool.unsubscribe(this.dm_sub_id)
   }
 
+  handleReconnection() {
+    if (this.signer instanceof LocalSigner) {
+      // In case of local signer, we only subscribe to DMs if the signer is unlocked
+      if (!this.signer.locked) {
+        this.subscribeDMs()
+      }
+    } else {
+      // ExtensionSigner
+      this.subscribeDMs()
+    }
+  }
+
   init() {
     this.pool = RelayPool(this.relays)
     this.pool.on('open', (relay: any) => {
+      console.info('🌟 relay opened: ', relay)
+      // We always subscribe to orders
       this.subscribeOrders()
+      if (this.signer) {
+        // If we have a signer already assigned, it probably means this is
+        // a reconnection event, in which case we need to resubscribe to DMs
+        console.debug('🔄 probably a reconnection')
+        this.handleReconnection()
+      }
     })
     this.pool.on('close', (relay: Relay) => {
       console.warn('💀 relay closed: ', relay)
@@ -135,7 +157,7 @@ class Mostro {
       }
       if (this.eventMap.has(ev.id)) {
         // We've already handled this event
-        console.debug('< 🦜 repeated event: ', ev.id)
+        // console.debug('< 🦜 repeated event: ', ev.id)
         return
       }
       await this.handleEvent(ev)
@@ -375,7 +397,7 @@ export default defineNuxtPlugin((nuxtApp) => {
 
   // Registering a watcher for the nsec
   const authStore = useAuth()
-  watch(() => authStore.nsec, (newValue, oldValue) => {
+  watch(() => authStore.nsec, (newValue) => {
     if (newValue) {
       // If we have a signer, we can request DMs
       mostro.signer = new LocalSigner()
@@ -387,7 +409,7 @@ export default defineNuxtPlugin((nuxtApp) => {
   })
 
   // Registering a watcher for public key
-  watch(() => authStore.publicKey, (newValue, oldValue) => {
+  watch(() => authStore.publicKey, (newValue) => {
     if (newValue) {
       mostro.pubkeyCache = {
         hex: newValue,
