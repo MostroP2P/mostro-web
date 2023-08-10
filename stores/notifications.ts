@@ -61,7 +61,14 @@ export const useNotifications = defineStore('notifications', {
             orderId: order.id,
             dismissed: false
           }
-          this.notifications.push(notification)
+          const existingNotificationIndex = this.notifications.findIndex(n => n.orderId === order.id)
+          if (existingNotificationIndex !== -1) {
+            // Replaces an existing notification
+            this.notifications.splice(existingNotificationIndex, 1, notification)
+          } else {
+            // Adds a notification for the first time
+            this.notifications.push(notification)
+          }
         }
       }
     },
