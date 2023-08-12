@@ -10,6 +10,25 @@ import {
   NOTIFICATIONS_KEY
 } from './types'
 
+const getTitle = (order: Order): string => {
+  if (order.kind === OrderType.SELL) {
+    if (order.status === OrderStatus.WAITING_BUYER_INVOICE) {
+      // Buyer as the maker just got the order taken
+      return 'Your sell order was just taken!'
+    } else if (order.status === OrderStatus.WAITING_PAYMENT) {
+      return 'You need to fund the escrow'
+    }
+  } else if (order.kind === OrderType.BUY) {
+    if (order.status === OrderStatus.WAITING_BUYER_INVOICE) {
+      // Seller as the maker just got the order taken
+      return 'Your buy order was just taken!'
+    } else if (order.status === OrderStatus.WAITING_PAYMENT) {
+      return 'You need to provide an invoice'
+    }
+  }
+  return `Your ${order.kind === OrderType.SELL ? 'Sell' : 'Buy'} needs attention`
+}
+
 export const useNotifications = defineStore('notifications', {
   state: () => ({
     notifications: [] as Notification[],
@@ -56,7 +75,7 @@ export const useNotifications = defineStore('notifications', {
           const notification: Notification = {
             eventId: event.id,
             timestamp: timestamp,
-            title: `Your ${order.kind === OrderType.SELL ? 'Sell' : 'Buy'} order was taken!`,
+            title: getTitle(order),
             subtitle: `Order for ${order.fiat_amount} ${order.fiat_code.toUpperCase()} - T: ${timestamp}, S: ${storedOrder.status}`,
             orderId: order.id,
             dismissed: false
