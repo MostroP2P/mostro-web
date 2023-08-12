@@ -160,8 +160,8 @@ class Mostro {
         // console.debug('< 🦜 repeated event: ', ev.id)
         return
       }
-      await this.handleEvent(ev)
       this.eventMap.set(ev.id, true)
+      await this.handleEvent(ev)
     })
   }
 
