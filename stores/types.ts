@@ -212,7 +212,6 @@ export interface NotificationState {
 
 export interface Notification {
   timestamp: number,
-  eventId: string,
   title: string,
   subtitle: string,
   orderId: string,

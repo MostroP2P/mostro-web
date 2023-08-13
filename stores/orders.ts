@@ -1,4 +1,3 @@
-import { useNotifications } from '@/stores/notifications'
 import { Order, OrderMapType, OrderOwnershipMapType, ScheduledOrderUpdatePayload } from './types'
 import { Event } from 'nostr-tools'
 
@@ -28,9 +27,6 @@ export const useOrders = defineStore('orders', {
       // We mark it as ours and add it to the `userOrders` map
       this.orders[order.id].is_mine = true
       this.userOrders[order.id] = true
-      // Check if we must notify the user
-      const notificationStore = useNotifications()
-      notificationStore.checkOrderForNotification({ order, event })
     },
     removeOrder(order: Order) {
       delete this.orders[order.id]
@@ -52,11 +48,7 @@ export const useOrders = defineStore('orders', {
         // The 'status' is always updated
         existingOrder.status = order.status
         // Updating the 'orders' object
-        this.orders[order.id] = {...existingOrder}
-
-        // Check if we must notify the user
-        const notificationStore = useNotifications()
-        notificationStore.checkOrderForNotification({ order, event })
+        this.orders[order.id] = { ...existingOrder }
       } else {
         console.warn(`Could not find order with id ${order.id} to update`)
       }
@@ -89,10 +81,6 @@ export const useOrders = defineStore('orders', {
           order[key] = toUpdate[key]
         })
         this.updateOrder({ order, event })
-
-        // Check if we must notify the user
-        const notificationStore = useNotifications()
-        notificationStore.checkOrderForNotification({ order, event })
       }
     }
   },
