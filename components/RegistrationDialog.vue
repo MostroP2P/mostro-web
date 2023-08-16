@@ -4,14 +4,14 @@
     <template v-slot:activator="{ props }">
       <v-btn v-bind="props" outlined class="mt-4">
         <KeyIcon class="mr-3"/>
-        Register
+        {{ registrationButtonText }}
       </v-btn>
     </template>
     <v-card>
-      <v-card-title>Registration method</v-card-title>
+      <v-card-title>Authentication method</v-card-title>
       <v-tabs v-model="tab">
         <v-tab>Nsec</v-tab>
-        <v-tab>NIP07</v-tab>
+        <v-tab v-if="hasNIP07">NIP07</v-tab>
       </v-tabs>
       <v-window v-model="tab">
         <v-window-item style="min-height: 5em">
@@ -176,6 +176,13 @@ export default {
     },
     validConfirmation() {
       return this.confirmation && this.confirmation === this.password
+    },
+    registrationButtonText() {
+      if (this.hasNIP07) {
+        return 'Login'
+      } else {
+        return 'Register'
+      }
     }
   }
 }
