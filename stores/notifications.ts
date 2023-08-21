@@ -86,6 +86,13 @@ export const useNotifications = defineStore('notifications', () => {
     }
     const existingNotificationIndex = notifications.value.findIndex(n => n.orderId === newOrder.id)
     if (existingNotificationIndex !== -1) {
+      // A notification for this order already exists
+      const existingNotification = notifications.value[existingNotificationIndex]
+      if (existingNotification.dismissed && existingNotification.title === title) {
+        // The existing notification has the same title and was already dismissed
+        // We don't need to add it again.
+        return
+      }
       // Replaces an existing notification
       notifications.value.splice(existingNotificationIndex, 1, notification)
     } else {
@@ -134,19 +141,7 @@ export const useNotifications = defineStore('notifications', () => {
   const dismiss = (notification: Notification) => {
     const index = notifications.value.findIndex(n => n.orderId === notification.orderId)
     if (index !== -1) {
-      const orderStore = useOrders()
-      const storedOrder = orderStore.getOrderById(notification.orderId)
-      if (!storedOrder ||
-        storedOrder.status === OrderStatus.EXPIRED ||
-        storedOrder.status === OrderStatus.CANCELED ||
-        storedOrder.status === OrderStatus.CANCELED_BY_ADMIN ||
-        storedOrder.status === OrderStatus.COMPLETED_BY_ADMIN ||
-        storedOrder.status === OrderStatus.SUCCESS
-      ) {
-        notifications.value.splice(index, 1)
-      } else {
-        notification.dismissed = true
-      }
+      notification.dismissed = true
     }
   }
   const getActiveNotifications = computed(() => {
