@@ -15,7 +15,7 @@
     </div>
     <div class="wrap-text text-message" v-if="isTaker">
       <p>
-        🧌 You took this selling order, please use a fiat payment processor that allows you to send the money immediately and in which there is no risk of freezing funds
+        🧌 You took this buy order, please use a fiat payment processor that allows you to send the money immediately and in which there is no risk of freezing funds
       </p>
       <br>
       <p>
