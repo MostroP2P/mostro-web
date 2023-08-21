@@ -17,7 +17,7 @@
         <transition-group name="list" tag="v-list">
           <v-list-item
             v-for="(notification) in notifications"
-            :key="notification.eventId"
+            :key="`${notification.orderId}-${notification.title}`"
             class="my-1 notification-item"
             @click="() => handleNotificationClick(notification)"
             three-line
