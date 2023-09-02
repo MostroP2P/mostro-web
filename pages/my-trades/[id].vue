@@ -6,7 +6,14 @@
         v-if="isCancelled"
         type="error"
         title="Order Cancelled"
-        text="This order was cancelled"
+        text="This trade was cancelled"
+      />
+      <v-alert
+        class="mb-4"
+        v-if="isSuccess"
+        type="success"
+        title="Order Completed"
+        text="This trade was completed"
       />
       <message-list :order-id="$route.params.id"/>
     </div>
@@ -25,5 +32,10 @@ const orderStore = useOrders()
 const isCancelled = computed(() => {
   const orderId = route.params.id
   return orderStore.getOrderStatus(orderId) === OrderStatus.CANCELED
+})
+
+const isSuccess = computed(() => {
+  const orderId = route.params.id
+  return orderStore.getOrderStatus(orderId) === OrderStatus.SUCCESS
 })
 </script>
