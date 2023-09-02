@@ -13,30 +13,17 @@
     <trade-actions></trade-actions>
   </v-container>
 </template>
-<script lang="ts">
+<script setup>
 import { mapState } from 'pinia'
 import { useRoute } from 'vue-router'
 import { useOrders } from '~/stores/orders'
 import { OrderStatus } from '~/stores/types'
+import { ref, computed } from 'vue'
+const route = useRoute()
+const orderStore = useOrders()
 
-export default defineComponent({
-  layout: 'message-list',
-  data() {
-    return {
-      route: useRoute(),
-      // @ts-ignore
-      OrderStatusConstant: OrderStatus
-    }
-  },
-  computed: {
-    ...mapState(useOrders, ['orders', 'getOrderStatus']),
-    currentOrderStatus() : OrderStatus {
-      // @ts-ignore
-      return this.getOrderStatus(this.$route.params.id)
-    },
-    isCancelled() {
-      return this.currentOrderStatus === OrderStatus.CANCELED
-    }
-  }
+const isCancelled = computed(() => {
+  const orderId = route.params.id
+  return orderStore.getOrderStatus(orderId) === OrderStatus.CANCELED
 })
 </script>
