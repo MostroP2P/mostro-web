@@ -84,18 +84,22 @@ export default defineComponent({
 
     return { inputMessage, inputContainerHeight, timeago, scrollToBottom, scrollingContent, isLocked }
   },
+  props: {
+    npub: {
+      type: String,
+      required: true
+    }
+  },
   methods: {
     async sendMessage() {
       // @ts-ignore
       const text = this.inputMessage.trim()
       if (!text) return
       // @ts-ignore
-      const { npub } = this.$route.params
-      // @ts-ignore
       const lastMessage = this.peerMessages[this.peerMessages.length - 1]
       const id = lastMessage?.id || null
       // @ts-ignore
-      await this.$mostro.submitDirectMessage(text, npub, id)
+      await this.$mostro.submitDirectMessage(text, this.npub, id)
       // @ts-ignore
       this.inputMessage = ''
       this.scrollToBottom()
@@ -119,10 +123,7 @@ export default defineComponent({
   computed: {
     ...mapState(useMessages, ['getPeerMessagesByNpub']),
     peerMessages() : PeerMessage[] {
-      const route = useRoute()
-      const { npub } = route.params
-      // @ts-ignore
-      return this.getPeerMessagesByNpub(npub)
+      return this.getPeerMessagesByNpub(this.npub)
     }
   }
 })

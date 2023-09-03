@@ -1,11 +1,14 @@
 <template>
   <div>
-    <Chat/>
+    <Chat :npub="npub"/>
   </div>
 </template>
-<script lang="ts">
-import { defineComponent } from 'vue'
-export default defineComponent({
+
+<script setup lang="ts">
+import { useRoute } from 'vue-router'
+const route = useRoute()
+const npub = ref(route.params.npub)
+definePageMeta({
   layout: 'message-list'
 })
 </script>

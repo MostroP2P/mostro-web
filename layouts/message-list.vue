@@ -3,17 +3,16 @@
     <v-app-bar
       fixed
       app
-      color="secondary"
+      color="secondary-darken-1"
     >
-      <v-btn icon @click="onBackClicked">
-        <v-icon>mdi-arrow-left</v-icon>
+      <v-btn @click="onBackClicked" icon="mdi-arrow-left" color="white">
       </v-btn>
       <v-toolbar-title>Message History</v-toolbar-title>
       <v-spacer />
     </v-app-bar>
     <v-main class="h-100">
       <v-container class="h-100">
-        <Nuxt />
+        <slot />
       </v-container>
     </v-main>
     <v-footer
