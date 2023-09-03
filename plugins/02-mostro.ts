@@ -371,6 +371,7 @@ class Mostro {
       pubkey: myPublicKey,
       tags: [
         ['p', destinationPubKey],
+        ['p', myPublicKey]
       ]
     }
     if (replyTo) {
