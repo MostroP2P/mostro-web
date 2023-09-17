@@ -1,5 +1,5 @@
 <template>
-  <v-card class="mx-auto">
+  <v-card class="mx-auto d-flex">
     <v-list lines="three">
       <div
         v-for="(message, index) in orderMessages"

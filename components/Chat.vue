@@ -1,25 +1,25 @@
 <template>
-  <div fluid class="d-flex flex-column">
+  <div fluid class="d-flex flex-column" id="chat-root">
     <v-card
-      class="overflow-y-auto"
-      max-height="70vh"
+      rounded="0"
+      class="flex-grow-1"
       id="messages-container"
     >
-      <div ref="scrollingContent">
+      <div ref="scrollingContent" style="height: calc(100vh - 350px)">
         <v-card-text v-if="peerMessages && peerMessages.length > 0">
-          <v-row v-for="(message, index) in peerMessages" :key="message.id">
+          <v-row v-for="(message) in peerMessages" :key="message.id">
             <v-col
               :class="message.sender === 'me' ? 'text-right' : 'text-left'"
               cols="12"
             >
-              <div class="text-caption mb-0 mx-2">{{ getMessageTime(message) }}</div>
+              <div class="text-caption mb-1 mx-0 text-disabled">{{ getMessageTime(message) }}</div>
               <v-chip
+                rounded
                 :class="[
-                  message.sender === 'me' ? 'primary' : 'secondary',
+                  message.sender === 'me' ? 'me' : 'other',
                   'white--text',
                   'px-4',
-                  'py-2',
-                  index === peerMessages.length - 1 ? 'last-peer-message' : ''
+                  'py-2'
                 ]"
               >
                 {{ message.text }}
@@ -29,29 +29,29 @@
         </v-card-text>
       </div>
     </v-card>
-    <div
+    <v-card
+      rounded="0"
       ref="inputContainer"
-      class="input-container"
     >
-      <v-container fluid>
-        <v-row>
-          <v-col cols="10" class="ml-0 pl-0">
-            <v-text-field
-              v-model="inputMessage"
-              @keydown.enter="sendMessage"
-              outlined
-              placeholder="Type your message here..."
-              single-line
-            ></v-text-field>
-          </v-col>
-          <v-col cols="2" class="d-flex justify-left align-center">
-            <v-btn fab color="primary" @click="sendMessage" :disabled="isLocked">
-              <v-icon>mdi-send</v-icon>
-            </v-btn>
-          </v-col>
-        </v-row>
-      </v-container>
-    </div>
+      <div class="d-flex justify-center align-center">
+        <v-text-field
+          v-model="inputMessage"
+          @keydown.enter="sendMessage"
+          variant="outlined"
+          placeholder="Type your message here..."
+          single-line
+          class="flex-grow-1 mx-4"
+        ></v-text-field>
+        <v-btn
+          class="mb-5 mr-4"
+          color="primary"
+          @click="sendMessage"
+          :disabled="isLocked"
+          icon="mdi-send"
+        >
+        </v-btn>
+      </div>
+    </v-card>
   </div>
 </template>
 
@@ -130,10 +130,28 @@ export default defineComponent({
 </script>
 
 <style scoped>
+#chat-root {
+  position: relative;
+  height: 100%;
+}
+
+#messages-container {
+  overflow-y: auto;
+  padding-bottom: 64px;
+}
+
 .input-container {
-  width: 90%;
   position: absolute;
-  bottom: 14px;
-  z-index: 1;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+}
+
+.me {
+  background: rgb(19, 166, 43);
+}
+
+.other {
+  background: rgb(92, 98, 93);
 }
 </style>

@@ -12,7 +12,7 @@
     />
     <fiat-sent-button v-if="showFiatSent" class="mx-3"/>
     <div v-if="showDispute" class="mx-3">
-      <v-btn text color="warning" prepend-icon="mdi-alert-outline">
+      <v-btn text color="warning" prepend-icon="mdi-alert-outline" @click="$emit('on-dispute')">
         Dispute
       </v-btn>
     </div>
