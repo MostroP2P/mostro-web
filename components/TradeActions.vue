@@ -11,11 +11,7 @@
       :message="giveInvoiceMessage"
     />
     <fiat-sent-button v-if="showFiatSent" class="mx-3"/>
-    <div v-if="showDispute" class="mx-3">
-      <v-btn text color="warning" prepend-icon="mdi-alert-outline" @click="$emit('on-dispute')">
-        Dispute
-      </v-btn>
-    </div>
+    <dispute-button v-if="showDispute || true" @dispute="handleDispute"/>
     <release-funds-dialog
       class="mx-3"
       v-if="showRelease"
@@ -30,6 +26,14 @@ import { useMessages } from '@/stores/messages'
 import { useOrders } from '@/stores/orders'
 import { OrderStatus, OrderType, MostroMessage, Action } from '~/stores/types'
 export default {
+  emits: ['dispute'],
+  methods: {
+    handleDispute() {
+      // Opens a dispute
+      // TODO: Actually send the dispute request to mostro
+      this.$emit('dispute')
+    }
+  },
   computed: {
     ...mapState(useOrders, ['getOrderStatus', 'getOrderById']),
     ...mapState(useMessages, ['getMostroMessagesByOrderId']),

@@ -29,7 +29,7 @@
         <v-window-item :key="TAB_NORMAL">
           <div>
             <message-list :order-id="$route.params.id" />
-            <trade-actions @on-dispute="() => openDispute()"></trade-actions>
+            <trade-actions @dispute="() => openDispute()"></trade-actions>
           </div>
         </v-window-item>
         <v-window-item :key="TAB_DISPUTE">
