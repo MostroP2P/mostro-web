@@ -27,6 +27,11 @@ type PublicKeyCache = {
   hex: null | string
 }
 
+export enum PublicKeyType {
+  HEX = 'hex',
+  NPUB = 'npub'
+}
+
 class Mostro {
   _signer: BaseSigner | undefined
   pool: any
@@ -220,29 +225,23 @@ class Mostro {
         }
       } else if (ev.pubkey === myPubKey) {
         // DMs I created
-        if (recipient !== mostroPubKey) {
-          // This is a DM I created for a conversation with another peer
-          try {
-            const [[, recipientPubKey]] = ev.tags
-            const plaintext = await this.signer!.decrypt!(recipientPubKey, ev.content)
+        try {
+          const [[, recipientPubKey]] = ev.tags
+          const plaintext = await this.signer!.decrypt!(recipientPubKey, ev.content)
+          if (recipient === mostroPubKey)
             console.log('< 💬 [me -> 🧌]: ', plaintext, ', ev: ', ev)
-            const peerNpub = nip19.npubEncode(recipient)
-            this.messageStore.addPeerMessage({
-              id: ev.id,
-              text: plaintext,
-              peerNpub: peerNpub,
-              sender: 'me',
-              created_at: ev.created_at
-            })
-          } catch (err) {
-            console.error('Error while decrypting message: ', err)
-          }
-        } else if (recipient === mostroPubKey) {
-          // DM I sent to mostro
-          console.debug('< 💬 [me -> 🧌]: ', ev)
-        } else {
-          // DM I sent to someone else
-          console.debug('< 💬 [me -> ?], ev: ', ev)
+          else
+            console.log('< 💬 [me -> peer]: ', plaintext, ', ev: ', ev)
+          const peerNpub = nip19.npubEncode(recipient)
+          this.messageStore.addPeerMessage({
+            id: ev.id,
+            text: plaintext,
+            peerNpub: peerNpub,
+            sender: 'me',
+            created_at: ev.created_at
+          })
+        } catch (err) {
+          console.error('Error while decrypting message: ', err)
         }
       } else {
         console.log(`> DM. ev: `, ev)
@@ -384,6 +383,17 @@ class Mostro {
 
   getNpub() {
     return this.pubkeyCache.npub
+  }
+
+  getMostroPublicKey(type: PublicKeyType) {
+    switch (type) {
+      case PublicKeyType.HEX:
+        return nip19.decode(this.mostro).data
+      case PublicKeyType.NPUB:
+        return this.mostro
+      default:
+        return this.mostro
+    }
   }
 }
 
