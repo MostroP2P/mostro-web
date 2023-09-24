@@ -30,7 +30,9 @@ export default {
   methods: {
     handleDispute() {
       // Opens a dispute
-      // TODO: Actually send the dispute request to mostro
+      const { $mostro } = useNuxtApp()
+      // @ts-ignore
+      $mostro.dispute(this.order)
       this.$emit('dispute')
     }
   },

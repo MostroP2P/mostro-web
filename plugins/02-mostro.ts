@@ -357,6 +357,17 @@ class Mostro {
     const event = await this.createEvent(payload)
     await this.pool.send(event)
   }
+  async dispute(order: Order) {
+    const payload = {
+      version: 0,
+      pubkey: this.getLocalKeys().npub,
+      action: 'Dispute',
+      order_id: order.id,
+      content: null
+    }
+    const event = await this.createEvent(payload)
+    await this.pool.send(event)
+  }
   async submitDirectMessage(message: string, npub: string, replyTo: string) {
     const destinationPubKey = nip19.decode(npub).data as string
     const myPublicKey = await this.signer?.getPublicKey()
