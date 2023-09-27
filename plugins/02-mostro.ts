@@ -17,6 +17,10 @@ const EVENT_LIMIT = 100
  */
 const EVENT_INTEREST_WINDOW = 60 * 60 * 24 * 7 // 7 days
 
+// Message kinds
+const NOSTR_REPLACEABLE_EVENT_KIND = 30078
+const NOSTR_ENCRYPTED_DM_KIND = 4
+
 type MostroOptions = {
   mostroPubKey: string,
   relays: string[]
@@ -103,7 +107,7 @@ class Mostro {
     const mostroPubKey = nip19.decode(this.mostro).data
     const filters = {
       limit: EVENT_LIMIT,
-      kinds: [30000],
+      kinds: [NOSTR_REPLACEABLE_EVENT_KIND],
       since: Math.floor(Date.now() / 1e3) - EVENT_INTEREST_WINDOW,
       authors: [mostroPubKey]
     }
@@ -114,7 +118,7 @@ class Mostro {
     console.log('📭 subscribing to DMs')
     const filters = {
       limit: EVENT_LIMIT,
-      kinds: [4],
+      kinds: [NOSTR_ENCRYPTED_DM_KIND],
       '#p': [this.pubkeyCache.hex],
       since: Math.floor(Date.now() / 1e3) - EVENT_INTEREST_WINDOW,
     }
@@ -176,12 +180,12 @@ class Mostro {
 
   async handleEvent(ev: any) {
     let { kind } = ev
-    if (!this.signer && kind !== 30000) {
-      // We shouldn't have any events other than kind 30000 at this point, but just in case
+    if (!this.signer && kind !== NOSTR_REPLACEABLE_EVENT_KIND) {
+    // We shouldn't have any events other than kind NOSTR_REPLACEABLE_EVENT_KIND at this point, but just in case
       console.warn('dropping event due to lack of signer')
       return
     }
-    if (kind === 30000) {
+    if (kind === NOSTR_REPLACEABLE_EVENT_KIND) {
       // Order
       let { content } = ev
       // Most of the orders that we receive via kind events are not ours,
@@ -196,7 +200,7 @@ class Mostro {
         this.orderStore.addOrder({ order: content, event: ev })
         this.orderMap.set(content.id, ev.id)
       }
-    } else if (kind === 4) {
+    } else if (kind === NOSTR_ENCRYPTED_DM_KIND) {
       // @ts-ignore
       let recipient = ev.tags.find(([k, v]) => k === 'p' && v && v !== '')[1]
       const mostroPubKey = nip19.decode(this.mostro).data
@@ -259,7 +263,7 @@ class Mostro {
     let event = {
       id: undefined as undefined | string,
       sig: undefined,
-      kind: 4,
+      kind: NOSTR_ENCRYPTED_DM_KIND,
       created_at: Math.floor(Date.now() / 1000),
       content: ciphertext,
       pubkey: myPubKey,
@@ -375,7 +379,7 @@ class Mostro {
     let event = {
       id: undefined as undefined | string,
       sig: undefined as undefined | string,
-      kind: 4,
+      kind: NOSTR_ENCRYPTED_DM_KIND,
       created_at: Math.floor(Date.now() / 1000),
       content: ciphertext,
       pubkey: myPublicKey,
