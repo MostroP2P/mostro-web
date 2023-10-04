@@ -1,13 +1,23 @@
 <template>
   <v-form v-model="valid" ref="form">
-    <v-text-field
-      v-model="fiatCode"
+    <v-autocomplete
+      :model-value="selectedCurrency"
+      :items="fiatCurrencies"
       label="Fiat code"
       hint="Enter fiat code"
       outlined
       required
     >
-    </v-text-field>
+      <template v-slot:item="{ props, item }">
+        <v-list-item
+          three-line
+          v-bind="props"
+          :title="item?.title"
+          :subtitle="item?.raw?.fullName"
+        >
+        </v-list-item>
+      </template>
+    </v-autocomplete>
     <v-text-field
       v-model="fiatAmount"
       label="Fiat amount"
@@ -83,8 +93,27 @@ import type { PropType } from 'vue'
 import * as bolt11 from 'light-bolt11-decoder'
 import invoiceValidator from '~/mixins/invoice-validator'
 import { OrderStatus, OrderPricingMode, OrderType, NewOrder } from '@/stores/types'
+import * as fiat from '~/assets/fiat.json'
+
+interface FiatCurrency {
+  symbol: string;
+  name: string;
+  symbol_native: string;
+  decimal_digits: number;
+  rounding: number;
+  code: string;
+  emoji: string;
+  name_plural: string;
+  price: boolean;
+}
+
+interface Fiat {
+  [key: string]: FiatCurrency;
+}
+
 export default defineComponent({
   data() {
+    const fmap = fiat as unknown as Fiat
     return {
       valid: false,
       fiatAmount: 0,
@@ -93,6 +122,8 @@ export default defineComponent({
       paymentMethod: '',
       isMarketPricing: true,
       buyerInvoice: '',
+      fiatCurrencies: [...Object.keys(fiat).map(k => ({ title: `${k} ${fmap[k].emoji}`, fullName: `${fmap[k].name}`, value: k }))],
+      selectedCurrency: null,
       fiatAmountRules: [
         (v: string) => !!v || 'Fiat amount is required',
         (v: string) => /\d+(?:-\d+)?$/.test(v) || 'Invalid value or range'
