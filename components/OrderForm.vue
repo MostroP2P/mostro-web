@@ -1,7 +1,7 @@
 <template>
   <v-form v-model="valid" ref="form">
     <v-autocomplete
-      :model-value="selectedCurrency"
+      v-model="fiatCode"
       :items="fiatCurrencies"
       label="Fiat code"
       hint="Enter fiat code"
@@ -123,7 +123,6 @@ export default defineComponent({
       isMarketPricing: true,
       buyerInvoice: '',
       fiatCurrencies: [...Object.keys(fiat).map(k => ({ title: `${k} ${fmap[k].emoji}`, fullName: `${fmap[k].name}`, value: k }))],
-      selectedCurrency: null,
       fiatAmountRules: [
         (v: string) => !!v || 'Fiat amount is required',
         (v: string) => /\d+(?:-\d+)?$/.test(v) || 'Invalid value or range'
