@@ -1,7 +1,7 @@
 <template>
   <v-dialog v-model="showDialog" max-width="500">
     <template v-slot:activator="{ props }">
-      <v-btn text color="accent" v-bind="props" prepend-icon="mdi-flash">
+      <v-btn text color="accent" v-bind="props" prepend-icon="mdi-flash" class="mx-2" min-width="160">
         <template v-slot:prepend>
           <v-icon color="success"></v-icon>
         </template>

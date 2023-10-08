@@ -1,7 +1,7 @@
 <template>
   <v-dialog v-model="showDialog" width="500">
     <template v-slot:activator="{ props }">
-      <v-btn text color="success" v-bind="props" prepend-icon="mdi-check">
+      <v-btn text color="success" v-bind="props" prepend-icon="mdi-check" class="mx-2" min-width="160">
         Release
       </v-btn>
     </template>

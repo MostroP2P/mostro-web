@@ -1,7 +1,7 @@
 <template>
   <v-dialog v-model="showDialog" max-width="500">
     <template v-slot:activator="{ props }">
-      <v-btn text color="success" v-bind="props" prepend-icon="mdi-qrcode-scan">
+      <v-btn text color="success" v-bind="props" prepend-icon="mdi-qrcode-scan" class="mx-2" min-width="160">
         Show Invoice
       </v-btn>
     </template>

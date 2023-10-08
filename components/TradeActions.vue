@@ -1,19 +1,24 @@
 <template>
   <div class="d-flex justify-center align-center mt-5">
     <pay-invoice-button
-      class="mx-3"
       v-if="showPayInvoice"
       :message="payInvoiceMessage"
     />
     <give-invoice-button
-      class="mx-3"
       v-if="showGiveInvoice"
       :message="giveInvoiceMessage"
     />
-    <fiat-sent-button v-if="showFiatSent" class="mx-3"/>
-    <dispute-button v-if="showDispute || true" @dispute="handleDispute"/>
+    <fiat-sent-button
+      v-if="showFiatSent"
+    />
+    <dispute-button
+      v-if="showDispute"
+      @dispute="handleDispute"
+    />
+    <cancel-button
+      v-if="showCancel"
+    />
     <release-funds-dialog
-      class="mx-3"
       v-if="showRelease"
       :order-id="$route.params.id"
     />
@@ -87,6 +92,9 @@ export default {
     showRelease() {
       // @ts-ignore
       return this.isLocalSeller && this.currentOrderStatus === OrderStatus.FIAT_SENT
+    },
+    showCancel() {
+      return this.currentOrderStatus === OrderStatus.WAITING_BUYER_INVOICE
     },
     showDispute() {
       if (this.isLocalBuyer) {
