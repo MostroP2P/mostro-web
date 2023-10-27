@@ -17,6 +17,7 @@
     />
     <cancel-button
       v-if="showCancel"
+      @cancel="handleCancel"
     />
     <release-funds-dialog
       v-if="showRelease"
@@ -39,6 +40,14 @@ export default {
       // @ts-ignore
       $mostro.dispute(this.order)
       this.$emit('dispute')
+    },
+    handleCancel() {
+      console.log('handleCancel')
+      // Cancels the order
+      const { $mostro, $router } = useNuxtApp()
+      // @ts-ignore
+      $mostro.cancel(this.order)
+      $router.replace({ path: '/' })
     }
   },
   computed: {
