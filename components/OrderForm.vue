@@ -192,6 +192,7 @@ export default defineComponent({
         amount: 0,
         fiat_code: this.fiatCode,
         fiat_amount: fiatAmount,
+        created_at: Math.ceil(Date.now() / 1E3),
         premium: 0,
         payment_method: this.paymentMethod
       }
