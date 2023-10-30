@@ -17,6 +17,10 @@ const EVENT_LIMIT = 100
  */
 const EVENT_INTEREST_WINDOW = 60 * 60 * 24 * 7 // 7 days
 
+// Message kinds
+const NOSTR_REPLACEABLE_EVENT_KIND = 30078
+const NOSTR_ENCRYPTED_DM_KIND = 4
+
 type MostroOptions = {
   mostroPubKey: string,
   relays: string[]
@@ -25,6 +29,11 @@ type MostroOptions = {
 type PublicKeyCache = {
   npub: null | string,
   hex: null | string
+}
+
+export enum PublicKeyType {
+  HEX = 'hex',
+  NPUB = 'npub'
 }
 
 class Mostro {
@@ -98,7 +107,7 @@ class Mostro {
     const mostroPubKey = nip19.decode(this.mostro).data
     const filters = {
       limit: EVENT_LIMIT,
-      kinds: [30000],
+      kinds: [NOSTR_REPLACEABLE_EVENT_KIND],
       since: Math.floor(Date.now() / 1e3) - EVENT_INTEREST_WINDOW,
       authors: [mostroPubKey]
     }
@@ -109,7 +118,7 @@ class Mostro {
     console.log('📭 subscribing to DMs')
     const filters = {
       limit: EVENT_LIMIT,
-      kinds: [4],
+      kinds: [NOSTR_ENCRYPTED_DM_KIND],
       '#p': [this.pubkeyCache.hex],
       since: Math.floor(Date.now() / 1e3) - EVENT_INTEREST_WINDOW,
     }
@@ -148,6 +157,10 @@ class Mostro {
     this.pool.on('close', (relay: Relay) => {
       console.warn('💀 relay closed: ', relay)
     })
+    this.pool.on('ok', async (relay: Relay, id: string, accepted: boolean, msg: string) => {
+      // TODO: Do more with this
+      console.debug(`👍 got an ok event. id: ${id}, accepted: ${accepted}, msg: ${msg}`)
+    })
     this.pool.on('event', async (relay: Relay, sub_id: string, ev: Event) => {
       const hasValidSignature = verifySignature(ev)
       if (!hasValidSignature) {
@@ -167,12 +180,12 @@ class Mostro {
 
   async handleEvent(ev: any) {
     let { kind } = ev
-    if (!this.signer && kind !== 30000) {
-      // We shouldn't have any events other than kind 30000 at this point, but just in case
+    if (!this.signer && kind !== NOSTR_REPLACEABLE_EVENT_KIND) {
+    // We shouldn't have any events other than kind NOSTR_REPLACEABLE_EVENT_KIND at this point, but just in case
       console.warn('dropping event due to lack of signer')
       return
     }
-    if (kind === 30000) {
+    if (kind === NOSTR_REPLACEABLE_EVENT_KIND) {
       // Order
       let { content } = ev
       // Most of the orders that we receive via kind events are not ours,
@@ -187,7 +200,7 @@ class Mostro {
         this.orderStore.addOrder({ order: content, event: ev })
         this.orderMap.set(content.id, ev.id)
       }
-    } else if (kind === 4) {
+    } else if (kind === NOSTR_ENCRYPTED_DM_KIND) {
       // @ts-ignore
       let recipient = ev.tags.find(([k, v]) => k === 'p' && v && v !== '')[1]
       const mostroPubKey = nip19.decode(this.mostro).data
@@ -216,29 +229,23 @@ class Mostro {
         }
       } else if (ev.pubkey === myPubKey) {
         // DMs I created
-        if (recipient !== mostroPubKey) {
-          // This is a DM I created for a conversation with another peer
-          try {
-            const [[, recipientPubKey]] = ev.tags
-            const plaintext = await this.signer!.decrypt!(recipientPubKey, ev.content)
+        try {
+          const [[, recipientPubKey]] = ev.tags
+          const plaintext = await this.signer!.decrypt!(recipientPubKey, ev.content)
+          if (recipient === mostroPubKey)
             console.log('< 💬 [me -> 🧌]: ', plaintext, ', ev: ', ev)
-            const peerNpub = nip19.npubEncode(recipient)
-            this.messageStore.addPeerMessage({
-              id: ev.id,
-              text: plaintext,
-              peerNpub: peerNpub,
-              sender: 'me',
-              created_at: ev.created_at
-            })
-          } catch (err) {
-            console.error('Error while decrypting message: ', err)
-          }
-        } else if (recipient === mostroPubKey) {
-          // DM I sent to mostro
-          console.debug('< 💬 [me -> 🧌]: ', ev)
-        } else {
-          // DM I sent to someone else
-          console.debug('< 💬 [me -> ?], ev: ', ev)
+          else
+            console.log('< 💬 [me -> peer]: ', plaintext, ', ev: ', ev)
+          const peerNpub = nip19.npubEncode(recipient)
+          this.messageStore.addPeerMessage({
+            id: ev.id,
+            text: plaintext,
+            peerNpub: peerNpub,
+            sender: 'me',
+            created_at: ev.created_at
+          })
+        } catch (err) {
+          console.error('Error while decrypting message: ', err)
         }
       } else {
         console.log(`> DM. ev: `, ev)
@@ -256,7 +263,7 @@ class Mostro {
     let event = {
       id: undefined as undefined | string,
       sig: undefined,
-      kind: 4,
+      kind: NOSTR_ENCRYPTED_DM_KIND,
       created_at: Math.floor(Date.now() / 1000),
       content: ciphertext,
       pubkey: myPubKey,
@@ -354,6 +361,28 @@ class Mostro {
     const event = await this.createEvent(payload)
     await this.pool.send(event)
   }
+  async dispute(order: Order) {
+    const payload = {
+      version: 0,
+      pubkey: this.getLocalKeys().npub,
+      action: 'Dispute',
+      order_id: order.id,
+      content: null
+    }
+    const event = await this.createEvent(payload)
+    await this.pool.send(event)
+  }
+  async cancel(order: Order) {
+    const payload = {
+      version: 0,
+      pubkey: this.getLocalKeys().npub,
+      action: 'Cancel',
+      order_id: order.id,
+      content: null
+    }
+    const event = await this.createEvent(payload)
+    await this.pool.send(event)
+  }
   async submitDirectMessage(message: string, npub: string, replyTo: string) {
     const destinationPubKey = nip19.decode(npub).data as string
     const myPublicKey = await this.signer?.getPublicKey()
@@ -361,12 +390,13 @@ class Mostro {
     let event = {
       id: undefined as undefined | string,
       sig: undefined as undefined | string,
-      kind: 4,
+      kind: NOSTR_ENCRYPTED_DM_KIND,
       created_at: Math.floor(Date.now() / 1000),
       content: ciphertext,
       pubkey: myPublicKey,
       tags: [
         ['p', destinationPubKey],
+        ['p', myPublicKey]
       ]
     }
     if (replyTo) {
@@ -379,6 +409,17 @@ class Mostro {
 
   getNpub() {
     return this.pubkeyCache.npub
+  }
+
+  getMostroPublicKey(type: PublicKeyType) {
+    switch (type) {
+      case PublicKeyType.HEX:
+        return nip19.decode(this.mostro).data
+      case PublicKeyType.NPUB:
+        return this.mostro
+      default:
+        return this.mostro
+    }
   }
 }
 

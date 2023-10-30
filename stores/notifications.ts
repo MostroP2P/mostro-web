@@ -14,57 +14,85 @@ export const useNotifications = defineStore('notifications', () => {
   const orders = useOrders()
   const notifications = ref([] as Notification[])
 
-  const getTitle = (order: Order, oldOrder: Order): string => {
-    const {
-      PENDING,
-      WAITING_BUYER_INVOICE,
-      WAITING_PAYMENT,
-      ACTIVE,
-      FIAT_SENT,
-      SETTLE_HODL_INVOICE
-    } = OrderStatus
-    if (order.kind === OrderType.SELL) {
-      if (order.status === WAITING_BUYER_INVOICE && oldOrder.status === PENDING) {
-        return 'Your sell order was just taken!'
-      } else if (order.status === WAITING_PAYMENT && oldOrder.status === WAITING_BUYER_INVOICE) {
-        return 'You need to fund the escrow'
-      } else if (order.status === ACTIVE && oldOrder.status === WAITING_PAYMENT) {
-        return 'Get in touch with the buyer'
-      } else if (order.status === FIAT_SENT && oldOrder.status === ACTIVE) {
-        return 'The buyer has sent the fiat'
-      } else if (order.status === SETTLE_HODL_INVOICE && oldOrder.status === FIAT_SENT) {
-        return 'The sats were released!'
-      }
-      return '?'
-    } else if (order.kind === OrderType.BUY) {
-      if (order.status === WAITING_PAYMENT && oldOrder.status === PENDING) {
-        return 'Your buy order was just taken!'
-      } else if (order.status === WAITING_BUYER_INVOICE && oldOrder.status === WAITING_PAYMENT) {
-        return 'You need to provide an invoice'
-      } else if (order.status === ACTIVE && oldOrder.status === WAITING_BUYER_INVOICE) {
-        return 'Get in touch with the seller'
-      } else if (order.status === FIAT_SENT && oldOrder.status === ACTIVE) {
-        return 'You have sent the fiat'
-      } else if (order.status === SETTLE_HODL_INVOICE && oldOrder.status === FIAT_SENT) {
-        return 'The sats were released!'
-      }
-      return '?'
-    } else {
-      return 'Unknown order type'
-    }
-  }
-
   const generateNotification = (newOrder: Order, oldOrder: Order) => {
+    let title = null
+    let subtitle = null
+    if (newOrder.is_mine) {
+      // I am the maker
+      if (newOrder.kind === OrderType.BUY) {
+        // This is a buy, I am the BUYER as the MAKER
+        if (newOrder.status === OrderStatus.WAITING_PAYMENT) {
+          title = 'Someone took your buy order'
+          subtitle = 'Hang in tight, the buyer is funding the escrow'
+        } else if (newOrder.status === OrderStatus.WAITING_BUYER_INVOICE) {
+          title = 'Invoice required'
+          subtitle = 'Please provide an invoice to proceed'
+        } else if (newOrder.status === OrderStatus.SETTLE_HODL_INVOICE) {
+          title = 'The seller has released the sats'
+          subtitle = 'Mostro has your sats, your invoice should be paid soon'
+        } else if (newOrder.status === OrderStatus.SUCCESS) {
+          title = 'Successful buy!'
+          subtitle = 'Your trade was concluded, enjoy your sound money!'
+        }
+      } else {
+        // This is a sell, I am the SELLER as the MAKER
+        if (newOrder.status === OrderStatus.WAITING_PAYMENT) {
+          title = 'Escrow funding required'
+          subtitle = 'Please fund the escrow to continue'
+        } else if (newOrder.status === OrderStatus.WAITING_BUYER_INVOICE) {
+          title = 'Someone took your sell order'
+          subtitle = 'Hang in tight, the buyer is providing an invoice'
+        } else if (newOrder.status === OrderStatus.FIAT_SENT) {
+          title = 'The buyer says the fiat was sent'
+          subtitle = 'Please confirm and release the funds'
+        }
+      }
+    } else {
+      // I am the taker
+      if (newOrder.kind === OrderType.BUY) {
+        // This is a buy, I am the SELLER as the TAKER
+        if (newOrder.status === OrderStatus.ACTIVE) {
+          title = 'The buyer has accepted the trade'
+          subtitle = 'Get in touch with the buyer'
+        } else if (newOrder.status === OrderStatus.FIAT_SENT) {
+          title = 'The buyer says the fiat was sent'
+          subtitle = 'Please confirm and release the funds'
+        }
+      } else {
+        // this is a sell, I am the BUYER as the TAKER
+        if (newOrder.status === OrderStatus.ACTIVE) {
+          title = 'The seller has accepted the trade'
+          subtitle = 'Get in touch with the seller'
+        } else if (newOrder.status === OrderStatus.SETTLE_HODL_INVOICE) {
+          title = 'The seller has released the sats'
+          subtitle = 'Just wait, your invoice should be paid soon'
+        } else if (newOrder.status === OrderStatus.SUCCESS) {
+          title = 'Successful buy!'
+          subtitle = 'Your trade was concluded, enjoy your sound money!'
+        }
+      }
+    }
+    if (!title) return
+    if (!subtitle) return
+
     const timestamp = Math.floor(Date.now() / 1000)
     const notification: Notification = {
       timestamp: timestamp,
-      title: getTitle(newOrder, oldOrder),
-      subtitle: `Order for ${newOrder.fiat_amount} ${newOrder.fiat_code.toUpperCase()} - T: ${timestamp}, S: ${newOrder.status}`,
+      title: title,
+      // subtitle: `Order for ${newOrder.fiat_amount} ${newOrder.fiat_code.toUpperCase()} - T: ${timestamp}, S: ${newOrder.status}`,
+      subtitle: subtitle,
       orderId: newOrder.id,
       dismissed: false
     }
     const existingNotificationIndex = notifications.value.findIndex(n => n.orderId === newOrder.id)
     if (existingNotificationIndex !== -1) {
+      // A notification for this order already exists
+      const existingNotification = notifications.value[existingNotificationIndex]
+      if (existingNotification.dismissed && existingNotification.title === title) {
+        // The existing notification has the same title and was already dismissed
+        // We don't need to add it again.
+        return
+      }
       // Replaces an existing notification
       notifications.value.splice(existingNotificationIndex, 1, notification)
     } else {
@@ -96,15 +124,14 @@ export const useNotifications = defineStore('notifications', () => {
         const oldOrder = oldOrderMap[key]
         // Check if the order is new or has changed
         if (!oldOrder || oldOrder.status !== newOrder.status) {
-          console.log(`>> Order ${newOrder.id} status changed from ${oldOrder?.status} to ${newOrder.status}, is mine: ${newOrder.is_mine}`)
-          if (newOrder.is_mine) {
-            if (newOrder.status === OrderStatus.WAITING_BUYER_INVOICE ||
-              newOrder.status === OrderStatus.WAITING_PAYMENT ||
-              newOrder.status === OrderStatus.ACTIVE ||
-              newOrder.status === OrderStatus.FIAT_SENT
-            ) {
-              generateNotification(newOrder, oldOrder)
-            }
+          if (newOrder.status === OrderStatus.WAITING_BUYER_INVOICE ||
+            newOrder.status === OrderStatus.WAITING_PAYMENT ||
+            newOrder.status === OrderStatus.ACTIVE ||
+            newOrder.status === OrderStatus.FIAT_SENT ||
+            newOrder.status === OrderStatus.SETTLE_HODL_INVOICE ||
+            newOrder.status === OrderStatus.SUCCESS
+          ) {
+            generateNotification(newOrder, oldOrder)
           }
         }
       })
@@ -114,19 +141,7 @@ export const useNotifications = defineStore('notifications', () => {
   const dismiss = (notification: Notification) => {
     const index = notifications.value.findIndex(n => n.orderId === notification.orderId)
     if (index !== -1) {
-      const orderStore = useOrders()
-      const storedOrder = orderStore.getOrderById(notification.orderId)
-      if (!storedOrder ||
-        storedOrder.status === OrderStatus.EXPIRED ||
-        storedOrder.status === OrderStatus.CANCELED ||
-        storedOrder.status === OrderStatus.CANCELED_BY_ADMIN ||
-        storedOrder.status === OrderStatus.COMPLETED_BY_ADMIN ||
-        storedOrder.status === OrderStatus.SUCCESS
-      ) {
-        notifications.value.splice(index, 1)
-      } else {
-        notification.dismissed = true
-      }
+      notification.dismissed = true
     }
   }
   const getActiveNotifications = computed(() => {

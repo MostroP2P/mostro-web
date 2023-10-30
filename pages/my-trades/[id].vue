@@ -1,92 +1,82 @@
 <template>
-  <v-container class="d-flex flex-column" style="min-height: 82vh">
-    <div class="message-list-wrapper flex-grow-1">
-      <v-alert
-        class="mb-4"
-        v-if="isCancelled"
-        type="error"
-        title="Order Cancelled"
-        text="This order was cancelled"
-      />
-      <message-list :order-id="$route.params.id"/>
-    </div>
-    <trade-actions></trade-actions>
-    <!-- <v-stepper alt-labels class="mt-5">
-      <v-stepper-header>
-        <v-stepper-step step="1" :complete="isWaitingPayment">
-          Waiting Payment
-        </v-stepper-step>
-        <v-divider></v-divider>
-        <v-stepper-step step="2" :complete="isActive">
-          Invoice Accepted
-        </v-stepper-step>
-        <v-divider></v-divider>
-        <v-stepper-step step="3" :complete="isFiatSent">
-          Fiat Sent
-        </v-stepper-step>
-        <v-divider></v-divider>
-        <v-stepper-step step="4" :complete="isFundsReleased">
-          Funds released
-        </v-stepper-step>
-      </v-stepper-header>
-    </v-stepper> -->
-    <!-- <div class="text-caption">
-      {{ getOrderStatus(route.params.id) }}
-    </div> -->
-  </v-container>
+  <NuxtLayout name="no-scroll-layout">
+    <v-container class="d-flex flex-column mt-0" fill-height style="height: calc(100vh - 120px)" id="my-trades">
+      <div class="message-list-wrapper">
+        <v-alert
+          class="mb-4"
+          v-if="isCancelled"
+          type="error"
+          title="Order Cancelled"
+          text="This trade was cancelled"
+        />
+        <v-alert
+          class="mb-4"
+          v-if="isSuccess"
+          type="success"
+          title="Order Completed"
+          text="This trade was completed"
+        />
+      </div>
+      <v-tabs fixed-tabs v-model="tab" class="mb-2">
+        <v-tab
+          v-for="tab in tabs"
+          :key="tab"
+        >
+          {{ tabs.length > 1 ? tab : '' }}
+        </v-tab>
+      </v-tabs>
+      <v-window v-model="tab" class="flex-grow-1" style="height: 10%;">
+        <v-window-item :key="TAB_NORMAL">
+          <div>
+            <message-list :order-id="$route.params.id" />
+            <trade-actions @dispute="() => openDispute()"></trade-actions>
+          </div>
+        </v-window-item>
+        <v-window-item :key="TAB_DISPUTE">
+          <dispute/>
+        </v-window-item>
+      </v-window>
+    </v-container>
+  </NuxtLayout>
 </template>
-<script lang="ts">
+<script setup>
 import { mapState } from 'pinia'
 import { useRoute } from 'vue-router'
 import { useOrders } from '~/stores/orders'
 import { OrderStatus } from '~/stores/types'
+import { ref, computed, onMounted } from 'vue'
+const route = useRoute()
+const orderStore = useOrders()
+const TAB_NORMAL = 'messages'
+const TAB_DISPUTE = 'dispute'
+const tabs = ref([TAB_NORMAL])
+const tab = ref(null)
 
-const steps = {
-  [`${OrderStatus.PENDING}`]: 0,
-  [`${OrderStatus.WAITING_PAYMENT}`]: 1,
-  [`${OrderStatus.ACTIVE}`]: 2,
-  [`${OrderStatus.FIAT_SENT}`]: 3,
-  [`${OrderStatus.SETTLE_HODL_INVOICE}`]: 4,
-  [`${OrderStatus.SUCCESS}`]: 4
-}
-export default defineComponent({
-  layout: 'message-list',
-  data() {
-    return {
-      route: useRoute(),
-      // @ts-ignore
-      OrderStatusConstant: OrderStatus
-    }
-  },
-  computed: {
-    ...mapState(useOrders, ['orders', 'getOrderStatus']),
-    currentOrderStatus() : OrderStatus {
-      // @ts-ignore
-      return this.getOrderStatus(this.$route.params.id)
-    },
-    isOrderTaken() {
-      // @ts-ignore
-      return steps[this.currentOrderStatus] >= steps[OrderStatus.PENDING] ?? 0
-    },
-    isWaitingPayment() {
-      // @ts-ignore
-      return steps[this.currentOrderStatus] >= steps[OrderStatus.WAITING_PAYMENT] ?? 0
-    },
-    isActive() {
-      // @ts-ignore
-      return steps[this.currentOrderStatus] >= steps[OrderStatus.ACTIVE] ?? 0
-    },
-    isFiatSent() {
-      // @ts-ignore
-      return steps[this.currentOrderStatus] >= steps[OrderStatus.FIAT_SENT] ?? 0
-    },
-    isFundsReleased() {
-      // @ts-ignore
-      return steps[this.currentOrderStatus] >= steps[OrderStatus.SUCCESS] ?? 0
-    },
-    isCancelled() {
-      return this.currentOrderStatus === OrderStatus.CANCELED
-    }
-  }
+definePageMeta({
+  layout: false,
 })
+
+const isCancelled = computed(() => {
+  const orderId = route.params.id
+  return orderStore.getOrderStatus(orderId) === OrderStatus.CANCELED
+})
+
+const isSuccess = computed(() => {
+  const orderId = route.params.id
+  return orderStore.getOrderStatus(orderId) === OrderStatus.SUCCESS
+})
+
+const openDispute = () => {
+  if (tabs.value.length === 1) {
+    // Opens the dispute tab only once
+    tabs.value.push(TAB_DISPUTE)
+    tab.value = 1
+  }
+}
 </script>
+
+<style scoped>
+#my-trades .flex-grow-1 {
+  overflow-y: auto;
+}
+</style>

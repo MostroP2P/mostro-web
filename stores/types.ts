@@ -180,6 +180,7 @@ export interface NewOrder {
   fiat_amount: number,
   payment_method: string,
   premium: number,
+  created_at: number,
   buyer_invoice?: string
 }
 

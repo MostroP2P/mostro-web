@@ -1,23 +1,25 @@
 <template>
   <div class="d-flex justify-center align-center mt-5">
     <pay-invoice-button
-      class="mx-3"
       v-if="showPayInvoice"
       :message="payInvoiceMessage"
     />
     <give-invoice-button
-      class="mx-3"
       v-if="showGiveInvoice"
       :message="giveInvoiceMessage"
     />
-    <fiat-sent-button v-if="showFiatSent" class="mx-3"/>
-    <div v-if="showDispute" class="mx-3">
-      <v-btn text color="warning" prepend-icon="mdi-alert-outline">
-        Dispute
-      </v-btn>
-    </div>
+    <fiat-sent-button
+      v-if="showFiatSent"
+    />
+    <dispute-button
+      v-if="showDispute"
+      @dispute="handleDispute"
+    />
+    <cancel-button
+      v-if="showCancel"
+      @cancel="handleCancel"
+    />
     <release-funds-dialog
-      class="mx-3"
       v-if="showRelease"
       :order-id="$route.params.id"
     />
@@ -30,6 +32,24 @@ import { useMessages } from '@/stores/messages'
 import { useOrders } from '@/stores/orders'
 import { OrderStatus, OrderType, MostroMessage, Action } from '~/stores/types'
 export default {
+  emits: ['dispute'],
+  methods: {
+    handleDispute() {
+      // Opens a dispute
+      const { $mostro } = useNuxtApp()
+      // @ts-ignore
+      $mostro.dispute(this.order)
+      this.$emit('dispute')
+    },
+    handleCancel() {
+      console.log('handleCancel')
+      // Cancels the order
+      const { $mostro, $router } = useNuxtApp()
+      // @ts-ignore
+      $mostro.cancel(this.order)
+      $router.replace({ path: '/' })
+    }
+  },
   computed: {
     ...mapState(useOrders, ['getOrderStatus', 'getOrderById']),
     ...mapState(useMessages, ['getMostroMessagesByOrderId']),
@@ -81,6 +101,9 @@ export default {
     showRelease() {
       // @ts-ignore
       return this.isLocalSeller && this.currentOrderStatus === OrderStatus.FIAT_SENT
+    },
+    showCancel() {
+      return this.currentOrderStatus === OrderStatus.WAITING_BUYER_INVOICE
     },
     showDispute() {
       if (this.isLocalBuyer) {
