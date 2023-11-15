@@ -1243,42 +1243,6 @@
     "price": true,
     "locale": "en-US"
   },
-  "USDSV": {
-    "symbol": "$",
-    "name": "USD en El Salvador",
-    "symbol_native": "$",
-    "decimal_digits": 2,
-    "rounding": 0,
-    "code": "USDSV",
-    "emoji": "🇺🇸🇸🇻",
-    "name_plural": "USD en El Salvador",
-    "price": true,
-    "locale": "es-SV"
-  },
-  "USDVE": {
-    "symbol": "$",
-    "name": "USD en Bs",
-    "symbol_native": "$",
-    "decimal_digits": 2,
-    "rounding": 0,
-    "code": "USDVE",
-    "emoji": "🇺🇸🇻🇪",
-    "name_plural": "USD en Bs",
-    "price": true,
-    "locale": "es-VE"
-  },
-  "USDUY": {
-    "symbol": "$",
-    "name": "USD en Uruguay",
-    "symbol_native": "$",
-    "decimal_digits": 2,
-    "rounding": 0,
-    "code": "USDUY",
-    "emoji": "🇺🇸🇺🇾",
-    "name_plural": "USD en Uruguay",
-    "price": true,
-    "locale": "es-UY"
-  },
   "UYU": {
     "symbol": "$U",
     "name": "Peso uruguayo",
