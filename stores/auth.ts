@@ -1,6 +1,6 @@
-import { EncryptedPrivateKey, ENCRYPTED_PRIVATE_KEY } from './types'
-
-export const AUTH_LOCAL_STORAGE_KEY = 'encrypted-private-key'
+import { EncryptedPrivateKey, AUTH_LOCAL_STORAGE_ENCRYPTED_KEY, AUTH_LOCAL_STORAGE_DECRYPTED_KEY } from './types'
+import { useLocalStorage } from '@vueuse/core'
+import { nip19 } from 'nostr-tools'
 
 export enum AuthMethod {
   LOCAL = 'local',
@@ -8,17 +8,32 @@ export enum AuthMethod {
   NOT_SET = 'not-set'
 }
 
-export interface LoginPayload {
+export interface ExtensionLoginPayload {
   authMethod: AuthMethod,
-  nsec?: string | null,
-  publicKey?: string | null// Used only in case of NIP-07
+  publicKey: string
 }
+
+export interface LocalLoginPayload {
+  authMethod: AuthMethod,
+  privateKey: string
+}
+
+export type LoginPayload = ExtensionLoginPayload | LocalLoginPayload
 
 export interface AuthState {
   authMethod: AuthMethod
   nsec: string | null,
   encryptedPrivateKey: EncryptedPrivateKey | null,
   publicKey?: string // Used only in case of NIP-07
+}
+
+function isNsec(nsec: string): boolean {
+  try {
+    const decoded = nip19.decode(nsec)
+    return decoded.type === 'nsec'
+  } catch (error) {
+    return false
+  }
 }
 
 export const useAuth = defineStore('auth', {
@@ -30,21 +45,38 @@ export const useAuth = defineStore('auth', {
   }),
   actions: {
     nuxtClientInit() {
-      const encryptedPrivKey = localStorage.getItem(ENCRYPTED_PRIVATE_KEY)
+      const encryptedPrivKey = localStorage.getItem(AUTH_LOCAL_STORAGE_ENCRYPTED_KEY)
       if(encryptedPrivKey) {
         this.encryptedPrivateKey = JSON.parse(encryptedPrivKey)
       }
-    },
-    login({ authMethod, nsec, publicKey } : LoginPayload) {
-      this.authMethod = authMethod
-      if (authMethod === AuthMethod.LOCAL) {
-        this.nsec = nsec ?? null
-      } else if (authMethod === AuthMethod.NIP07) {
-        this.publicKey = publicKey
+      const decryptedPrivKey = useLocalStorage(AUTH_LOCAL_STORAGE_DECRYPTED_KEY, '')
+      if (decryptedPrivKey) {
+        this.setKey({ privateKey: decryptedPrivKey.value })
+        this.authMethod = AuthMethod.LOCAL
       }
     },
-    setKey({ nsec }: { nsec: string }) {
-      this.nsec = nsec
+    login(loginPayload: LoginPayload) {
+      this.authMethod = loginPayload.authMethod
+      if (loginPayload.authMethod === AuthMethod.LOCAL) {
+        const localLoginPayload = loginPayload as LocalLoginPayload
+        this.setKey({ privateKey: localLoginPayload.privateKey })
+      } else if (this.authMethod === AuthMethod.NIP07) {
+        const extensionLoginPayload = loginPayload as ExtensionLoginPayload
+        this.publicKey = extensionLoginPayload.publicKey
+      }
+    },
+    setKey({ privateKey }: { privateKey: string }) {
+      if (!privateKey) return
+      if (isNsec(privateKey)) {
+        this.nsec = privateKey
+      } else {
+        try {
+          const encoded = nip19.nsecEncode(privateKey)
+          this.nsec = encoded
+        } catch (err) {
+          console.error('Error decoding private key to nip-19: ', err)
+        }
+      }
     },
     setEncryptedPrivateKey(encryptedPrivateKey: EncryptedPrivateKey | null) {
       this.encryptedPrivateKey = encryptedPrivateKey
@@ -55,6 +87,10 @@ export const useAuth = defineStore('auth', {
       }
       if (this.authMethod === AuthMethod.NIP07) {
         this.publicKey = null
+      }
+      const decryptedPrivKey = useLocalStorage(AUTH_LOCAL_STORAGE_DECRYPTED_KEY, '')
+      if (decryptedPrivKey) {
+        decryptedPrivKey.value = ''
       }
       this.authMethod = AuthMethod.NOT_SET
     }

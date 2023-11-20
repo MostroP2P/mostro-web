@@ -17,7 +17,7 @@
         <v-window-item style="min-height: 5em">
           <v-row class="mx-4 mt-5">
             <v-text-field
-              v-model="nsec"
+              v-model="privateKey"
               outlined
               :rules="[
                 (v) => rules.isNotEmpty(v),
@@ -96,7 +96,8 @@ import * as CryptoJS from 'crypto-js'
 import secretValidator from '~/mixins/secret-validator'
 import crypto from '~/mixins/crypto'
 import nip07 from '~/mixins/nip-07'
-import { ENCRYPTED_PRIVATE_KEY } from '~/stores/types'
+import { useLocalStorage } from '@vueuse/core'
+import { AUTH_LOCAL_STORAGE_ENCRYPTED_KEY } from '~/stores/types'
 import { AuthMethod, useAuth } from '~/stores/auth'
 
 // Minimum password length
@@ -108,7 +109,7 @@ export default {
       MIN_PASSWORD_LENGTH,
       showDialog: false,
       tab: null,
-      nsec: '',
+      privateKey: '',
       nsecVisible: false,
       password: '',
       confirmation: '',
@@ -118,7 +119,13 @@ export default {
   },
   setup() {
     const authStore = useAuth()
-    return { authStore }
+    const encryptedPrivKey = useLocalStorage(AUTH_LOCAL_STORAGE_ENCRYPTED_KEY, '')
+
+    watch(encryptedPrivKey, (newVal) => {
+      encryptedPrivKey.value = newVal
+    })
+
+    return { authStore, encryptedPrivKey }
   },
   mixins: [secretValidator, crypto, nip07],
   methods: {
@@ -135,14 +142,10 @@ export default {
         let rawKey = await window.crypto.subtle.exportKey('raw', key)
         let rawKeyBytes = Buffer.from(rawKey)
         let base64Key = rawKeyBytes.toString('base64')
-        const ciphertext = CryptoJS.AES.encrypt(this.nsec, base64Key).toString()
-        localStorage.setItem(
-          ENCRYPTED_PRIVATE_KEY,
-          JSON.stringify({ ciphertext, salt: salt.toString('base64') })
-        )
-        this.authStore.setKey({ nsec: this.nsec })
+        const ciphertext = CryptoJS.AES.encrypt(this.privateKey, base64Key).toString()
+        this.encryptedPrivKey = JSON.stringify({ ciphertext, salt: salt.toString('base64') })
         this.authStore.login({
-          nsec: this.nsec,
+          privateKey: this.privateKey,
           authMethod: AuthMethod.LOCAL
         })
       } catch(err) {
@@ -167,7 +170,7 @@ export default {
       return window && window.nostr
     },
     validSecret() {
-      const v = this.nsec
+      const v = this.privateKey
       // @ts-ignore
       return this.rules.isNotEmpty(v) && this.rules.isValidNsec(v) || this.rules.isValidHex(v)
     },

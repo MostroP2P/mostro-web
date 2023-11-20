@@ -18,43 +18,36 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue'
-import { mapState } from 'pinia'
+import { defineComponent, watch } from 'vue'
 import { useLocalStorage } from '@vueuse/core'
-import { useAuth, AuthMethod, AUTH_LOCAL_STORAGE_KEY } from '@/stores/auth'
+import { useAuth } from '@/stores/auth'
+import { AUTH_LOCAL_STORAGE_ENCRYPTED_KEY } from '@/stores/types'
 
 export default defineComponent({
   setup() {
     const authStore = useAuth()
-    const encryptedPrivKey = useLocalStorage(AUTH_LOCAL_STORAGE_KEY, '')
+    const encryptedPrivKey = useLocalStorage(AUTH_LOCAL_STORAGE_ENCRYPTED_KEY, '')
+
+    watch(encryptedPrivKey, (newVal) => {
+      encryptedPrivKey.value = newVal
+    })
+
     return {
       authStore,
       encryptedPrivKey
     }
   },
-  beforeDestroy() {
-    window.removeEventListener('beforeunload', this.beforeUnloadEvent)
-  },
   methods: {
     onLogout() {
       this.authStore.logout()
     },
-    beforeUnloadEvent(event: any) {
-      event.preventDefault()
-      event.returnValue = ''
-    }
   },
   computed: {
-    ...mapState(useAuth, ['authMethod']),
     hasEncryptedKey(): boolean {
       return this.encryptedPrivKey !== ''
     },
     isLoggedIn(): boolean {
-      if (this.authMethod !== AuthMethod.NOT_SET) {
-        window.addEventListener('beforeunload', this.beforeUnloadEvent)
-        return true
-      }
-      return false
+      return !!this.authStore.publicKey || !!this.authStore.nsec
     }
   }
 })
