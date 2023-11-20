@@ -31,6 +31,15 @@
           </v-row>
           <v-row class="mx-4 mb-5">
             <v-btn
+              color="error"
+              prepend-icon="mdi-delete"
+              :disabled="isProcessing"
+              @click="onDelete"
+            >
+              Delete
+            </v-btn>
+            <v-spacer/>
+            <v-btn
               color="primary"
               :disabled="!validPassword || isProcessing"
               @click="onPassword"
@@ -67,7 +76,8 @@ import * as CryptoJS from 'crypto-js'
 import secretValidator from '~/mixins/secret-validator'
 import crypto from '~/mixins/crypto'
 import nip07 from '~/mixins/nip-07'
-import { AuthMethod, useAuth, AUTH_LOCAL_STORAGE_KEY } from '@/stores/auth'
+import { AuthMethod, LocalLoginPayload, useAuth } from '@/stores/auth'
+import { AUTH_LOCAL_STORAGE_DECRYPTED_KEY, AUTH_LOCAL_STORAGE_ENCRYPTED_KEY } from '@/stores/types'
 
 // Minimum password length
 const MIN_PASSWORD_LENGTH = 10
@@ -75,8 +85,12 @@ const MIN_PASSWORD_LENGTH = 10
 export default defineComponent({
   setup() {
     const authStore = useAuth()
+    const encryptedPrivKey = useLocalStorage(AUTH_LOCAL_STORAGE_ENCRYPTED_KEY, '')
+    const decryptedPrivKey = useLocalStorage(AUTH_LOCAL_STORAGE_DECRYPTED_KEY, '')
     return {
-      authStore
+      authStore,
+      encryptedPrivKey,
+      decryptedPrivKey
     }
   },
   data() {
@@ -93,8 +107,7 @@ export default defineComponent({
     async onPassword() {
       this.isProcessing = true
       try {
-        const encryptedPrivKey = useLocalStorage(AUTH_LOCAL_STORAGE_KEY, '')
-        const encryptedPrivateKey = JSON.parse(encryptedPrivKey.value)
+        const encryptedPrivateKey = JSON.parse(this.encryptedPrivKey)
         if (encryptedPrivateKey) {
           const salt = Buffer.from(encryptedPrivateKey.salt, 'base64')
           const ciphertext = encryptedPrivateKey.ciphertext
@@ -104,8 +117,14 @@ export default defineComponent({
           let rawKeyBytes = Buffer.from(rawKey)
           let base64Key = rawKeyBytes.toString('base64')
           const plaintext = CryptoJS.AES.decrypt(ciphertext, base64Key).toString()
+          // Store the decrypted key in local storage
           const nsec = Buffer.from(plaintext, 'hex').toString('utf8')
-          this.authStore.login({ nsec, authMethod: AuthMethod.LOCAL})
+          this.decryptedPrivKey = nsec
+          const localLoginPayload: LocalLoginPayload = {
+            privateKey: nsec,
+            authMethod: AuthMethod.LOCAL
+          }
+          this.authStore.login(localLoginPayload)
           this.showDialog = false
         } else {
           console.warn('The encrypted private key was not found')
@@ -120,6 +139,12 @@ export default defineComponent({
       // @ts-ignore
       const publicKey = await this.getPublicKey()
       this.authStore.login({ authMethod: AuthMethod.NIP07, publicKey })
+      this.showDialog = false
+    },
+    onDelete() {
+      this.decryptedPrivKey = ''
+      this.encryptedPrivKey = ''
+      this.authStore.logout()
       this.showDialog = false
     }
   },

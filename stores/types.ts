@@ -191,7 +191,8 @@ export enum OrderPricingMode {
 
 export const USER_ORDERS_KEY = 'user-orders-key'
 export const NOTIFICATIONS_KEY = 'notifications-key'
-export const ENCRYPTED_PRIVATE_KEY = 'encrypted-private-key'
+export const AUTH_LOCAL_STORAGE_ENCRYPTED_KEY = 'encrypted-private-key'
+export const AUTH_LOCAL_STORAGE_DECRYPTED_KEY = 'decrypted-private-key'
 
 export interface OrderState {
   orders: typeof reactive<OrderMapType>,
