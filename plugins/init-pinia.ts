@@ -1,8 +1,8 @@
 import { useAuth } from '~/stores/auth'
 
-export default function () {
+export default defineNuxtPlugin(() => {
   if (process.client) {
     const authStore = useAuth()
     authStore.nuxtClientInit()
   }
-}
+})
