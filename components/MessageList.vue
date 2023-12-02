@@ -3,7 +3,7 @@
     <v-list lines="three">
       <div
         v-for="(message, index) in orderMessages"
-        :key="`${message.id}-${index}`"
+        :key="`${message.order_id}-${index}`"
       >
         <message :message="message" :disabled="isCancelled"/>
         <v-divider v-if="index < orderMessages.length - 1"/>
