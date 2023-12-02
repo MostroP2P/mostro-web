@@ -179,6 +179,7 @@ class Mostro {
   }
 
   async handleEvent(ev: any) {
+    console.debug('📧 nostr event: ', ev)
     let { kind } = ev
     if (!this.signer && kind !== NOSTR_REPLACEABLE_EVENT_KIND) {
     // We shouldn't have any events other than kind NOSTR_REPLACEABLE_EVENT_KIND at this point, but just in case
@@ -188,6 +189,11 @@ class Mostro {
     if (kind === NOSTR_REPLACEABLE_EVENT_KIND) {
       // Order
       let { content } = ev
+      if (!content) {
+        // Some events don't have content, so there's nothing to parse
+        // TODO: Handle these events?
+        return
+      }
       // Most of the orders that we receive via kind events are not ours,
       // so we set the `is_mine` field as false here.
       content = { ...JSON.parse(content), is_mine: false }
