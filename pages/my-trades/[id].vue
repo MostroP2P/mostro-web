@@ -42,10 +42,13 @@
 <script setup>
 import { mapState } from 'pinia'
 import { useRoute } from 'vue-router'
+import { useRouter } from 'vue-router'
 import { useOrders } from '~/stores/orders'
 import { OrderStatus } from '~/stores/types'
-import { ref, computed, onMounted } from 'vue'
+import { useAuth } from '~/stores/auth'
+import { ref, computed, watch } from 'vue'
 const route = useRoute()
+const router = useRouter()
 const orderStore = useOrders()
 const TAB_NORMAL = 'messages'
 const TAB_DISPUTE = 'dispute'
@@ -54,6 +57,7 @@ const tab = ref(null)
 
 definePageMeta({
   layout: false,
+  middleware: ['auth'],
 })
 
 const isCancelled = computed(() => {
@@ -73,6 +77,13 @@ const openDispute = () => {
     tab.value = 1
   }
 }
+const auth = useAuth()
+watch(() => auth.isAuthenticated, () => {
+  if (!auth.isAuthenticated.value) {
+    // // Redirects to the login page if the user is not logged in
+    router.replace('/')
+  }
+})
 </script>
 
 <style scoped>

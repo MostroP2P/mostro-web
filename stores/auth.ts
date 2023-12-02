@@ -93,9 +93,13 @@ export const useAuth = defineStore('auth', {
         decryptedPrivKey.value = ''
       }
       this.authMethod = AuthMethod.NOT_SET
-    }
+    },
   },
   getters: {
+    isAuthenticated(state) {
+      return state.authMethod !== AuthMethod.NOT_SET &&
+      (state.nsec !== null || state.publicKey !== null)
+    },
     isLocked(state) {
       switch(state.authMethod) {
         case AuthMethod.LOCAL:
