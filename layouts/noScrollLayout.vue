@@ -90,13 +90,13 @@ const items = ref([
     icon: 'mdi-book',
     title: 'My Trades',
     to: '/my-trades',
-    disabled: () => authStore.isLocked
+    disabled: () => !authStore.isAuthenticated
   },
   {
     icon: 'mdi-email',
     title: 'Messages',
     to: '/messages',
-    disabled: () => authStore.isLocked
+    disabled: () => !authStore.isAuthenticated
   },
   {
     icon: 'mdi-information',

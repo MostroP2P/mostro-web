@@ -73,12 +73,12 @@ export default defineComponent({
       return this.fiatMap[fiatCode?.toUpperCase()].emoji ?? ''
     },
     showTakeSell(order: Order) : boolean {
-      const isLocked: boolean = this.authStore.isLocked
-      return order.kind === OrderType.SELL && !isLocked
+      const isAuthenticated: boolean = this.authStore.isAuthenticated
+      return order.kind === OrderType.SELL && isAuthenticated
     },
     showTakeBuy(order: Order) : boolean {
-      const isLocked = this.authStore.isLocked
-      return order.kind === OrderType.BUY && !isLocked
+      const isAuthenticated = this.authStore.isAuthenticated
+      return order.kind === OrderType.BUY && isAuthenticated
     },
     summary(order: Order) {
       if (order.amount === 0) {

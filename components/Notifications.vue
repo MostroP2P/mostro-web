@@ -59,7 +59,7 @@ const authStore = useAuth()
 const notifications = computed(() => notificationStore.getActiveNotifications)
 const menuCloseDelay = computed(() => notifications.value.length * 200 + 1e3)
 const isMenuDisabled = computed(() => {
-  if (authStore.isLocked) {
+  if (!authStore.isAuthenticated) {
     return true
   }
   if (!notifications.value || notifications.value.length === 0) {

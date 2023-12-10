@@ -100,14 +100,5 @@ export const useAuth = defineStore('auth', {
       return state.authMethod !== AuthMethod.NOT_SET &&
       (state.nsec !== null || state.publicKey !== null)
     },
-    isLocked(state) {
-      switch(state.authMethod) {
-        case AuthMethod.LOCAL:
-          return !state.nsec
-        case AuthMethod.NIP07:
-          return !state.publicKey
-      }
-      return true
-    }
   }
 })
