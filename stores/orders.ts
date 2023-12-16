@@ -1,3 +1,4 @@
+import { MostroEvent } from 'plugins/02-mostro'
 import { Order, OrderMapType, OrderOwnershipMapType, ScheduledOrderUpdatePayload } from './types'
 import { Event } from 'nostr-tools'
 
@@ -7,7 +8,7 @@ export const useOrders = defineStore('orders', {
     userOrders: {}
   }),
   actions: {
-    addOrder({ order, event }: {order: Order, event: Event<4|30000> }) {
+    addOrder({ order, event }: {order: Order, event: MostroEvent }) {
       if (!this.orders[order.id]) {
         // Because of the asynchronous nature of messages, we can
         // have an order being added from the network which we already know
@@ -19,7 +20,7 @@ export const useOrders = defineStore('orders', {
         this.orders[order.id] = order
       }
     },
-    addUserOrder({ order, event }: {order: Order, event: Event<4|30000>}) {
+    addUserOrder({ order, event }: {order: Order, event: MostroEvent}) {
       if (!this.orders[order.id]) {
         // If the order doesn't yet exist, we add it
         this.orders[order.id] = order
@@ -31,7 +32,7 @@ export const useOrders = defineStore('orders', {
     removeOrder(order: Order) {
       delete this.orders[order.id]
     },
-    updateOrder({ order, event }: {order: Order, event: Event<4|30000> }) {
+    updateOrder({ order, event }: {order: Order, event: MostroEvent }) {
       const existingOrder = this.orders[order.id]      
       if (existingOrder) {
         // We just update buyer & seller pubkeys if they're not set yet

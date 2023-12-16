@@ -4,7 +4,7 @@ import { nip19, getEventHash, verifySignature, UnsignedEvent, Kind, Relay, Event
 import { useAuth } from '@/stores/auth'
 import { useOrders } from '@/stores/orders'
 import { useMessages } from '@/stores/messages'
-import { Order, SmallOrder } from '../stores/types'
+import { Order, OrderStatus, OrderType, SmallOrder } from '../stores/types'
 import { BaseSigner, ExtensionSigner, LocalSigner } from './01-signer'
 
 /**
@@ -20,6 +20,8 @@ const EVENT_INTEREST_WINDOW = 60 * 60 * 24 * 7 // 7 days
 // Message kinds
 const NOSTR_REPLACEABLE_EVENT_KIND = 30078
 const NOSTR_ENCRYPTED_DM_KIND = 4
+
+export type MostroEvent = Event<typeof NOSTR_REPLACEABLE_EVENT_KIND | typeof NOSTR_ENCRYPTED_DM_KIND>
 
 type MostroOptions = {
   mostroPubKey: string,
@@ -178,33 +180,53 @@ class Mostro {
     })
   }
 
-  async handleEvent(ev: any) {
+  extractOrderFromEvent(tags: Map<string, string>, ev: Event): Order {
+    // Create a map from the tags array for easy access
+    // const tags = new Map<string, string>(ev.tags as [string, string][])
+
+    if (!tags.has('d') || !tags.has('k') || !tags.has('s') || !tags.has('fa') || !tags.has('pm') || !tags.has('premium') || !tags.has('f')) {
+      console.error('Missing required tags in event to extract order. ev.tags: ', ev.tags)
+      throw Error('Missing required tags in event to extract order')
+    }
+
+     // Extract values from the tags map
+    const id = tags.get('d') as string
+    const kind = tags.get('k') as OrderType
+    const status = tags.get('s') as OrderStatus
+    const fiat_code = tags.get('f') as string
+    const fiat_amount = Number(tags.get('fa'))
+    const payment_method = tags.get('pm') as string
+    const premium = Number(tags.get('premium'))
+    const created_at = ev.created_at
+
+    return new Order(id, kind, status, fiat_code, fiat_amount, payment_method, premium, created_at)
+  }
+
+  async handleEvent(ev: Event) {
     console.debug('📧 nostr event: ', ev)
     let { kind } = ev
-    if (!this.signer && kind !== NOSTR_REPLACEABLE_EVENT_KIND) {
+    if (!this.signer && kind.valueOf() !== NOSTR_REPLACEABLE_EVENT_KIND) {
     // We shouldn't have any events other than kind NOSTR_REPLACEABLE_EVENT_KIND at this point, but just in case
       console.warn('dropping event due to lack of signer')
       return
     }
-    if (kind === NOSTR_REPLACEABLE_EVENT_KIND) {
-      // Order
-      let { content } = ev
-      if (!content) {
-        // Some events don't have content, so there's nothing to parse
-        // TODO: Handle these events?
-        return
-      }
-      // Most of the orders that we receive via kind events are not ours,
-      // so we set the `is_mine` field as false here.
-      content = { ...JSON.parse(content), is_mine: false }
-      console.log('< 📢', content)
-      if (this.orderMap.has(content.id)) {
-        // Updates existing order
-        this.orderStore.updateOrder({ order: content, event: ev })
+    if (kind.valueOf() === NOSTR_REPLACEABLE_EVENT_KIND) {
+      // Create a map from the tags array for easy access
+      const tags = new Map<string, string>(ev.tags as [string, string][])
+      if (tags.get('data_label') === 'order') {
+        // Order
+        const order = this.extractOrderFromEvent(tags, ev)
+        console.log('< 📢', order)
+        if (this.orderMap.has(order.id)) {
+          // Updates existing order
+          this.orderStore.updateOrder({ order: order, event: ev as MostroEvent })
+        } else {
+          // Adds new order
+          this.orderStore.addOrder({ order: order, event: ev as MostroEvent })
+          this.orderMap.set(order.id, ev.id)
+        }
       } else {
-        // Adds new order
-        this.orderStore.addOrder({ order: content, event: ev })
-        this.orderMap.set(content.id, ev.id)
+        // TODO: Extract other kinds of events data: Disputes & Ratings
       }
     } else if (kind === NOSTR_ENCRYPTED_DM_KIND) {
       // @ts-ignore
@@ -217,7 +239,7 @@ class Mostro {
           if (ev.pubkey === mostroPubKey) {
             console.info('< 💬 [🧌 -> me]: ', plaintext, ', ev: ', ev)
             const msg = { ...JSON.parse(plaintext), created_at: ev.created_at }
-            this.messageStore.addMostroMessage({ message: msg, event: ev })
+            this.messageStore.addMostroMessage({ message: msg, event: ev as MostroEvent})
           } else {
             console.info('< 💬 [peer -> me]: ', plaintext, ', ev: ', ev)
             // Peer DMs
@@ -290,11 +312,13 @@ class Mostro {
 
   async submitOrder(order: Order) {
     const payload = {
-      version: 0,
-      pubkey: this.getLocalKeys().npub,
-      action: 'Order',
-      content: {
-        Order: order
+      Order: {
+        version: 1,
+        pubkey: this.getLocalKeys().npub,
+        action: 'NewOrder',
+        content: {
+          Order: order
+        }
       }
     }
     const event = await this.createEvent(payload)

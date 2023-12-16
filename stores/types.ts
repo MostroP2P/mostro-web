@@ -1,6 +1,7 @@
 import { reactive } from 'vue'
 import { Event } from 'nostr-tools'
 import { AuthState } from './auth'
+import { MostroEvent } from 'plugins/02-mostro'
 
 export type ThreadSummary = {
   orderId: string,
@@ -32,16 +33,18 @@ type Peer = {
  * Message sent by mostro
  */
 export type MostroMessage = {
-  version: number,
-  order_id: string,
-  action: Action,
-  content: {
-    PaymentRequest?: PaymentRequest,
-    SmallOrder?: SmallOrder,
-    Peer?: Peer,
-    Order?: Order
-  },
-  created_at: number
+  Order: {
+    version: number,
+    order_id: string,
+    action: Action,
+    content: {
+      PaymentRequest?: PaymentRequest,
+      SmallOrder?: SmallOrder,
+      Peer?: Peer,
+      Order?: Order
+    },
+    created_at: number
+  }
 }
 
 /**
@@ -54,6 +57,7 @@ export type TextMessage = {
 
 export enum Action {
   Order = 'Order',
+  NewOrder = 'NewOrder',
   TakeSell = 'TakeSell',
   TakeBuy = 'TakeBuy',
   PayInvoice = 'PayInvoice',
@@ -232,7 +236,7 @@ export interface RootState {
 }
 export interface ScheduledOrderUpdatePayload {
   orderId: string,
-  event: Event<4|30000>,
+  event: MostroEvent,
   seller_pubkey?: string,
   buyer_pubkey?: string
 }
