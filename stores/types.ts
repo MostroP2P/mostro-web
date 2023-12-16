@@ -35,7 +35,7 @@ type Peer = {
 export type MostroMessage = {
   Order: {
     version: number,
-    order_id: string,
+    id: string,
     action: Action,
     content: {
       PaymentRequest?: PaymentRequest,

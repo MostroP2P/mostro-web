@@ -2,11 +2,11 @@
   <div class="d-flex justify-center align-center mt-5">
     <pay-invoice-button
       v-if="showPayInvoice"
-      :message="payInvoiceMessage"
+      :message="(payInvoiceMessage as MostroMessage)"
     />
     <give-invoice-button
       v-if="showGiveInvoice"
-      :message="giveInvoiceMessage"
+      :message="(giveInvoiceMessage as MostroMessage)"
     />
     <fiat-sent-button
       v-if="showFiatSent"
@@ -21,7 +21,7 @@
     />
     <release-funds-dialog
       v-if="showRelease"
-      :order-id="$route.params.id"
+      :order-id="$route.params.id as string"
     />
   </div>
 </template>
@@ -57,13 +57,14 @@ export default {
       const orderId = this.$route.params.id
       // @ts-ignore
       const messages = this.getMostroMessagesByOrderId(orderId)
-      return messages.find((msg: MostroMessage) => msg.action === Action.WaitingSellerToPay || msg.action === Action.PayInvoice)
+      return messages
+        .find((msg: MostroMessage) => msg.Order.action === Action.WaitingSellerToPay || msg.Order.action === Action.PayInvoice)
     },
     giveInvoiceMessage() {
       const orderId = this.$route.params.id
       // @ts-ignore
       const messages = this.getMostroMessagesByOrderId(orderId)
-      return messages.find((msg: MostroMessage) => msg.action === Action.AddInvoice || msg.action === Action.TakeSell)
+      return messages.find((msg: MostroMessage) => msg.Order.action === Action.AddInvoice || msg.Order.action === Action.TakeSell)
     },
     currentOrderStatus() {
       const route = useRoute()
@@ -123,9 +124,9 @@ export default {
     showPayInvoice() {
       const orderId = this.$route.params.id
       // @ts-ignore
-      const messages = this.getMostroMessagesByOrderId(orderId)
+      const messages: MostroMessage[] = this.getMostroMessagesByOrderId(orderId)
       if (!messages || messages.length === 0) return false
-      return messages[messages.length - 1]?.action === Action.PayInvoice &&
+      return messages[messages.length - 1].Order.action === Action.PayInvoice &&
         this.currentOrderStatus !== OrderStatus.CANCELED
     },
     isCancelled() {

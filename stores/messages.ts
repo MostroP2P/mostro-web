@@ -38,7 +38,7 @@ export const useMessages = defineStore('messages', {
           const { content } = orderMessage
           if (content.SmallOrder) {
             const { seller_pubkey, buyer_pubkey } = content.SmallOrder
-            const order = await orderStore.getOrderById(orderMessage.order_id) as Order
+            const order = await orderStore.getOrderById(orderMessage.id) as Order
             if (seller_pubkey && buyer_pubkey) {
               order.seller_pubkey = seller_pubkey
               order.buyer_pubkey = buyer_pubkey
@@ -46,7 +46,7 @@ export const useMessages = defineStore('messages', {
                 orderStore.updateOrder({ order, event })
               } else {
                 orderStore.scheduleOrderUpdate({
-                  orderId: orderMessage.order_id,
+                  orderId: orderMessage.id,
                   seller_pubkey,
                   buyer_pubkey,
                   event
@@ -77,12 +77,12 @@ export const useMessages = defineStore('messages', {
       // Loop that fills the map
       for (const message of state.messages.mostro) {
         if (!message.Order) continue
-        const messageOrder = message.Order
-        if (!messageMap.has(messageOrder.order_id)) {
-          messageMap.set(messageOrder.order_id, 1)
+        const orderMessage = message.Order
+        if (!messageMap.has(orderMessage.id)) {
+          messageMap.set(orderMessage.id, 1)
         } else {
-          let currentCount = messageMap.get(messageOrder.order_id) as number
-          messageMap.set(messageOrder.order_id, currentCount + 1)
+          let currentCount = messageMap.get(orderMessage.id) as number
+          messageMap.set(orderMessage.id, currentCount + 1)
         }
       }
       return Array.from(messageMap).map(([orderId, messageCount]) => {
@@ -129,7 +129,7 @@ export const useMessages = defineStore('messages', {
         // Filtering messages by order id
         const messages = messageSlice
           .filter((message: MostroMessage) => message.Order)
-          .filter((message: MostroMessage) => message.Order.order_id === orderId)
+          .filter((message: MostroMessage) => message.Order.id === orderId)
 
         // Reducing messages to only the last one for each action
         type ReducerAcc = { [key: string]: MostroMessage }

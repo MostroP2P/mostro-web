@@ -3,7 +3,7 @@
     <v-list lines="three">
       <div
         v-for="(message, index) in orderMessages"
-        :key="`${message.order_id}-${index}`"
+        :key="`${message.Order.id}-${index}`"
       >
         <message :message="message" :disabled="isCancelled"/>
         <v-divider v-if="index < orderMessages.length - 1"/>
@@ -28,8 +28,9 @@ export default {
     ...mapState(useOrders, ['getOrderStatus']),
     orderMessages() {
       // @ts-ignore
-      return this.getMostroMessagesByOrderId(this.orderId)
-        .filter((msg: MostroMessage) => msg.action !== Action.CantDo)
+      const orderMsgs =  this.getMostroMessagesByOrderId(this.orderId)
+        .filter((msg: MostroMessage) => msg.Order.action !== Action.CantDo)
+      return orderMsgs
     },
     isCancelled() {
       return this.getOrderStatus(this.orderId) === OrderStatus.CANCELED

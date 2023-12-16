@@ -18,7 +18,7 @@ const EVENT_LIMIT = 100
 const EVENT_INTEREST_WINDOW = 60 * 60 * 24 * 7 // 7 days
 
 // Message kinds
-const NOSTR_REPLACEABLE_EVENT_KIND = 30078
+const NOSTR_REPLACEABLE_EVENT_KIND = 38383
 const NOSTR_ENCRYPTED_DM_KIND = 4
 
 export type MostroEvent = Event<typeof NOSTR_REPLACEABLE_EVENT_KIND | typeof NOSTR_ENCRYPTED_DM_KIND>
@@ -359,7 +359,7 @@ class Mostro {
     const event = await this.createEvent(payload)
     await this.pool.send(event)
   }
-  async addInvoice(order: SmallOrder, invoice: string) {
+  async addInvoice(order: Order, invoice: string) {
     const payload = {
       version: 0,
       pubkey: this.getLocalKeys().npub,
