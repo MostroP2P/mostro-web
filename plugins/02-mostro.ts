@@ -326,15 +326,17 @@ class Mostro {
   }
   async takeSell(order: Order, invoice: string) {
     const payload = {
-      version: 0,
-      pubkey: this.getLocalKeys().npub,
-      order_id: order.id,
-      action: 'TakeSell',
-      content: invoice === null ? null : {
-        PaymentRequest: [
-          null,
-          invoice
-        ]
+      Order: {
+        version: 1,
+        pubkey: this.getLocalKeys().npub,
+        id: order.id,
+        action: 'TakeSell',
+        content: invoice === null ? null : {
+          PaymentRequest: [
+            null,
+            invoice
+          ]
+        }
       }
     }
     const event = await this.createEvent(payload)
@@ -342,13 +344,15 @@ class Mostro {
   }
   async takeBuy(order: Order) {
     const payload = {
-      version: 0,
-      pubkey: this.getLocalKeys().npub,
-      order_id: order.id,
-      action: 'TakeBuy',
-      content: {
-        Peer: {
-          pubkey: this.getLocalKeys().npub
+      Order: {
+        version: 1,
+        pubkey: this.getLocalKeys().npub,
+        id: order.id,
+        action: 'TakeBuy',
+        content: {
+          Peer: {
+            pubkey: this.getLocalKeys().npub
+          }
         }
       }
     }
