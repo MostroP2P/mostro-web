@@ -202,35 +202,30 @@ class Mostro {
     return new Order(id, kind, status, fiat_code, fiat_amount, payment_method, premium, created_at)
   }
 
-  async handleEvent(ev: Event) {
-    console.debug('📧 nostr event: ', ev)
-    let { kind } = ev
-    if (!this.signer && kind.valueOf() !== NOSTR_REPLACEABLE_EVENT_KIND) {
-    // We shouldn't have any events other than kind NOSTR_REPLACEABLE_EVENT_KIND at this point, but just in case
-      console.warn('dropping event due to lack of signer')
-      return
-    }
-    if (kind.valueOf() === NOSTR_REPLACEABLE_EVENT_KIND) {
-      // Create a map from the tags array for easy access
-      const tags = new Map<string, string>(ev.tags as [string, string][])
-      if (tags.get('z') === 'order') {
-        // Order
-        const order = this.extractOrderFromEvent(tags, ev)
-        console.log('< 📢', order)
-        if (this.orderMap.has(order.id)) {
-          // Updates existing order
-          this.orderStore.updateOrder({ order: order, event: ev as MostroEvent })
-        } else {
-          // Adds new order
-          this.orderStore.addOrder({ order: order, event: ev as MostroEvent })
-          this.orderMap.set(order.id, ev.id)
-        }
+  handlePublicEvent(ev: Event) {
+    // Create a map from the tags array for easy access
+    const tags = new Map<string, string>(ev.tags as [string, string][])
+    if (tags.get('z') === 'order') {
+      // Order
+      const order = this.extractOrderFromEvent(tags, ev)
+      console.log('< 📢', order)
+      if (this.orderMap.has(order.id)) {
+        // Updates existing order
+        this.orderStore.updateOrder({ order: order, event: ev as MostroEvent })
       } else {
-        // TODO: Extract other kinds of events data: Disputes & Ratings
+        // Adds new order
+        this.orderStore.addOrder({ order: order, event: ev as MostroEvent })
+        this.orderMap.set(order.id, ev.id)
       }
-    } else if (kind === NOSTR_ENCRYPTED_DM_KIND) {
-      // @ts-ignore
-      let recipient = ev.tags.find(([k, v]) => k === 'p' && v && v !== '')[1]
+    } else {
+      // TODO: Extract other kinds of events data: Disputes & Ratings
+    }
+  }
+
+  async handlePrivateEvent(ev: Event) {
+    const tags = new Map<string, string>(ev.tags as [string, string][])
+    if (tags.has('p')) {
+      const recipient = tags.get('p') as string
       const mostroPubKey = nip19.decode(this.mostro).data
       const myPubKey = this.pubkeyCache.hex
       if (myPubKey === recipient) {
@@ -241,7 +236,7 @@ class Mostro {
             const msg = { ...JSON.parse(plaintext), created_at: ev.created_at }
             this.messageStore.addMostroMessage({ message: msg, event: ev as MostroEvent})
           } else {
-            console.info('< 💬 [peer -> me]: ', plaintext, ', ev: ', ev)
+            console.info('< 💬 [🍐 -> me]: ', plaintext, ', ev: ', ev)
             // Peer DMs
             const peerNpub = nip19.npubEncode(ev.pubkey)
             this.messageStore.addPeerMessage({
@@ -263,7 +258,7 @@ class Mostro {
           if (recipient === mostroPubKey)
             console.log('< 💬 [me -> 🧌]: ', plaintext, ', ev: ', ev)
           else
-            console.log('< 💬 [me -> peer]: ', plaintext, ', ev: ', ev)
+            console.log('< 💬 [me -> 🍐]: ', plaintext, ', ev: ', ev)
           const peerNpub = nip19.npubEncode(recipient)
           this.messageStore.addPeerMessage({
             id: ev.id,
@@ -279,6 +274,23 @@ class Mostro {
         console.log(`> DM. ev: `, ev)
         console.warn(`Ignoring _DM for key: ${recipient}, my pubkey is ${myPubKey}`)
       }
+    } else {
+      console.warn('Ignoring DM with no recipient')
+    }
+  }
+
+  async handleEvent(ev: Event) {
+    console.debug('📧 nostr event: ', ev)
+    let { kind } = ev
+    if (!this.signer && kind.valueOf() !== NOSTR_REPLACEABLE_EVENT_KIND) {
+    // We shouldn't have any events other than kind NOSTR_REPLACEABLE_EVENT_KIND at this point, but just in case
+      console.warn('dropping event due to lack of signer')
+      return
+    }
+    if (kind.valueOf() === NOSTR_REPLACEABLE_EVENT_KIND) {
+      this.handlePublicEvent(ev)
+    } else if (kind === NOSTR_ENCRYPTED_DM_KIND) {
+      this.handlePrivateEvent(ev)
     } else {
       console.info(`Got event with kind: ${kind}, ev: `, ev)
     }
