@@ -5,7 +5,7 @@
       :message="message"
     />
     <order-taken-message
-      v-if="message.Order.action === action.Order"
+      v-if="message.Order.action === action.NewOrder"
       :message="message"
     />
     <waiting-buyer-invoice-message

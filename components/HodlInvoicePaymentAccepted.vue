@@ -51,29 +51,38 @@ export default {
   computed: {
     ...mapState(useOrders, ['getOrderById']),
     sellerPubkey() {
-      const smallOrder = this.message.content.SmallOrder
+      const smallOrder = this.message.Order.content.SmallOrder
       if (smallOrder) {
         return smallOrder.seller_pubkey
       }
       return '?'
     },
     fiatCode() {
-      const orderId = this.message.order_id
-      const order = this.getOrderById(orderId)
-      return order.fiat_code
+      const orderId = this.message.Order.content.Order?.id
+      if (orderId) {
+        const order = this.getOrderById(orderId)
+        return order.fiat_code
+      }
+      return '?'
     },
     fiatAmount() {
-      const orderId = this.message.order_id
-      const order = this.getOrderById(orderId)
-      return order.fiat_amount
+      const orderId = this.message.Order.content.Order?.id
+      if (orderId) {
+        const order = this.getOrderById(orderId)
+        return order.fiat_amount
+      }
+      return '?'
     },
     paymentMethod() {
-      const orderId = this.message.order_id
-      const order = this.getOrderById(orderId)
-      return order.payment_method
+      const orderId = this.message.Order.content.Order?.id
+      if (orderId) {
+        const order = this.getOrderById(orderId)
+        return order.payment_method
+      }
+      return '?'
     },
     creationDate() {
-      return this.message.created_at * 1e3
+      return this.message.Order.created_at * 1e3
     }
   }
 }

@@ -49,16 +49,16 @@ export default {
       return this.getOrderById(this.$route.params.id)
     },
     fiatAmount() {
-      const smallOrder = this.message.content.SmallOrder
-      if (smallOrder) {
-        return smallOrder.fiat_amount
+      const order = this.message.Order.content.Order
+      if (order) {
+        return order.fiat_amount
       }
       return NaN
     },
     fiatCode() {
-      const smallOrder = this.message.content.SmallOrder
-      if (smallOrder) {
-        return smallOrder.fiat_code
+      const order = this.message.Order.content.Order
+      if (order) {
+        return order.fiat_code
       }
       return NaN
     },
@@ -67,14 +67,14 @@ export default {
       return this?.order?.payment_method
     },
     buyerPubkey() {
-      const smallOrder = this.message.content.SmallOrder
-      if (smallOrder) {
-        return smallOrder.buyer_pubkey
+      const order = this.message.Order.content.Order
+      if (order && order.buyer_pubkey) {
+        return order.buyer_pubkey
       }
       return '?'
     },
     creationDate() {
-      return this.message.created_at * 1e3
+      return this.message.Order.created_at * 1e3
     }
   }
 }
