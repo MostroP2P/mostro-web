@@ -213,7 +213,7 @@ class Mostro {
     if (kind.valueOf() === NOSTR_REPLACEABLE_EVENT_KIND) {
       // Create a map from the tags array for easy access
       const tags = new Map<string, string>(ev.tags as [string, string][])
-      if (tags.get('data_label') === 'order') {
+      if (tags.get('z') === 'order') {
         // Order
         const order = this.extractOrderFromEvent(tags, ev)
         console.log('< 📢', order)
@@ -306,7 +306,7 @@ class Mostro {
   getLocalKeys() {
     return {
       npub: this.pubkeyCache.npub,
-      public: this.pubkeyCache.hex
+      hex: this.pubkeyCache.hex
     }
   }
 
@@ -314,7 +314,7 @@ class Mostro {
     const payload = {
       Order: {
         version: 1,
-        pubkey: this.getLocalKeys().npub,
+        pubkey: this.getLocalKeys().hex,
         action: 'NewOrder',
         content: {
           Order: order
@@ -361,15 +361,17 @@ class Mostro {
   }
   async addInvoice(order: Order, invoice: string) {
     const payload = {
-      version: 0,
-      pubkey: this.getLocalKeys().npub,
-      order_id: order.id,
-      action: 'AddInvoice',
-      content: {
-        PaymentRequest: [
-          null,
-          invoice
-        ]
+      Order: {
+        version: 1,
+        pubkey: this.getLocalKeys().npub,
+        id: order.id,
+        action: 'AddInvoice',
+        content: {
+          PaymentRequest: [
+            null,
+            invoice
+          ]
+        }
       }
     }
     const event = await this.createEvent(payload)
