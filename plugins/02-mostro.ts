@@ -328,7 +328,7 @@ class Mostro {
     const payload = {
       Order: {
         version: 1,
-        pubkey: this.getLocalKeys().npub,
+        pubkey: this.getLocalKeys().hex,
         id: order.id,
         action: 'TakeSell',
         content: invoice === null ? null : {
@@ -346,12 +346,12 @@ class Mostro {
     const payload = {
       Order: {
         version: 1,
-        pubkey: this.getLocalKeys().npub,
+        pubkey: this.getLocalKeys().hex,
         id: order.id,
         action: 'TakeBuy',
         content: {
           Peer: {
-            pubkey: this.getLocalKeys().npub
+            pubkey: this.getLocalKeys().hex
           }
         }
       }
@@ -363,7 +363,7 @@ class Mostro {
     const payload = {
       Order: {
         version: 1,
-        pubkey: this.getLocalKeys().npub,
+        pubkey: this.getLocalKeys().hex,
         id: order.id,
         action: 'AddInvoice',
         content: {
@@ -380,7 +380,7 @@ class Mostro {
   async release(order: Order) {
     const payload = {
       version: 0,
-      pubkey: this.getLocalKeys().npub,
+      pubkey: this.getLocalKeys().hex,
       action: 'Release',
       order_id: order.id
     }
@@ -390,7 +390,7 @@ class Mostro {
   async fiatSent(order: Order) {
     const payload = {
       version: 0,
-      pubkey: this.getLocalKeys().npub,
+      pubkey: this.getLocalKeys().hex,
       action: 'FiatSent',
       order_id: order.id
     }
@@ -400,7 +400,7 @@ class Mostro {
   async dispute(order: Order) {
     const payload = {
       version: 0,
-      pubkey: this.getLocalKeys().npub,
+      pubkey: this.getLocalKeys().hex,
       action: 'Dispute',
       order_id: order.id,
       content: null
@@ -411,7 +411,7 @@ class Mostro {
   async cancel(order: Order) {
     const payload = {
       version: 0,
-      pubkey: this.getLocalKeys().npub,
+      pubkey: this.getLocalKeys().hex,
       action: 'Cancel',
       order_id: order.id,
       content: null
