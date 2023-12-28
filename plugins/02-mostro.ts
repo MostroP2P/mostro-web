@@ -208,7 +208,7 @@ class Mostro {
     if (tags.get('z') === 'order') {
       // Order
       const order = this.extractOrderFromEvent(tags, ev)
-      console.log('< 📢', order)
+      console.info('< [🧌 -> 📢]', order, ', ev: ', ev)
       if (this.orderMap.has(order.id)) {
         // Updates existing order
         this.orderStore.updateOrder({ order: order, event: ev as MostroEvent })
@@ -280,7 +280,6 @@ class Mostro {
   }
 
   async handleEvent(ev: Event) {
-    console.debug('📧 nostr event: ', ev)
     let { kind } = ev
     if (!this.signer && kind.valueOf() !== NOSTR_REPLACEABLE_EVENT_KIND) {
     // We shouldn't have any events other than kind NOSTR_REPLACEABLE_EVENT_KIND at this point, but just in case
@@ -311,7 +310,7 @@ class Mostro {
     }
     event.id = getEventHash(event as UnsignedEvent<Kind.EncryptedDirectMessage>)
     event = await this.signer?.signEvent(event)
-    console.log('> 📝 createEvent. payload: ', payload, ', ev: ', event)
+    console.info('> 💬 [me -> 🧌]: ', JSON.stringify(payload), ', ev: ', event)
     return ['EVENT', event]
   }
 
