@@ -16,13 +16,15 @@ type PaymentRequest = [NullableOrder, string]
 
 export type SmallOrder = {
   amount: number,
-  buyer_pubkey: string,
   fiat_amount: number,
   fiat_code: string,
   id: string,
   payment_method: string,
   premium: number,
+  buyer_pubkey: string,
   seller_pubkey: string
+  master_buyer_pubkey?: string,
+  master_seller_pubkey?: string,
 }
 
 type Peer = {

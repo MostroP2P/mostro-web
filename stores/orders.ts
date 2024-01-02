@@ -1,6 +1,5 @@
 import { MostroEvent } from 'plugins/02-mostro'
 import { Order, OrderMapType, OrderOwnershipMapType, ScheduledOrderUpdatePayload } from './types'
-import { Event } from 'nostr-tools'
 
 export const useOrders = defineStore('orders', {
   state: (): { orders: OrderMapType, userOrders: OrderOwnershipMapType }  => ({
@@ -36,11 +35,11 @@ export const useOrders = defineStore('orders', {
       const existingOrder = this.orders[order.id]      
       if (existingOrder) {
         // We just update buyer & seller pubkeys if they're not set yet
-        if (!existingOrder.buyer_pubkey && order.buyer_pubkey) {
-          existingOrder.buyer_pubkey = order.buyer_pubkey
+        if (!existingOrder.master_buyer_pubkey && order.master_buyer_pubkey) {
+          existingOrder.master_buyer_pubkey = order.master_buyer_pubkey
         }
-        if (!existingOrder.seller_pubkey && order.seller_pubkey) {
-          existingOrder.seller_pubkey = order.seller_pubkey
+        if (!existingOrder.master_seller_pubkey && order.master_seller_pubkey) {
+          existingOrder.master_seller_pubkey = order.master_seller_pubkey
         }
         // A similar treatment is done for the 'is_mine' flag
         if (!existingOrder.is_mine) {
