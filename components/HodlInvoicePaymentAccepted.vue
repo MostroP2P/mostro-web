@@ -10,7 +10,7 @@
       </p>
       <br>
       <p>
-        Get in touch with the seller, user <npub :npub="sellerPubkey"/> to get the details on how to send the money, you must send {{ fiatCode }} {{ fiatAmount }} using {{ paymentMethod }}.
+        Get in touch with the seller, user <npub :publicKey="sellerPubkey"/> to get the details on how to send the money, you must send {{ fiatCode }} {{ fiatAmount }} using {{ paymentMethod }}. The seller will provide you with the details on how to send the money.
       </p>
       <br>
       <p>
@@ -50,10 +50,10 @@ export default {
   },
   computed: {
     ...mapState(useOrders, ['getOrderById']),
-    sellerPubkey() {
-      const smallOrder = this.message.Order.content.SmallOrder
-      if (smallOrder) {
-        return smallOrder.seller_pubkey
+    sellerPubkey(): String {
+      const order = this.message.Order.content.Order
+      if (order) {
+        return order.master_seller_pubkey || '??'
       }
       return '?'
     },

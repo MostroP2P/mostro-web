@@ -6,7 +6,7 @@
     </v-list-item-title>
     <div class="wrap-text text-message">
       The user
-      <npub :npub="buyerPubkey"/>
+        <npub :publicKey="buyerPubkey"/>
       has taken your order and wants to buy your sats. Get in touch and tell
       him/her how to send you {{ fiatAmount }} {{ fiatCode }} through {{ paymentMethod }}.
       Once you verify you have received the full amount you have to release the sats.
@@ -68,8 +68,8 @@ export default {
     },
     buyerPubkey() {
       const order = this.message.Order.content.Order
-      if (order && order.buyer_pubkey) {
-        return order.buyer_pubkey
+      if (order && order.master_buyer_pubkey) {
+        return order.master_buyer_pubkey
       }
       return '?'
     },
