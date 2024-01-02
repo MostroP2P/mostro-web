@@ -46,7 +46,8 @@ export type MostroMessage = {
       Order?: Order
     },
     created_at: number
-  }
+  },
+  created_at: number
 }
 
 /**

@@ -7,10 +7,10 @@
       </v-list-item-title>
       <div class="wrap-text text-message">
         <p v-if="isLocalBuyer">
-          🧌 I told <npub :npub="sellerPubkey"/> that you have sent fiat money once the seller confirms the money was received, the sats should be sent to you.
+          🧌 I told <npub :publicKey="sellerPubkey"/> that you have sent fiat money once the seller confirms the money was received, the sats should be sent to you.
         </p>
         <p v-if="!isLocalBuyer">
-          <npub :npub="buyerPubkey"/> has informed that already sent you the fiat money, once you confirmed you received it, please release funds. You will not be able to create another order until you release funds.
+          <npub :publicKey="buyerPubkey"/> has informed that already sent you the fiat money, once you confirmed you received it, please release funds. You will not be able to create another order until you release funds.
         </p>
       </div>
     </div>
@@ -52,12 +52,10 @@ export default {
       return this.getOrderById(route.params.id)
     },
     buyerPubkey() {
-      // @ts-ignore
-      return this.message?.content?.Peer?.pubkey ?? '?'
+      return this.order?.master_seller_pubkey
     },
     sellerPubkey() {
-      // @ts-ignore
-      return this.order?.seller_pubkey
+      return this.order?.master_seller_pubkey
     },
     isLocalBuyer() {
       // @ts-ignore
