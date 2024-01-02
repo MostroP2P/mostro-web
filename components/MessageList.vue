@@ -27,7 +27,6 @@ export default {
     ...mapState(useMessages, ['getMostroMessagesByOrderId']),
     ...mapState(useOrders, ['getOrderStatus']),
     orderMessages() {
-      // @ts-ignore
       const orderMsgs =  this.getMostroMessagesByOrderId(this.orderId)
         .filter((msg: MostroMessage) => msg.Order.action !== Action.CantDo)
       return orderMsgs

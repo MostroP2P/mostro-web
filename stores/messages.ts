@@ -151,7 +151,7 @@ export const useMessages = defineStore('messages', {
         if (!reduced) return []
         // Converting back to an array
         return Object.values(reduced)
-          .sort((a: MostroMessage, b: MostroMessage) => b.Order.created_at - a.Order.created_at)
+          .sort((a: MostroMessage, b: MostroMessage) => a.Order.created_at - b.Order.created_at)
       }
     },
     getPeerMessagesByNpub(state: MessagesState) : (npub: string) => PeerMessage[] {
