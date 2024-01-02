@@ -400,10 +400,12 @@ export class Mostro {
   }
   async fiatSent(order: Order) {
     const payload = {
-      version: 0,
-      pubkey: this.getLocalKeys().hex,
-      action: 'FiatSent',
-      order_id: order.id
+      Order: {
+        version: 1,
+        pubkey: this.getLocalKeys().hex,
+        action: 'FiatSent',
+        id: order.id
+      }
     }
     const event = await this.createEvent(payload)
     await this.pool.send(event)
