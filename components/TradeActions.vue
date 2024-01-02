@@ -31,6 +31,8 @@ import { useRoute } from 'vue-router'
 import { useMessages } from '@/stores/messages'
 import { useOrders } from '@/stores/orders'
 import { OrderStatus, OrderType, MostroMessage, Action } from '~/stores/types'
+import { Mostro } from 'plugins/02-mostro'
+
 export default {
   emits: ['dispute'],
   methods: {
@@ -92,12 +94,12 @@ export default {
       return this.order.kind === OrderType.SELL
     },
     isLocalSeller() {
-      // @ts-ignore
-      return this?.$mostro?.getNpub() === this.order?.seller_pubkey
+      const userPubKey = (this.$mostro as Mostro).getUserPublicKey()
+      return userPubKey.hex === this.order?.master_seller_pubkey
     },
     isLocalBuyer() {
-      // @ts-ignore
-      return this?.$mostro?.getNpub() === this.order?.buyer_pubkey
+      const userPubKey = (this.$mostro as Mostro).getUserPublicKey()
+      return userPubKey.hex === this.order?.master_buyer_pubkey
     },
     showRelease() {
       // @ts-ignore

@@ -38,7 +38,7 @@ export enum PublicKeyType {
   NPUB = 'npub'
 }
 
-class Mostro {
+export class Mostro {
   _signer: BaseSigner | undefined
   pool: any
   mostro: string
@@ -456,6 +456,10 @@ class Mostro {
 
   getNpub() {
     return this.pubkeyCache.npub
+  }
+
+  getUserPublicKey() {
+    return this.pubkeyCache
   }
 
   getMostroPublicKey(type: PublicKeyType) {
