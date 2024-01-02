@@ -59,7 +59,10 @@ export const useMessages = defineStore('messages', {
           const order: Order = orderMessage.content.Order as Order
           orderStore.addUserOrder({ order, event })
         }
-        if (orderMessage?.action === Action.BuyerTookOrder) {
+        if (
+          orderMessage?.action === Action.BuyerTookOrder ||
+          orderMessage?.action === Action.HoldInvoicePaymentAccepted
+        ) {
           const order: Order = orderMessage.content.Order as Order
           orderStore.updateOrder({ order, event })
         }
