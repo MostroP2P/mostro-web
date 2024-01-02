@@ -11,7 +11,7 @@
       </v-card-title>
       <v-card-text>
         I confirm that I've sent {{ fiatAmount }} {{ fiatCode?.toUpperCase() }} to
-        <npub :npub="sellerPubkey"/>
+        <npub :publicKey="sellerPubkey"/>
         .
       </v-card-text>
       <v-card-actions>
@@ -67,16 +67,13 @@ export default {
       return this.getOrderById(this.$route.params.id)
     },
     fiatAmount() {
-      // @ts-ignore
       return this.order?.fiat_amount
     },
     fiatCode() {
-      // @ts-ignore
       return this.order?.fiat_code
     },
     sellerPubkey() {
-      // @ts-ignore
-      return this.order?.seller_pubkey
+      return this.order?.master_seller_pubkey
     },
   }
 }
