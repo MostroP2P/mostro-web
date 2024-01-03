@@ -390,10 +390,13 @@ export class Mostro {
   }
   async release(order: Order) {
     const payload = {
-      version: 0,
-      pubkey: this.getLocalKeys().hex,
-      action: 'Release',
-      order_id: order.id
+      Order: {
+        version: 1,
+        pubkey: this.getLocalKeys().hex,
+        action: 'Release',
+        id: order.id,
+        content: null,
+      }
     }
     const event = await this.createEvent(payload)
     await this.pool.send(event)
@@ -412,22 +415,26 @@ export class Mostro {
   }
   async dispute(order: Order) {
     const payload = {
-      version: 0,
-      pubkey: this.getLocalKeys().hex,
-      action: 'Dispute',
-      order_id: order.id,
-      content: null
+      Order: {
+        version: 1,
+        pubkey: this.getLocalKeys().hex,
+        action: 'Dispute',
+        order_id: order.id,
+        content: null,
+      }
     }
     const event = await this.createEvent(payload)
     await this.pool.send(event)
   }
   async cancel(order: Order) {
     const payload = {
-      version: 0,
-      pubkey: this.getLocalKeys().hex,
-      action: 'Cancel',
-      order_id: order.id,
-      content: null
+      Order: {
+        version: 1,
+        pubkey: this.getLocalKeys().hex,
+        action: 'Cancel',
+        order_id: order.id,
+        content: null,
+      }
     }
     const event = await this.createEvent(payload)
     await this.pool.send(event)
