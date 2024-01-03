@@ -12,10 +12,10 @@
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
-        <v-btn text color="warning" @click="() => showDialog = false">
+        <v-btn variant="text" color="warning" @click="() => showDialog = false">
           Cancel
         </v-btn>
-        <v-btn text color="info" @click="onConfirm">
+        <v-btn variant="text" color="info" @click="onConfirm">
           Confirm
         </v-btn>
       </v-card-actions>

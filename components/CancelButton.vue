@@ -1,7 +1,7 @@
 <template>
   <v-dialog v-model="showDialog" max-width="500">
     <template v-slot:activator="{ props }">
-      <v-btn v-bind="props" text color="warning" prepend-icon="mdi-alert-outline" class="mx-2" min-width="160">
+      <v-btn v-bind="props" variant="text" color="warning" prepend-icon="mdi-alert-outline" class="mx-2" min-width="160">
         Cancel
       </v-btn>
     </template>
@@ -11,10 +11,10 @@
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
-        <v-btn text color="warning" @click="() => showDialog = false">
+        <v-btn variant="text" color="warning" @click="() => showDialog = false">
           Cancel
         </v-btn>
-        <v-btn text color="info" @click="onConfirm">
+        <v-btn variant="text" color="info" @click="onConfirm">
           Confirm
         </v-btn>
       </v-card-actions>

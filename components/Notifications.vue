@@ -35,7 +35,7 @@
               <v-divider :key="`div-${notification.eventId}`"/>
           </v-list-item>
           <v-list-item :key="1000">
-            <v-btn text block @click.prevent="clearNotifications">
+            <v-btn variant="text" block @click.prevent="clearNotifications">
               <v-icon>mdi-notification-clear-all</v-icon>
             </v-btn>
           </v-list-item>
