@@ -208,7 +208,7 @@ export class Mostro {
     if (tags.get('z') === 'order') {
       // Order
       const order = this.extractOrderFromEvent(tags, ev)
-      console.info('< [🧌 -> 📢]', order, ', ev: ', ev)
+      console.info('< [🧌 -> 📢]', JSON.stringify(order), ', ev: ', ev)
       if (this.orderMap.has(order.id)) {
         // Updates existing order
         this.orderStore.updateOrder({ order: order, event: ev as MostroEvent })

@@ -132,6 +132,7 @@ export class Order {
   master_seller_pubkey?: string
   master_buyer_pubkey?: string
   is_mine?: boolean = false
+  updated_at?: number
 
   constructor(
     id: string,

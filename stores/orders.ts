@@ -45,8 +45,17 @@ export const useOrders = defineStore('orders', {
         if (!existingOrder.is_mine) {
           existingOrder.is_mine = order.is_mine
         }
-        // The 'status' is always updated
-        existingOrder.status = order.status
+        // The 'status' is updated only if the message is more recent
+        // than the 'last_updated' field of the order.
+        if (
+          order.updated_at &&
+          existingOrder.updated_at &&
+          order.updated_at < existingOrder.updated_at
+        ) {
+          existingOrder.status = order.status
+        }
+        // Updating or adding the 'updated_at' field
+        existingOrder.updated_at = order.updated_at || Date.now()
         // Updating the 'orders' object
         this.orders[order.id] = { ...existingOrder }
       } else {
