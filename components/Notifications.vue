@@ -32,7 +32,7 @@
               <v-list-item-subtitle class="text-caption text--disabled" style="max-width: 25em">
                 Order: {{ notification.orderId }}
               </v-list-item-subtitle>
-              <v-divider :key="`div-${notification.eventId}`"/>
+              <v-divider :key="`div-${notification.orderId}`"/>
           </v-list-item>
           <v-list-item :key="1000">
             <v-btn variant="text" block @click.prevent="clearNotifications">
