@@ -50,7 +50,7 @@ type FiatData = {
   decimal_digits: number,
   rounding: number,
   code: string,
-  emoji: string
+  emoji: string,
   name_plural: string,
   price: boolean
 }
@@ -61,8 +61,11 @@ export default defineComponent({
     const ordersStore = useOrders()
     const getPendingOrders = computed(() => ordersStore.getPendingOrders)
 
+    // Filter out fiat currencies without a price field
+    const fiatWithPrice = Object.fromEntries(Object.entries(fiat).filter(([_key, value]) => 'price' in value))
+
     return {
-      fiatMap: fiat as { [key: string]: Partial<FiatData> },
+      fiatMap: fiatWithPrice as { [key: string]: Partial<FiatData> },
       headerHeight: 64,
       authStore,
       getPendingOrders
