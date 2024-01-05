@@ -104,7 +104,7 @@ export default {
       return this.isLocalSeller && this.currentOrderStatus === OrderStatus.FIAT_SENT
     },
     showCancel() {
-      return this.currentOrderStatus === OrderStatus.WAITING_BUYER_INVOICE
+      return this.currentOrderStatus === OrderStatus.WAITING_BUYER_INVOICE && this.isLocalBuyer
     },
     showDispute() {
       if (this.isLocalBuyer) {
