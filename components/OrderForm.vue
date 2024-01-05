@@ -7,6 +7,7 @@
       hint="Enter fiat code"
       outlined
       required
+      auto-select-first
     >
       <template v-slot:item="{ props, item }">
         <v-list-item
@@ -92,7 +93,8 @@ import { defineComponent } from 'vue'
 import type { PropType } from 'vue'
 import * as bolt11 from 'light-bolt11-decoder'
 import invoiceValidator from '~/mixins/invoice-validator'
-import { OrderStatus, OrderPricingMode, OrderType, NewOrder } from '@/stores/types'
+import { OrderStatus, OrderPricingMode, OrderType } from '@/stores/types'
+import type { NewOrder } from '@/stores/types'
 import fiat from '~/assets/fiat.json'
 
 interface FiatCurrency {
@@ -113,8 +115,6 @@ interface Fiat {
 
 export default defineComponent({
   data() {
-    // Filter out fiat currencies without a price field
-    const fiatWithPrice = Object.fromEntries(Object.entries(fiat).filter(([_key, value]) => 'price' in value))
     const fmap = fiat as unknown as Fiat
     return {
       valid: false,
@@ -124,7 +124,7 @@ export default defineComponent({
       paymentMethod: '',
       isMarketPricing: true,
       buyerInvoice: '',
-      fiatCurrencies: [...Object.keys(fiatWithPrice).map(k => ({ title: `${k} ${fmap[k].emoji}`, fullName: `${fmap[k].name}`, value: k }))],
+      fiatCurrencies: [...Object.keys(fiat).map(k => ({ title: `${k} ${fmap[k].emoji}`, fullName: `${fmap[k].name}`, value: k }))],
       fiatAmountRules: [
         (v: string) => !!v || 'Fiat amount is required',
         (v: string) => /\d+(?:-\d+)?$/.test(v) || 'Invalid value or range'
