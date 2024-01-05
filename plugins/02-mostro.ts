@@ -412,7 +412,7 @@ export class Mostro {
         version: 1,
         pubkey: this.getLocalKeys().hex,
         action: 'Dispute',
-        order_id: order.id,
+        id: order.id,
         content: null,
       }
     }
@@ -425,7 +425,7 @@ export class Mostro {
         version: 1,
         pubkey: this.getLocalKeys().hex,
         action: 'Cancel',
-        order_id: order.id,
+        id: order.id,
         content: null,
       }
     }
