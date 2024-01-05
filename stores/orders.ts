@@ -31,7 +31,7 @@ export const useOrders = defineStore('orders', {
     removeOrder(order: Order) {
       delete this.orders[order.id]
     },
-    updateOrder({ order, event }: {order: Order, event: MostroEvent }) {
+    updateOrder({ order, event } : {order: Order, event: MostroEvent }, updateStatus: boolean = false) {
       const existingOrder = this.orders[order.id]      
       if (existingOrder) {
         // We just update buyer & seller pubkeys if they're not set yet
@@ -45,17 +45,12 @@ export const useOrders = defineStore('orders', {
         if (!existingOrder.is_mine) {
           existingOrder.is_mine = order.is_mine
         }
-        // The 'status' is updated only if the message is more recent
-        // than the 'last_updated' field of the order.
-        if (
-          order.updated_at &&
-          existingOrder.updated_at &&
-          order.updated_at < existingOrder.updated_at
-        ) {
+        // The 'status' is updated only if the `updateStatus` flag is set to `true`
+        // This is because we want to update when receving a replaceable event, but
+        // not necessarily when receiving a DM
+        if (updateStatus) {
           existingOrder.status = order.status
         }
-        // Updating or adding the 'updated_at' field
-        existingOrder.updated_at = order.updated_at || Date.now()
         // Updating the 'orders' object
         this.orders[order.id] = { ...existingOrder }
       } else {

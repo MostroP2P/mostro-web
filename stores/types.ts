@@ -47,6 +47,15 @@ export type MostroMessage = {
     },
     created_at: number
   },
+  CantDo: {
+    version: number,
+    id: string,
+    pubkey: string | null,
+    action: Action.CantDo,
+    content: {
+      TextMessage: string,
+    }
+  }
   created_at: number
 }
 

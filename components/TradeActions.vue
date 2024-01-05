@@ -56,15 +56,13 @@ export default {
     ...mapState(useOrders, ['getOrderStatus', 'getOrderById']),
     ...mapState(useMessages, ['getMostroMessagesByOrderId']),
     payInvoiceMessage() {
-      const orderId = this.$route.params.id
-      // @ts-ignore
+      const orderId = this.$route.params.id as string
       const messages = this.getMostroMessagesByOrderId(orderId)
       return messages
         .find((msg: MostroMessage) => msg.Order.action === Action.WaitingSellerToPay || msg.Order.action === Action.PayInvoice)
     },
     giveInvoiceMessage() {
-      const orderId = this.$route.params.id
-      // @ts-ignore
+      const orderId = this.$route.params.id as string
       const messages = this.getMostroMessagesByOrderId(orderId)
       return messages.find((msg: MostroMessage) => msg.Order.action === Action.AddInvoice || msg.Order.action === Action.TakeSell)
     },

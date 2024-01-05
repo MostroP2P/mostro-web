@@ -71,7 +71,7 @@
       <v-btn
         class="mx-3"
         color="warning"
-        text
+        variant="text"
         @click="onClose"
       >
         Cancel
@@ -79,7 +79,7 @@
       <v-btn
         :disabled="!valid"
         color="success"
-        text
+        variant="text"
         @click="onSubmit"
       >
         Submit

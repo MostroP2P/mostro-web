@@ -204,7 +204,7 @@ export class Mostro {
       console.info('< [🧌 -> 📢]', JSON.stringify(order), ', ev: ', ev)
       if (this.orderMap.has(order.id)) {
         // Updates existing order
-        this.orderStore.updateOrder({ order: order, event: ev as MostroEvent })
+        this.orderStore.updateOrder({ order: order, event: ev as MostroEvent }, true)
       } else {
         // Adds new order
         this.orderStore.addOrder({ order: order, event: ev as MostroEvent })

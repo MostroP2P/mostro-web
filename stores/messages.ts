@@ -32,41 +32,22 @@ export const useMessages = defineStore('messages', {
       if (message.Order) {
         const orderMessage = message.Order
         const orderStore = useOrders()
-        if (orderMessage?.content?.SmallOrder) {
-          // If we have a SmallOrder as payload we might be receiving the buyer's identity
-          // so here we expand our order data with it.
-          const { content } = orderMessage
-          if (content.SmallOrder) {
-            const { seller_pubkey, buyer_pubkey } = content.SmallOrder
-            const order = await orderStore.getOrderById(orderMessage.id) as Order
-            if (seller_pubkey && buyer_pubkey) {
-              order.seller_pubkey = seller_pubkey
-              order.buyer_pubkey = buyer_pubkey
-              if (order) {
-                orderStore.updateOrder({ order, event })
-              } else {
-                orderStore.scheduleOrderUpdate({
-                  orderId: orderMessage.id,
-                  seller_pubkey,
-                  buyer_pubkey,
-                  event
-                })
-              }
-            }
-          }
-        }
         if (orderMessage?.action === Action.NewOrder) {
           const order: Order = orderMessage.content.Order as Order
           orderStore.addUserOrder({ order, event })
-        }
-        if (
+        } else if (
           orderMessage?.action === Action.BuyerTookOrder ||
-          orderMessage?.action === Action.HoldInvoicePaymentAccepted
+          orderMessage?.action === Action.HoldInvoicePaymentAccepted ||
+          orderMessage?.action === Action.HoldInvoicePaymentSettled
         ) {
           const order: Order = orderMessage.content.Order as Order
           orderStore.updateOrder({ order, event })
         }
-        this.messages.mostro.splice(0, 0, message)
+        this.messages.mostro.push(message)
+      } else if (message.CantDo) {
+        console.warn(`>>> [${message.CantDo.id}] CantDo, id: ${message.CantDo.id} message: ${message.CantDo.content.TextMessage}`)
+      } else {
+        console.warn('>>> addMostroMessage: message has unknown property property. ev id: ', event.id)
       }
     },
     addPeerMessage(peerMessage: PeerMessage) {
@@ -154,7 +135,6 @@ export const useMessages = defineStore('messages', {
         if (!reduced) return []
         // Converting back to an array
         return Object.values(reduced)
-          .sort((a: MostroMessage, b: MostroMessage) => a.Order.created_at - b.Order.created_at)
       }
     },
     getPeerMessagesByNpub(state: MessagesState) : (npub: string) => PeerMessage[] {
