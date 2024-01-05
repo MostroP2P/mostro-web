@@ -8,11 +8,6 @@ import { Order, OrderStatus, OrderType, SmallOrder } from '../stores/types'
 import { BaseSigner, ExtensionSigner, LocalSigner } from './01-signer'
 
 /**
- * Maximum number of events to be returned in the initial query
- */
-const EVENT_LIMIT = 100
-
-/**
  * Maximum number of seconds to be returned in the initial query
  */
 const EVENT_INTEREST_WINDOW = 60 * 60 * 24 * 7 // 7 days
@@ -108,7 +103,6 @@ export class Mostro {
     console.log('📣 subscribing to orders')
     const mostroPubKey = nip19.decode(this.mostro).data
     const filters = {
-      limit: EVENT_LIMIT,
       kinds: [NOSTR_REPLACEABLE_EVENT_KIND],
       since: Math.floor(Date.now() / 1e3) - EVENT_INTEREST_WINDOW,
       authors: [mostroPubKey]
@@ -119,7 +113,6 @@ export class Mostro {
   subscribeDMs() {
     console.log('📭 subscribing to DMs')
     const filters = {
-      limit: EVENT_LIMIT,
       kinds: [NOSTR_ENCRYPTED_DM_KIND],
       '#p': [this.pubkeyCache.hex],
       since: Math.floor(Date.now() / 1e3) - EVENT_INTEREST_WINDOW,
