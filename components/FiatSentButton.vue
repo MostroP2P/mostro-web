@@ -32,7 +32,7 @@ import { ref, computed } from 'vue'
 import { useOrders } from '~/stores/orders'
 import { useRoute, useRouter } from 'vue-router'
 import NPub from '~/components/NPub.vue'
-import { Mostro } from 'plugins/02-mostro'
+import { Mostro } from '~/plugins/02-mostro'
 
 export default {
   components: {

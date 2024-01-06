@@ -76,7 +76,8 @@ import * as CryptoJS from 'crypto-js'
 import secretValidator from '~/mixins/secret-validator'
 import crypto from '~/mixins/crypto'
 import nip07 from '~/mixins/nip-07'
-import { AuthMethod, LocalLoginPayload, useAuth } from '@/stores/auth'
+import { AuthMethod, useAuth } from '@/stores/auth'
+import type { LocalLoginPayload } from '@/stores/auth'
 import { AUTH_LOCAL_STORAGE_DECRYPTED_KEY, AUTH_LOCAL_STORAGE_ENCRYPTED_KEY } from '@/stores/types'
 
 // Minimum password length
