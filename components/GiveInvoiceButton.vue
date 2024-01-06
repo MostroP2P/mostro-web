@@ -39,7 +39,7 @@
 <script lang="ts">
 import type { PropType } from 'vue'
 import * as bolt11 from 'light-bolt11-decoder'
-import { MostroMessage } from '~/stores/types'
+import type { MostroMessage } from '~/stores/types'
 
 type InvoiceSection = {
   letters: string

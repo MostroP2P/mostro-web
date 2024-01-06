@@ -34,7 +34,7 @@ import type { PropType } from 'vue'
 import { mapState } from 'pinia'
 import * as timeago from 'timeago.js'
 import { useOrders } from '~/stores/orders'
-import { MostroMessage } from '~/stores/types'
+import type { MostroMessage } from '~/stores/types'
 
 export default {
   data() {

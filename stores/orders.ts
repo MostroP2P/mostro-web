@@ -1,5 +1,6 @@
-import { MostroEvent } from 'plugins/02-mostro'
-import { Order, OrderMapType, OrderOwnershipMapType, ScheduledOrderUpdatePayload } from './types'
+import type { MostroEvent } from '~/plugins/02-mostro'
+import type { OrderMapType, OrderOwnershipMapType, ScheduledOrderUpdatePayload } from './types'
+import { Order } from './types'
 
 export const useOrders = defineStore('orders', {
   state: (): { orders: OrderMapType, userOrders: OrderOwnershipMapType }  => ({

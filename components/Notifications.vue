@@ -48,7 +48,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useNotifications } from '@/stores/notifications'
-import { Notification } from '~/stores/types'
+import type { Notification } from '~/stores/types'
 import { useAuth } from '~/stores/auth'
 
 const notificationStore = useNotifications()

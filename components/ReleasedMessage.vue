@@ -18,7 +18,7 @@ import type { PropType } from 'vue'
 import { mapState } from 'pinia'
 import { useRoute } from 'vue-router'
 import * as timeago from 'timeago.js'
-import { MostroMessage, Order } from '~/stores/types'
+import type { MostroMessage, Order } from '~/stores/types'
 import { useOrders } from '@/stores/orders'
 import NPub from '~/components/NPub.vue'
 export default {

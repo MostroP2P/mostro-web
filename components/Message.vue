@@ -62,8 +62,8 @@
 import { mapState } from 'pinia'
 import { useOrders } from '@/stores/orders'
 import type { PropType } from 'vue'
-import { MostroMessage, Action } from '~/stores/types'
-
+import type { MostroMessage } from '~/stores/types'
+import { Action } from '~/stores/types'
 export default {
   data() {
     return {

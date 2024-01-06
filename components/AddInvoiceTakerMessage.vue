@@ -21,7 +21,7 @@
 </template>
 <script lang="ts">
 import type { PropType } from 'vue'
-import { MostroMessage } from '~/stores/types'
+import type { MostroMessage } from '~/stores/types'
 import * as timeago from 'timeago.js'
 import textMessage from '~/mixins/text-message'
 

@@ -61,7 +61,7 @@ import { mapState } from 'pinia'
 import { useAuth } from '@/stores/auth'
 import { useMessages } from '~/stores/messages'
 import * as _timeago from 'timeago.js'
-import { PeerMessage } from '~/stores/types'
+import type { PeerMessage } from '~/stores/types'
 
 export default defineComponent({
   setup() {

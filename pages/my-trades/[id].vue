@@ -40,7 +40,6 @@
   </NuxtLayout>
 </template>
 <script setup>
-import { mapState } from 'pinia'
 import { useRoute } from 'vue-router'
 import { useRouter } from 'vue-router'
 import { useOrders } from '~/stores/orders'

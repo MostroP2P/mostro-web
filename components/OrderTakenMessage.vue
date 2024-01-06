@@ -12,11 +12,12 @@
   </div>
 </template>
 <script lang="ts">
-import { PropType } from 'vue'
+import type { PropType } from 'vue'
 import { mapState } from 'pinia'
 import * as timeago from 'timeago.js'
 import { useOrders } from '~/stores/orders'
-import { MostroMessage, OrderType } from '~/stores/types'
+import type { MostroMessage } from '~/stores/types'
+import { OrderType } from '~/stores/types'
 export default {
   data() {
     return {

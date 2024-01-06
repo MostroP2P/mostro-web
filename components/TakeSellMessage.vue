@@ -12,7 +12,7 @@
 <script lang="ts">
 import { defineComponent } from 'vue'
 import type { PropType } from 'vue'
-import { MostroMessage } from '~/stores/types'
+import type { MostroMessage } from '~/stores/types'
 import * as timeago from 'timeago.js'
 export default defineComponent({
   props: {

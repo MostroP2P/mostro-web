@@ -5,8 +5,9 @@
   "description": "Mostro web client",
   "scripts": {
     "prebuild": "echo \"export const GIT_COMMIT = '$(git rev-parse HEAD)'\" > ./constants/version.js",
+    "type-check": "tsc --noEmit",
     "build": "nuxt build",
-    "dev": "nuxt dev",
+    "dev": "npm run type-check && nuxt dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare"

@@ -5,10 +5,9 @@ import {
   OrderStatus,
   Order,
   OrderType,
-  Notification,
   NOTIFICATIONS_KEY,
-  OrderMapType
 } from './types'
+import type { Notification, OrderMapType } from './types'
 
 export const useNotifications = defineStore('notifications', () => {
   const orders = useOrders()

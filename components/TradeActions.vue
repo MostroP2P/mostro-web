@@ -30,8 +30,9 @@ import { mapState } from 'pinia'
 import { useRoute } from 'vue-router'
 import { useMessages } from '@/stores/messages'
 import { useOrders } from '@/stores/orders'
-import { OrderStatus, OrderType, MostroMessage, Action } from '~/stores/types'
-import { Mostro } from 'plugins/02-mostro'
+import { OrderStatus, OrderType, Action } from '~/stores/types'
+import type { MostroMessage } from '~/stores/types'
+import { Mostro } from '~/plugins/02-mostro'
 
 export default {
   emits: ['dispute'],
