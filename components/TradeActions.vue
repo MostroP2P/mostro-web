@@ -31,11 +31,17 @@ import { useRoute } from 'vue-router'
 import { useMessages } from '@/stores/messages'
 import { useOrders } from '@/stores/orders'
 import { OrderStatus, OrderType, Action } from '~/stores/types'
-import type { MostroMessage } from '~/stores/types'
+import { type MostroMessage, Order } from '~/stores/types'
 import { Mostro } from '~/plugins/02-mostro'
 
 export default {
   emits: ['dispute'],
+  data() {
+    const route = useRoute()
+    return {
+      orderId: route.params.id as string
+    }
+  },
   methods: {
     handleDispute() {
       // Opens a dispute
@@ -67,29 +73,22 @@ export default {
       const messages = this.getMostroMessagesByOrderId(orderId)
       return messages.find((msg: MostroMessage) => msg.Order.action === Action.AddInvoice || msg.Order.action === Action.TakeSell)
     },
-    currentOrderStatus() {
-      const route = useRoute()
-      // @ts-ignore
-      return this.getOrderStatus(route.params.id)
+    currentOrderStatus(): OrderStatus {
+      return this.getOrderStatus(this.orderId)
     },
-    order() {
-      // @ts-ignore
-      return this.getOrderById(this.$route.params.id)
+    order(): Order {
+      return this.getOrderById(this.orderId)
     },
     buyerPubkey() {
-      // @ts-ignore
       return this.order.buyer_pubkey
     },
     sellerPubkey() {
-      // @ts-ignore
       return this.order.seller_pubkey
     },
     isBuy() {
-      // @ts-ignore
       return this.order.kind === OrderType.BUY
     },
     isSell() {
-      // @ts-ignore
       return this.order.kind === OrderType.SELL
     },
     isLocalSeller() {
@@ -101,7 +100,6 @@ export default {
       return userPubKey.hex === this.order?.master_buyer_pubkey
     },
     showRelease() {
-      // @ts-ignore
       return this.isLocalSeller && this.currentOrderStatus === OrderStatus.FIAT_SENT
     },
     showCancel() {
@@ -110,22 +108,17 @@ export default {
     showDispute() {
       if (this.isLocalBuyer) {
         // Rule for local buyer
-        // @ts-ignore
         return this.currentOrderStatus === OrderStatus.FIAT_SENT
       } else {
         // Rule for local seller
-        // @ts-ignore
         return [OrderStatus.ACTIVE, OrderStatus.FIAT_SENT].includes(this.currentOrderStatus)
       }
     },
     showFiatSent() {
-      // @ts-ignore
       return this.currentOrderStatus === OrderStatus.ACTIVE && this.isLocalBuyer
     },
     showPayInvoice() {
-      const orderId = this.$route.params.id
-      // @ts-ignore
-      const messages: MostroMessage[] = this.getMostroMessagesByOrderId(orderId)
+      const messages: MostroMessage[] = this.getMostroMessagesByOrderId(this.orderId)
       if (!messages || messages.length === 0) return false
       return messages[messages.length - 1].Order.action === Action.PayInvoice &&
         this.currentOrderStatus !== OrderStatus.CANCELED
@@ -133,9 +126,7 @@ export default {
     isCancelled() {
       return this.currentOrderStatus === OrderStatus.CANCELED
     },
-    showGiveInvoice() {
-      // @ts-ignore
-      return this.currentOrderStatus === OrderStatus.WAITING_BUYER_INVOICE && this.giveInvoiceMessage
+    showGiveInvoice() {      return this.currentOrderStatus === OrderStatus.WAITING_BUYER_INVOICE && this.giveInvoiceMessage
     }
   }
 }
