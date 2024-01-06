@@ -61,11 +61,8 @@ export default defineComponent({
     const ordersStore = useOrders()
     const getPendingOrders = computed(() => ordersStore.getPendingOrders)
 
-    // Filter out fiat currencies without a price field
-    const fiatWithPrice = Object.fromEntries(Object.entries(fiat).filter(([_key, value]) => 'price' in value))
-
     return {
-      fiatMap: fiatWithPrice as { [key: string]: Partial<FiatData> },
+      fiatMap: fiat as { [key: string]: Partial<FiatData> },
       headerHeight: 64,
       authStore,
       getPendingOrders
@@ -73,7 +70,7 @@ export default defineComponent({
   },
   methods: {
     getFlag(fiatCode: string) {
-      return this.fiatMap[fiatCode?.toUpperCase()].emoji ?? ''
+      return this.fiatMap[fiatCode?.toUpperCase()]?.emoji ?? ''
     },
     showTakeSell(order: Order) : boolean {
       const isAuthenticated: boolean = this.authStore.isAuthenticated

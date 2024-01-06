@@ -1,7 +1,6 @@
 import { reactive } from 'vue'
-import { Event } from 'nostr-tools'
-import { AuthState } from './auth'
-import { MostroEvent } from 'plugins/02-mostro'
+import type { AuthState } from './auth'
+import type { MostroEvent } from '~/plugins/02-mostro'
 
 export type ThreadSummary = {
   orderId: string,
