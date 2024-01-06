@@ -1,10 +1,11 @@
 import { watch } from 'vue'
 import { RelayPool } from 'nostr'
-import { nip19, getEventHash, verifySignature, UnsignedEvent, Kind, Relay, Event } from 'nostr-tools'
+import { nip19, getEventHash, verifySignature, Kind } from 'nostr-tools'
+import type { UnsignedEvent, Relay, Event } from 'nostr-tools'
 import { useAuth } from '@/stores/auth'
 import { useOrders } from '@/stores/orders'
 import { useMessages } from '@/stores/messages'
-import { Order, OrderStatus, OrderType, SmallOrder } from '../stores/types'
+import { Order, OrderStatus, OrderType } from '../stores/types'
 import { BaseSigner, ExtensionSigner, LocalSigner } from './01-signer'
 
 /**

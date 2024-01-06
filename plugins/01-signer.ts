@@ -1,4 +1,5 @@
-import { nip04, nip19, getPublicKey, getSignature, UnsignedEvent } from 'nostr-tools'
+import { nip04, nip19, getPublicKey, getSignature } from 'nostr-tools'
+import type { UnsignedEvent } from 'nostr-tools'
 import { useAuth } from '@/stores/auth'
 
 export interface Relays {
@@ -29,59 +30,70 @@ export abstract class BaseSigner {
   }
 }
 
-let sharedLock = Promise.resolve()
-
-function Locked(_target: any, _propertyKey: string, descriptor: PropertyDescriptor) {
-  const originalMethod = descriptor.value
-
-  descriptor.value = function (...args: any[]) {
-    sharedLock = sharedLock
-      .then(() => {
-        return originalMethod.apply(this, args)
-      })
-      .catch(() => { })
-
-    return sharedLock
-  }
-
-  return descriptor
-}
-
 /**
  * Browser extension implementing NIP-07
  */
 export class ExtensionSigner extends BaseSigner {
   protected _type = SignerType.NIP07
+  protected static sharedLock: Promise<void> = Promise.resolve();
 
-  // @ts-ignore
-  @Locked
   getPublicKey() {
-    // @ts-ignore
-    return window.nostr.getPublicKey()
+    return ExtensionSigner.sharedLock
+      .then(() => {
+        // @ts-ignore
+        return window.nostr.getPublicKey();
+      })
+      .catch(() => {
+        // Handle or throw an error if necessary
+      });
   }
-  // @ts-ignore
-  @Locked
+
   signEvent(e: any) {
-    // @ts-ignore
-    return window.nostr.signEvent(e)
+    return ExtensionSigner.sharedLock
+      .then(() => {
+        // @ts-ignore
+        return window.nostr.signEvent(e);
+      })
+      .catch(() => {
+        // Handle or throw an error if necessary
+      });
   }
-  // @ts-ignore
-  @Locked
+
   getRelays?(): Promise<Relays> {
-    // @ts-ignore
-    return window.nostr.getRelays() as Promise<Relays>
+    return ExtensionSigner.sharedLock
+      .then(() => {
+        // @ts-ignore
+        return window.nostr.getRelays() as Promise<Relays>;
+      })
+      .then(relays => relays || {})
+      .catch(() => {
+        // Handle or throw an error if necessary
+        throw new Error('Unable to get relays');
+      });
   }
-  // @ts-ignore
-  @Locked
+
   encrypt?(pubkey: string, plaintext: string) {
-    // @ts-ignore
-    return window.nostr.nip04.encrypt(pubkey, plaintext) as Promise<string>
+    return ExtensionSigner.sharedLock
+      .then(() => {
+        // @ts-ignore
+        return window.nostr.nip04.encrypt(pubkey, plaintext) as Promise<string>;
+      })
+      .catch((error) => {
+        // Handle or throw an error if necessary
+        throw new Error('Encryption failed: ' + error.message);
+      });
   }
-  // @ts-ignore
-  @Locked
+
   decrypt?(pubkey: string, ciphertext: string) {
-    // @ts-ignore
-    return window.nostr.nip04.decrypt(pubkey, ciphertext) as Promise<string>
+    return ExtensionSigner.sharedLock
+      .then(() => {
+        // @ts-ignore
+        return window.nostr.nip04.decrypt(pubkey, ciphertext) as Promise<string>;
+      })
+      .catch((error) => {
+        // Handle or throw an error if necessary
+        throw new Error('Encryption failed: ' + error.message);
+      });
   }
 }
 
