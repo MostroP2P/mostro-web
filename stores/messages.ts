@@ -1,13 +1,15 @@
-import {
+import type {
   ThreadSummary,
   MostroMessage,
   PeerMessage,
   PeerThreadSummary,
+} from './types'
+import {
   Order,
   Action
 } from './types'
 import { useOrders } from './orders'
-import { MostroEvent } from 'plugins/02-mostro'
+import type { MostroEvent } from '~/plugins/02-mostro'
 
 export interface MessagesState {
   messages: {
@@ -40,12 +42,13 @@ export const useMessages = defineStore('messages', {
           orderMessage?.action === Action.HoldInvoicePaymentAccepted ||
           orderMessage?.action === Action.HoldInvoicePaymentSettled
         ) {
-          const order: Order = orderMessage.content.Order as Order
-          orderStore.updateOrder({ order, event })
+          const order: Order = orderMessage?.content?.Order as Order
+          if (order)
+            orderStore.updateOrder({ order, event })
         }
         this.messages.mostro.push(message)
       } else if (message.CantDo) {
-        console.warn(`>>> [${message.CantDo.id}] CantDo, id: ${message.CantDo.id} message: ${message.CantDo.content.TextMessage}`)
+        console.warn(`>>> [${message.CantDo.id}] CantDo, id: ${message.CantDo.id} message: ${message.CantDo?.content?.TextMessage}`)
       } else {
         console.warn('>>> addMostroMessage: message has unknown property property. ev id: ', event.id)
       }
