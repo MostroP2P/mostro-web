@@ -17,6 +17,8 @@ export const useOrders = defineStore('orders', {
         if (this.userOrders[order.id]) {
           order.is_mine = true
         }
+        // Adds the 'updated_at' field, setting it to the event's creation time
+        order.updated_at = event.created_at
         this.orders[order.id] = order
       }
     },
@@ -27,6 +29,8 @@ export const useOrders = defineStore('orders', {
       }
       // We mark it as ours and add it to the `userOrders` map
       this.orders[order.id].is_mine = true
+      // Adds the 'updated_at' field, setting it to the event's creation time
+      order.updated_at = event.created_at
       this.userOrders[order.id] = true
     },
     removeOrder(order: Order) {
@@ -52,8 +56,8 @@ export const useOrders = defineStore('orders', {
         if (updateStatus) {
           existingOrder.status = order.status
         }
-        // Updating the 'orders' object
-        this.orders[order.id] = { ...existingOrder }
+        // Adds or updates the 'update_at' field
+        existingOrder.updated_at = !existingOrder.updated_at ?  order.created_at : Math.max(existingOrder.updated_at, event.created_at)
       } else {
         console.warn(`Could not find order with id ${order.id} to update`)
       }
