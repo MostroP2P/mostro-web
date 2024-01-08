@@ -3,17 +3,20 @@
     <v-progress-linear
       :model-value="progressRemaining"
       color="light-green"
-      height="15"
+      height="25"
       striped
       rounded
     >
     </v-progress-linear>
-    <div class="text-center text-caption text-disabled">
+    <div
+      class="text-center text-caption"
+      :class="{ 'text-danger': isCloseToEnd }"
+    >
       {{ Math.floor(secondsRemaining / 60) }} minutes {{ Math.floor(secondsRemaining % 60) }} seconds remaining
     </div>
   </div>
-
 </template>
+
 <script setup lang="ts">
 import { useRoute } from 'vue-router'
 import { useOrders } from '~/stores/orders'
@@ -21,11 +24,13 @@ import { OrderStatus } from '~/stores/types'
 
 const route = useRoute()
 const orderStore = useOrders()
-const ORDER_WAIT_TIME_SEC = 60
+const ORDER_WAIT_TIME_SEC = 900
 const ORDER_WAIT_TIME_MS = ORDER_WAIT_TIME_SEC * 1E3
+const CLOSE_TO_END_THRESHOLD = 5 // Expressed in percentage terms
 
 const secondsRemaining = ref(ORDER_WAIT_TIME_MS / 1000)
 const progressRemaining = computed(() => (secondsRemaining.value / ORDER_WAIT_TIME_SEC) * 100)
+const isCloseToEnd = computed(() => progressRemaining.value < CLOSE_TO_END_THRESHOLD)
 
 const updateCountdown = () => {
   const order = orderStore.getOrderById(route.params.id as string)
@@ -55,3 +60,11 @@ onUnmounted(() => {
 })
 
 </script>
+
+<style>
+.text-danger {
+  color: #EF9A9A;
+  font-weight: 600;
+}
+</style>
+
