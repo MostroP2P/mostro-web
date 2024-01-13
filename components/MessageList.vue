@@ -3,7 +3,7 @@
     <v-list lines="three">
       <div
         v-for="(message, index) in orderMessages"
-        :key="`${message.id}-${index}`"
+        :key="`${message.Order.id}-${index}`"
       >
         <message :message="message" :disabled="isCancelled"/>
         <v-divider v-if="index < orderMessages.length - 1"/>
@@ -13,7 +13,8 @@
 </template>
 <script lang="ts">
 import { mapState } from 'pinia'
-import { Action, MostroMessage, OrderStatus } from '~/stores/types'
+import { Action, OrderStatus } from '~/stores/types'
+import type { MostroMessage } from '~/stores/types'
 import { useMessages } from '@/stores/messages'
 import { useOrders } from '@/stores/orders'
 export default {
@@ -27,9 +28,9 @@ export default {
     ...mapState(useMessages, ['getMostroMessagesByOrderId']),
     ...mapState(useOrders, ['getOrderStatus']),
     orderMessages() {
-      // @ts-ignore
-      return this.getMostroMessagesByOrderId(this.orderId)
-        .filter((msg: MostroMessage) => msg.action !== Action.CantDo)
+      const orderMsgs =  this.getMostroMessagesByOrderId(this.orderId)
+        .filter((msg: MostroMessage) => msg.Order.action !== Action.CantDo)
+      return orderMsgs
     },
     isCancelled() {
       return this.getOrderStatus(this.orderId) === OrderStatus.CANCELED

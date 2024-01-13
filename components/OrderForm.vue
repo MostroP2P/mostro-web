@@ -1,19 +1,22 @@
 <template>
   <v-form v-model="valid" ref="form">
     <v-autocomplete
-      v-model="fiatCode"
+      v-model="selectedFiat"
+      ref="autocomplete"
       :items="fiatCurrencies"
+      :item-value="item => item"
       label="Fiat code"
-      hint="Enter fiat code"
       outlined
       required
+      auto-select-first
+      @keydown.delete="clearSelectedFiat"
     >
       <template v-slot:item="{ props, item }">
         <v-list-item
           three-line
           v-bind="props"
-          :title="item?.title"
-          :subtitle="item?.raw?.fullName"
+          :title="getTitle(item.raw)"
+          :subtitle="getFullName(item.raw)"
         >
         </v-list-item>
       </template>
@@ -30,9 +33,10 @@
     </v-text-field>
     <v-divider></v-divider>
     <v-switch class="ml-2 mb-3"
+      :disabled="!hasPriceFeed"
       v-model="isMarketPricing"
       inset
-      color="accent"
+      color="info"
       hint="The pricing mechanism of this order"
       :label="isMarketPricing ? 'Market' : 'Fixed'"
     >
@@ -71,7 +75,7 @@
       <v-btn
         class="mx-3"
         color="warning"
-        text
+        variant="text"
         @click="onClose"
       >
         Cancel
@@ -79,7 +83,7 @@
       <v-btn
         :disabled="!valid"
         color="success"
-        text
+        variant="text"
         @click="onSubmit"
       >
         Submit
@@ -92,23 +96,12 @@ import { defineComponent } from 'vue'
 import type { PropType } from 'vue'
 import * as bolt11 from 'light-bolt11-decoder'
 import invoiceValidator from '~/mixins/invoice-validator'
-import { OrderStatus, OrderPricingMode, OrderType, NewOrder } from '@/stores/types'
-import * as fiat from '~/assets/fiat.json'
-
-interface FiatCurrency {
-  symbol: string;
-  name: string;
-  symbol_native: string;
-  decimal_digits: number;
-  rounding: number;
-  code: string;
-  emoji: string;
-  name_plural: string;
-  price: boolean;
-}
+import { OrderStatus, OrderPricingMode, OrderType } from '@/stores/types'
+import type { FiatData, NewOrder } from '@/stores/types'
+import fiat from '~/assets/fiat.json'
 
 interface Fiat {
-  [key: string]: FiatCurrency;
+  [key: string]: FiatData;
 }
 
 export default defineComponent({
@@ -117,12 +110,17 @@ export default defineComponent({
     return {
       valid: false,
       fiatAmount: 0,
-      fiatCode: '',
+      selectedFiat: null as FiatData | null,
       amount: 0,
       paymentMethod: '',
       isMarketPricing: true,
       buyerInvoice: '',
-      fiatCurrencies: [...Object.keys(fiat).map(k => ({ title: `${k} ${fmap[k].emoji}`, fullName: `${fmap[k].name}`, value: k }))],
+      fiatCurrencies: ([...Object.values(fiat)] as FiatData[]).map((f: FiatData) => {
+        return {
+          ...f,
+          title: `${f.code} ${f.emoji}`
+        }
+      }),
       fiatAmountRules: [
         (v: string) => !!v || 'Fiat amount is required',
         (v: string) => /\d+(?:-\d+)?$/.test(v) || 'Invalid value or range'
@@ -166,7 +164,7 @@ export default defineComponent({
     const config = useRuntimeConfig()
     if (config.public.nodeEnv === 'development') {
       this.fiatAmount = 5
-      this.fiatCode = 'USD'
+      this.selectedFiat = this.fiatCurrencies.find((f: FiatData) => f.code === 'USD') || null
       this.paymentMethod = 'Cash'
     }
   },
@@ -176,6 +174,7 @@ export default defineComponent({
       this.$refs.form.validate()
     },
     async onSubmit() {
+      if (!this.selectedfiatCode) return
       this.onProcessingUpdate(true)
       const fiatAmount = typeof this.fiatAmount === 'number' ?
         this.fiatAmount : parseFloat(this.fiatAmount)
@@ -190,7 +189,7 @@ export default defineComponent({
         kind: this.orderType === OrderType.SELL ? OrderType.SELL : OrderType.BUY,
         status: OrderStatus.PENDING,
         amount: 0,
-        fiat_code: this.fiatCode,
+        fiat_code: this.selectedfiatCode,
         fiat_amount: fiatAmount,
         created_at: Math.ceil(Date.now() / 1E3),
         premium: 0,
@@ -212,9 +211,34 @@ export default defineComponent({
       } finally {
         this.onProcessingUpdate(false)
       }
+    },
+    getTitle(item: FiatData) {
+      return `${item.code} ${item.emoji}`
+    },
+    getFullName(item: FiatData) {
+      return item.name
+    },
+    clearSelectedFiat() {
+      this.selectedFiat = null
+      // Reset the text field directly if necessary
+      if (this.$refs.autocomplete) {
+        // @ts-ignore
+        const input = this.$refs.autocomplete.$el.querySelector('input')
+        nextTick(() => {
+          if (input) input.value = ''
+        })
+      }
     }
   },
   computed: {
+    selectedfiatCode() {
+      return this.selectedFiat?.code ? this.selectedFiat.code : null
+    },
+    hasPriceFeed() {
+      const hasPriceFeed = this.selectedFiat?.price ?? false
+      this.isMarketPricing = hasPriceFeed
+      return hasPriceFeed
+    },
     showInvoiceInput() {
       return !this.isMarketPricing && this.orderType === 'Buy'
     }

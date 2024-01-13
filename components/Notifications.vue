@@ -32,10 +32,10 @@
               <v-list-item-subtitle class="text-caption text--disabled" style="max-width: 25em">
                 Order: {{ notification.orderId }}
               </v-list-item-subtitle>
-              <v-divider :key="`div-${notification.eventId}`"/>
+              <v-divider :key="`div-${notification.orderId}`"/>
           </v-list-item>
           <v-list-item :key="1000">
-            <v-btn text block @click.prevent="clearNotifications">
+            <v-btn variant="text" block @click.prevent="clearNotifications">
               <v-icon>mdi-notification-clear-all</v-icon>
             </v-btn>
           </v-list-item>
@@ -48,7 +48,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useNotifications } from '@/stores/notifications'
-import { Notification } from '~/stores/types'
+import type { Notification } from '~/stores/types'
 import { useAuth } from '~/stores/auth'
 
 const notificationStore = useNotifications()
@@ -59,7 +59,7 @@ const authStore = useAuth()
 const notifications = computed(() => notificationStore.getActiveNotifications)
 const menuCloseDelay = computed(() => notifications.value.length * 200 + 1e3)
 const isMenuDisabled = computed(() => {
-  if (authStore.isLocked) {
+  if (!authStore.isAuthenticated) {
     return true
   }
   if (!notifications.value || notifications.value.length === 0) {

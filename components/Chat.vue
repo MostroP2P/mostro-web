@@ -46,7 +46,7 @@
           class="mb-5 mr-4"
           color="primary"
           @click="sendMessage"
-          :disabled="isLocked"
+          :disabled="!isAuthenticated"
           icon="mdi-send"
         >
         </v-btn>
@@ -61,7 +61,7 @@ import { mapState } from 'pinia'
 import { useAuth } from '@/stores/auth'
 import { useMessages } from '~/stores/messages'
 import * as _timeago from 'timeago.js'
-import { PeerMessage } from '~/stores/types'
+import type { PeerMessage } from '~/stores/types'
 
 export default defineComponent({
   setup() {
@@ -80,9 +80,9 @@ export default defineComponent({
     onMounted(scrollToBottom)
 
     const authStore = useAuth()
-    const isLocked = computed(() => authStore.isLocked)
+    const isAuthenticated = computed(() => authStore.isAuthenticated)
 
-    return { inputMessage, inputContainerHeight, timeago, scrollToBottom, scrollingContent, isLocked }
+    return { inputMessage, inputContainerHeight, timeago, scrollToBottom, scrollingContent, isAuthenticated }
   },
   props: {
     npub: {

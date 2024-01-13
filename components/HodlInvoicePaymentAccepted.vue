@@ -10,7 +10,7 @@
       </p>
       <br>
       <p>
-        Get in touch with the seller, user <npub :npub="sellerPubkey"/> to get the details on how to send the money, you must send {{ fiatCode }} {{ fiatAmount }} using {{ paymentMethod }}.
+        Get in touch with the seller, user <npub :publicKey="sellerPubkey"/> to get the details on how to send the money, you must send {{ fiatCode }} {{ fiatAmount }} using {{ paymentMethod }}. The seller will provide you with the details on how to send the money.
       </p>
       <br>
       <p>
@@ -22,7 +22,7 @@
 <script lang="ts">
 import type { PropType } from 'vue'
 import { mapState } from 'pinia'
-import { MostroMessage } from '~/stores/types'
+import type { MostroMessage } from '~/stores/types'
 import * as timeago from 'timeago.js'
 import { useOrders } from '~/stores/orders'
 import textMessage from '~/mixins/text-message'
@@ -50,30 +50,39 @@ export default {
   },
   computed: {
     ...mapState(useOrders, ['getOrderById']),
-    sellerPubkey() {
-      const smallOrder = this.message.content.SmallOrder
-      if (smallOrder) {
-        return smallOrder.seller_pubkey
+    sellerPubkey(): String {
+      const order = this.message.Order.content.Order
+      if (order) {
+        return order.master_seller_pubkey || '??'
       }
       return '?'
     },
     fiatCode() {
-      const orderId = this.message.order_id
-      const order = this.getOrderById(orderId)
-      return order.fiat_code
+      const orderId = this.message.Order.content.Order?.id
+      if (orderId) {
+        const order = this.getOrderById(orderId)
+        return order.fiat_code
+      }
+      return '?'
     },
     fiatAmount() {
-      const orderId = this.message.order_id
-      const order = this.getOrderById(orderId)
-      return order.fiat_amount
+      const orderId = this.message.Order.content.Order?.id
+      if (orderId) {
+        const order = this.getOrderById(orderId)
+        return order.fiat_amount
+      }
+      return '?'
     },
     paymentMethod() {
-      const orderId = this.message.order_id
-      const order = this.getOrderById(orderId)
-      return order.payment_method
+      const orderId = this.message.Order.content.Order?.id
+      if (orderId) {
+        const order = this.getOrderById(orderId)
+        return order.payment_method
+      }
+      return '?'
     },
     creationDate() {
-      return this.message.created_at * 1e3
+      return this.message.Order.created_at * 1e3
     }
   }
 }

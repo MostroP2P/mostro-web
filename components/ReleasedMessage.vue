@@ -7,7 +7,7 @@
       </v-list-item-title>
       <div class="wrap-text text-message">
         <p>
-          🕐 <npub v-if="sellerPubkey" :npub="sellerPubkey"/> already released the satoshis, expect your invoice to be paid any time, remember your wallet needs to be online to receive through lighntning network.
+          🕐 <npub v-if="sellerPubkey" :publicKey="sellerPubkey"/> already released the satoshis, expect your invoice to be paid any time, remember your wallet needs to be online to receive through lighntning network.
         </p>
       </div>
     </div>
@@ -18,7 +18,7 @@ import type { PropType } from 'vue'
 import { mapState } from 'pinia'
 import { useRoute } from 'vue-router'
 import * as timeago from 'timeago.js'
-import { MostroMessage, Order } from '~/stores/types'
+import type { MostroMessage, Order } from '~/stores/types'
 import { useOrders } from '@/stores/orders'
 import NPub from '~/components/NPub.vue'
 export default {
@@ -40,12 +40,10 @@ export default {
     ...mapState(useOrders, ['getOrderById']),
     order() : Order {
       const route = useRoute()
-      // @ts-ignore
-      return this.getOrderById(route.params.id)
+      return this.getOrderById(route.params.id as string)
     },
     sellerPubkey() {
-      // @ts-ignore
-      return this.order?.seller_pubkey
+      return this.order?.master_seller_pubkey
     },
     creationDate() {
       return this.message.created_at * 1e3

@@ -1,7 +1,7 @@
 <template>
   <v-dialog v-model="showDialog" max-width="500">
     <template v-slot:activator="{ props }">
-      <v-btn text color="success" v-bind="props" prepend-icon="mdi-qrcode-scan" class="mx-2" min-width="160">
+      <v-btn variant="text" color="success" v-bind="props" prepend-icon="mdi-qrcode-scan" class="mx-2" min-width="160">
         Show Invoice
       </v-btn>
     </template>
@@ -23,16 +23,16 @@
         </v-btn-toggle>
       </div>
       <v-card-text v-if="hasMessage && invoiceMode === 0" class="d-flex justify-center align-center mt-2">
-        <qrcode-vue :value="message.content.PaymentRequest[1]" :size="300" level="H"/>
+        <qrcode-vue :value="getInvoice()" :size="300" level="H"/>
       </v-card-text>
       <v-card-text v-if="hasMessage && invoiceMode === 1" class="text-caption mt-2">
-        {{ message?.content?.PaymentRequest[1] }}
+        {{ getInvoice() }}
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
         <v-btn
           color="accent"
-          text
+          variant="text"
           @click="showDialog = false"
         >
           Close
@@ -45,7 +45,7 @@
 <script lang="ts">
 import type { PropType } from 'vue'
 import QrcodeVue from 'qrcode.vue'
-import { MostroMessage } from '~/stores/types'
+import type { MostroMessage } from '~/stores/types'
 
 export default {
   components: {
@@ -63,11 +63,23 @@ export default {
       invoiceMode: 0
     }
   },
+  methods: {
+    getInvoice() {
+      if (
+        this.message.Order &&
+        this.message.Order.content &&
+        this.message.Order.content.PaymentRequest
+      ) {
+        return this.message.Order.content.PaymentRequest[1]
+      }
+      return ''
+    }
+  },
   computed: {
     hasMessage() : boolean {
       return this.message &&
-        this.message.content &&
-        this.message.content.PaymentRequest !== undefined
+        this.message.Order.content &&
+        this.message.Order.content.PaymentRequest !== undefined
     }
   }
 }

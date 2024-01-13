@@ -17,6 +17,9 @@
           text="This trade was completed"
         />
       </div>
+      <div>
+        <CountDown v-if="showCountdown"/>
+      </div>
       <v-tabs fixed-tabs v-model="tab" class="mb-2">
         <v-tab
           v-for="tab in tabs"
@@ -39,30 +42,34 @@
     </v-container>
   </NuxtLayout>
 </template>
-<script setup>
-import { mapState } from 'pinia'
+<script setup lang="ts">
 import { useRoute } from 'vue-router'
+import { useRouter } from 'vue-router'
 import { useOrders } from '~/stores/orders'
 import { OrderStatus } from '~/stores/types'
-import { ref, computed, onMounted } from 'vue'
+import { useAuth } from '~/stores/auth'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import type { WatchStopHandle } from 'vue'
 const route = useRoute()
+const router = useRouter()
 const orderStore = useOrders()
 const TAB_NORMAL = 'messages'
 const TAB_DISPUTE = 'dispute'
 const tabs = ref([TAB_NORMAL])
-const tab = ref(null)
+const tab = ref(null as null | number)
 
 definePageMeta({
   layout: false,
+  middleware: ['auth'],
 })
 
 const isCancelled = computed(() => {
-  const orderId = route.params.id
+  const orderId = route.params.id as string
   return orderStore.getOrderStatus(orderId) === OrderStatus.CANCELED
 })
 
 const isSuccess = computed(() => {
-  const orderId = route.params.id
+  const orderId = route.params.id as string
   return orderStore.getOrderStatus(orderId) === OrderStatus.SUCCESS
 })
 
@@ -73,6 +80,50 @@ const openDispute = () => {
     tab.value = 1
   }
 }
+const auth = useAuth()
+watch(() => auth.isAuthenticated, () => {
+  if (!auth.isAuthenticated) {
+    // // Redirects to the login page if the user is not logged in
+    router.replace('/')
+  }
+})
+
+// Whether to show the countdown or not
+const showCountdown = ref(false)
+// Stop watch handle
+let stopWatch: WatchStopHandle | undefined
+
+onMounted(() => {
+  // Get the specific order and check its status
+  const order = orderStore.getOrderById(route.params.id as string)
+  if (order.status === OrderStatus.WAITING_BUYER_INVOICE || order.status === OrderStatus.WAITING_PAYMENT) {
+    // If the order is in the WAITING_BUYER_INVOICE or WAITING_PAYMENT state, show the countdown
+    showCountdown.value = true
+  }
+  // Start watching the specific order, in case the status changes
+  stopWatch = watch(
+    () => orderStore.orders[route.params.id as string],
+    (newOrder, oldOrder) => {
+      // This function will be executed whenever the specific order changes
+      console.log(`Order with id ${route.params.id}, new: `, newOrder.status, ', old: ', oldOrder.status)
+      if (newOrder.status === OrderStatus.WAITING_BUYER_INVOICE || newOrder.status === OrderStatus.WAITING_PAYMENT) {
+        // If the order is in the WAITING_BUYER_INVOICE or WAITING_PAYMENT state, show the countdown
+        showCountdown.value = true
+      } else {
+        // Otherwise, hide the countdown
+        showCountdown.value = false
+      }
+    },
+    { deep: true }
+  )
+})
+
+onUnmounted(() => {
+  if (stopWatch) {
+    stopWatch() // Stop the watcher when the component is unmounted
+  }
+})
+
 </script>
 
 <style scoped>

@@ -19,7 +19,7 @@
       >
       </v-rating>
       <div>
-        <v-btn text>Rate</v-btn>
+        <v-btn variant="text">Rate</v-btn>
       </div>
     </div>
   </div>
@@ -27,7 +27,7 @@
 <script lang="ts">
 import type { PropType } from 'vue'
 import * as timeago from 'timeago.js'
-import { MostroMessage } from '~/stores/types'
+import type { MostroMessage } from '~/stores/types'
 export default {
   data() {
     return { timeago }

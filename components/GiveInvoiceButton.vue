@@ -1,7 +1,7 @@
 <template>
   <v-dialog v-model="showDialog" max-width="500">
     <template v-slot:activator="{ props }">
-      <v-btn text color="accent" v-bind="props" prepend-icon="mdi-flash" class="mx-2" min-width="160">
+      <v-btn variant="text" color="accent" v-bind="props" prepend-icon="mdi-flash" class="mx-2" min-width="160">
         <template v-slot:prepend>
           <v-icon color="success"></v-icon>
         </template>
@@ -24,11 +24,11 @@
         :hint="invoiceHint"
       />
       <v-card-actions class="mx-3 mb-3">
-        <v-btn color="warning" text @click="close" class="px-3">
+        <v-btn color="warning" variant="text" @click="close" class="px-3">
           Cancel
         </v-btn>
         <v-spacer></v-spacer>
-        <v-btn :disabled="submitDisabled" color="success" text @click="submitInvoice" append-icon="mdi-send" class="px-3">
+        <v-btn :disabled="submitDisabled" color="success" variant="text" @click="submitInvoice" append-icon="mdi-send" class="px-3">
           Submit
         </v-btn>
       </v-card-actions>
@@ -39,7 +39,7 @@
 <script lang="ts">
 import type { PropType } from 'vue'
 import * as bolt11 from 'light-bolt11-decoder'
-import { MostroMessage } from '~/stores/types'
+import type { MostroMessage } from '~/stores/types'
 
 type InvoiceSection = {
   letters: string
@@ -80,11 +80,10 @@ export default {
   },
   methods: {
     async submitInvoice() {
-      // @ts-ignore
-      const smallOrder = this.message.content.SmallOrder
+      const order = this.message.Order.content.Order
       try {
         // @ts-ignore
-        await this.$mostro.addInvoice(smallOrder, this.invoice)
+        await this.$mostro.addInvoice(order, this.invoice)
       } catch(err) {
         console.error('Error while giving invoice for buy order: ', err)
       } finally {
@@ -156,7 +155,7 @@ export default {
       return true
     },
     satsAmount() {
-      return this.message.content.SmallOrder?.amount ?? '?'
+      return this.message.Order.content.Order?.amount ?? '?'
     },
     wrongAmountErrorMessage() {
       // @ts-ignore

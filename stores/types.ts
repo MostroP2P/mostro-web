@@ -1,6 +1,6 @@
 import { reactive } from 'vue'
-import { Event } from 'nostr-tools'
-import { AuthState } from './auth'
+import type { AuthState } from './auth'
+import type { MostroEvent } from '~/plugins/02-mostro'
 
 export type ThreadSummary = {
   orderId: string,
@@ -15,13 +15,15 @@ type PaymentRequest = [NullableOrder, string]
 
 export type SmallOrder = {
   amount: number,
-  buyer_pubkey: string,
   fiat_amount: number,
   fiat_code: string,
   id: string,
   payment_method: string,
   premium: number,
+  buyer_pubkey: string,
   seller_pubkey: string
+  master_buyer_pubkey?: string,
+  master_seller_pubkey?: string,
 }
 
 type Peer = {
@@ -32,15 +34,27 @@ type Peer = {
  * Message sent by mostro
  */
 export type MostroMessage = {
-  version: number,
-  order_id: string,
-  action: Action,
-  content: {
-    PaymentRequest?: PaymentRequest,
-    SmallOrder?: SmallOrder,
-    Peer?: Peer,
-    Order?: Order
+  Order: {
+    version: number,
+    id: string,
+    action: Action,
+    content: {
+      PaymentRequest?: PaymentRequest,
+      SmallOrder?: SmallOrder,
+      Peer?: Peer,
+      Order?: Order
+    },
+    created_at: number
   },
+  CantDo: {
+    version: number,
+    id: string,
+    pubkey: string | null,
+    action: Action.CantDo,
+    content: {
+      TextMessage: string,
+    }
+  }
   created_at: number
 }
 
@@ -54,6 +68,7 @@ export type TextMessage = {
 
 export enum Action {
   Order = 'Order',
+  NewOrder = 'NewOrder',
   TakeSell = 'TakeSell',
   TakeBuy = 'TakeBuy',
   PayInvoice = 'PayInvoice',
@@ -125,6 +140,7 @@ export class Order {
   master_seller_pubkey?: string
   master_buyer_pubkey?: string
   is_mine?: boolean = false
+  updated_at?: number
 
   constructor(
     id: string,
@@ -232,7 +248,7 @@ export interface RootState {
 }
 export interface ScheduledOrderUpdatePayload {
   orderId: string,
-  event: Event<4|30000>,
+  event: MostroEvent,
   seller_pubkey?: string,
   buyer_pubkey?: string
 }
@@ -240,4 +256,16 @@ export interface ScheduledOrderUpdatePayload {
 export interface EncryptedPrivateKey {
   ciphertext: string,
   salt: string
+}
+
+export interface FiatData {
+  symbol: string;
+  name: string;
+  symbol_native: string;
+  decimal_digits: number;
+  rounding: number;
+  code: string;
+  emoji: string;
+  name_plural: string;
+  price: boolean;
 }

@@ -6,7 +6,7 @@
         size="x-large"
         density="comfortable"
         elevation="6"
-        :disabled="isLocked"
+        :disabled="!isAuthenticated"
         class="fixed-btn"
         v-bind="props">
       </v-btn>
@@ -47,7 +47,7 @@
 import { computed } from 'vue'
 import { useAuth } from '@/stores/auth'
 const authStore = useAuth()
-const isLocked = computed(() => authStore.isLocked)
+const isAuthenticated = computed(() => authStore.isAuthenticated)
 </script>
 
 <script lang="ts">

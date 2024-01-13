@@ -1,4 +1,5 @@
-import { EncryptedPrivateKey, AUTH_LOCAL_STORAGE_ENCRYPTED_KEY, AUTH_LOCAL_STORAGE_DECRYPTED_KEY } from './types'
+import { AUTH_LOCAL_STORAGE_ENCRYPTED_KEY, AUTH_LOCAL_STORAGE_DECRYPTED_KEY } from './types'
+import type { EncryptedPrivateKey } from './types'
 import { useLocalStorage } from '@vueuse/core'
 import { nip19 } from 'nostr-tools'
 
@@ -93,17 +94,12 @@ export const useAuth = defineStore('auth', {
         decryptedPrivKey.value = ''
       }
       this.authMethod = AuthMethod.NOT_SET
-    }
+    },
   },
   getters: {
-    isLocked(state) {
-      switch(state.authMethod) {
-        case AuthMethod.LOCAL:
-          return !state.nsec
-        case AuthMethod.NIP07:
-          return !state.publicKey
-      }
-      return true
-    }
+    isAuthenticated(state) {
+      return state.authMethod !== AuthMethod.NOT_SET &&
+      (state.nsec !== null || state.publicKey !== null)
+    },
   }
 })

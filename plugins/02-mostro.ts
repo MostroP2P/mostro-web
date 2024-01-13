@@ -1,16 +1,12 @@
 import { watch } from 'vue'
 import { RelayPool } from 'nostr'
-import { nip19, getEventHash, verifySignature, UnsignedEvent, Kind, Relay, Event } from 'nostr-tools'
+import { nip19, getEventHash, verifySignature, Kind } from 'nostr-tools'
+import type { UnsignedEvent, Relay, Event } from 'nostr-tools'
 import { useAuth } from '@/stores/auth'
 import { useOrders } from '@/stores/orders'
 import { useMessages } from '@/stores/messages'
-import { Order, SmallOrder } from '../stores/types'
+import { Order, OrderStatus, OrderType } from '../stores/types'
 import { BaseSigner, ExtensionSigner, LocalSigner } from './01-signer'
-
-/**
- * Maximum number of events to be returned in the initial query
- */
-const EVENT_LIMIT = 100
 
 /**
  * Maximum number of seconds to be returned in the initial query
@@ -18,8 +14,10 @@ const EVENT_LIMIT = 100
 const EVENT_INTEREST_WINDOW = 60 * 60 * 24 * 7 // 7 days
 
 // Message kinds
-const NOSTR_REPLACEABLE_EVENT_KIND = 30078
+const NOSTR_REPLACEABLE_EVENT_KIND = 38383
 const NOSTR_ENCRYPTED_DM_KIND = 4
+
+export type MostroEvent = Event<typeof NOSTR_REPLACEABLE_EVENT_KIND | typeof NOSTR_ENCRYPTED_DM_KIND>
 
 type MostroOptions = {
   mostroPubKey: string,
@@ -36,7 +34,7 @@ export enum PublicKeyType {
   NPUB = 'npub'
 }
 
-class Mostro {
+export class Mostro {
   _signer: BaseSigner | undefined
   pool: any
   mostro: string
@@ -106,7 +104,6 @@ class Mostro {
     console.log('📣 subscribing to orders')
     const mostroPubKey = nip19.decode(this.mostro).data
     const filters = {
-      limit: EVENT_LIMIT,
       kinds: [NOSTR_REPLACEABLE_EVENT_KIND],
       since: Math.floor(Date.now() / 1e3) - EVENT_INTEREST_WINDOW,
       authors: [mostroPubKey]
@@ -117,7 +114,6 @@ class Mostro {
   subscribeDMs() {
     console.log('📭 subscribing to DMs')
     const filters = {
-      limit: EVENT_LIMIT,
       kinds: [NOSTR_ENCRYPTED_DM_KIND],
       '#p': [this.pubkeyCache.hex],
       since: Math.floor(Date.now() / 1e3) - EVENT_INTEREST_WINDOW,
@@ -178,31 +174,52 @@ class Mostro {
     })
   }
 
-  async handleEvent(ev: any) {
-    let { kind } = ev
-    if (!this.signer && kind !== NOSTR_REPLACEABLE_EVENT_KIND) {
-    // We shouldn't have any events other than kind NOSTR_REPLACEABLE_EVENT_KIND at this point, but just in case
-      console.warn('dropping event due to lack of signer')
-      return
+  extractOrderFromEvent(tags: Map<string, string>, ev: Event): Order {
+    // Create a map from the tags array for easy access
+    // const tags = new Map<string, string>(ev.tags as [string, string][])
+
+    if (!tags.has('d') || !tags.has('k') || !tags.has('s') || !tags.has('fa') || !tags.has('pm') || !tags.has('premium') || !tags.has('f')) {
+      console.error('Missing required tags in event to extract order. ev.tags: ', ev.tags)
+      throw Error('Missing required tags in event to extract order')
     }
-    if (kind === NOSTR_REPLACEABLE_EVENT_KIND) {
+
+     // Extract values from the tags map
+    const id = tags.get('d') as string
+    const kind = tags.get('k') as OrderType
+    const status = tags.get('s') as OrderStatus
+    const fiat_code = tags.get('f') as string
+    const fiat_amount = Number(tags.get('fa'))
+    const payment_method = tags.get('pm') as string
+    const premium = Number(tags.get('premium'))
+    const created_at = ev.created_at
+
+    return new Order(id, kind, status, fiat_code, fiat_amount, payment_method, premium, created_at)
+  }
+
+  handlePublicEvent(ev: Event) {
+    // Create a map from the tags array for easy access
+    const tags = new Map<string, string>(ev.tags as [string, string][])
+    if (tags.get('z') === 'order') {
       // Order
-      let { content } = ev
-      // Most of the orders that we receive via kind events are not ours,
-      // so we set the `is_mine` field as false here.
-      content = { ...JSON.parse(content), is_mine: false }
-      console.log('< 📢', content)
-      if (this.orderMap.has(content.id)) {
+      const order = this.extractOrderFromEvent(tags, ev)
+      console.info('< [🧌 -> 📢]', JSON.stringify(order), ', ev: ', ev)
+      if (this.orderMap.has(order.id)) {
         // Updates existing order
-        this.orderStore.updateOrder({ order: content, event: ev })
+        this.orderStore.updateOrder({ order: order, event: ev as MostroEvent }, true)
       } else {
         // Adds new order
-        this.orderStore.addOrder({ order: content, event: ev })
-        this.orderMap.set(content.id, ev.id)
+        this.orderStore.addOrder({ order: order, event: ev as MostroEvent })
+        this.orderMap.set(order.id, ev.id)
       }
-    } else if (kind === NOSTR_ENCRYPTED_DM_KIND) {
-      // @ts-ignore
-      let recipient = ev.tags.find(([k, v]) => k === 'p' && v && v !== '')[1]
+    } else {
+      // TODO: Extract other kinds of events data: Disputes & Ratings
+    }
+  }
+
+  async handlePrivateEvent(ev: Event) {
+    const tags = new Map<string, string>(ev.tags as [string, string][])
+    if (tags.has('p')) {
+      const recipient = tags.get('p') as string
       const mostroPubKey = nip19.decode(this.mostro).data
       const myPubKey = this.pubkeyCache.hex
       if (myPubKey === recipient) {
@@ -211,9 +228,9 @@ class Mostro {
           if (ev.pubkey === mostroPubKey) {
             console.info('< 💬 [🧌 -> me]: ', plaintext, ', ev: ', ev)
             const msg = { ...JSON.parse(plaintext), created_at: ev.created_at }
-            this.messageStore.addMostroMessage({ message: msg, event: ev })
+            this.messageStore.addMostroMessage({ message: msg, event: ev as MostroEvent})
           } else {
-            console.info('< 💬 [peer -> me]: ', plaintext, ', ev: ', ev)
+            console.info('< 💬 [🍐 -> me]: ', plaintext, ', ev: ', ev)
             // Peer DMs
             const peerNpub = nip19.npubEncode(ev.pubkey)
             this.messageStore.addPeerMessage({
@@ -235,7 +252,7 @@ class Mostro {
           if (recipient === mostroPubKey)
             console.log('< 💬 [me -> 🧌]: ', plaintext, ', ev: ', ev)
           else
-            console.log('< 💬 [me -> peer]: ', plaintext, ', ev: ', ev)
+            console.log('< 💬 [me -> 🍐]: ', plaintext, ', ev: ', ev)
           const peerNpub = nip19.npubEncode(recipient)
           this.messageStore.addPeerMessage({
             id: ev.id,
@@ -251,6 +268,22 @@ class Mostro {
         console.log(`> DM. ev: `, ev)
         console.warn(`Ignoring _DM for key: ${recipient}, my pubkey is ${myPubKey}`)
       }
+    } else {
+      console.warn('Ignoring DM with no recipient')
+    }
+  }
+
+  async handleEvent(ev: Event) {
+    let { kind } = ev
+    if (!this.signer && kind.valueOf() !== NOSTR_REPLACEABLE_EVENT_KIND) {
+    // We shouldn't have any events other than kind NOSTR_REPLACEABLE_EVENT_KIND at this point, but just in case
+      console.warn('dropping event due to lack of signer')
+      return
+    }
+    if (kind.valueOf() === NOSTR_REPLACEABLE_EVENT_KIND) {
+      this.handlePublicEvent(ev)
+    } else if (kind === NOSTR_ENCRYPTED_DM_KIND) {
+      this.handlePrivateEvent(ev)
     } else {
       console.info(`Got event with kind: ${kind}, ev: `, ev)
     }
@@ -271,24 +304,26 @@ class Mostro {
     }
     event.id = getEventHash(event as UnsignedEvent<Kind.EncryptedDirectMessage>)
     event = await this.signer?.signEvent(event)
-    console.log('> 📝 createEvent. payload: ', payload, ', ev: ', event)
+    console.info('> 💬 [me -> 🧌]: ', JSON.stringify(payload), ', ev: ', event)
     return ['EVENT', event]
   }
 
   getLocalKeys() {
     return {
       npub: this.pubkeyCache.npub,
-      public: this.pubkeyCache.hex
+      hex: this.pubkeyCache.hex
     }
   }
 
   async submitOrder(order: Order) {
     const payload = {
-      version: 0,
-      pubkey: this.getLocalKeys().npub,
-      action: 'Order',
-      content: {
-        Order: order
+      Order: {
+        version: 1,
+        pubkey: this.getLocalKeys().hex,
+        action: 'NewOrder',
+        content: {
+          Order: order
+        }
       }
     }
     const event = await this.createEvent(payload)
@@ -296,15 +331,17 @@ class Mostro {
   }
   async takeSell(order: Order, invoice: string) {
     const payload = {
-      version: 0,
-      pubkey: this.getLocalKeys().npub,
-      order_id: order.id,
-      action: 'TakeSell',
-      content: invoice === null ? null : {
-        PaymentRequest: [
-          null,
-          invoice
-        ]
+      Order: {
+        version: 1,
+        pubkey: this.getLocalKeys().hex,
+        id: order.id,
+        action: 'TakeSell',
+        content: invoice === null ? null : {
+          PaymentRequest: [
+            null,
+            invoice
+          ]
+        }
       }
     }
     const event = await this.createEvent(payload)
@@ -312,30 +349,34 @@ class Mostro {
   }
   async takeBuy(order: Order) {
     const payload = {
-      version: 0,
-      pubkey: this.getLocalKeys().npub,
-      order_id: order.id,
-      action: 'TakeBuy',
-      content: {
-        Peer: {
-          pubkey: this.getLocalKeys().npub
+      Order: {
+        version: 1,
+        pubkey: this.getLocalKeys().hex,
+        id: order.id,
+        action: 'TakeBuy',
+        content: {
+          Peer: {
+            pubkey: this.getLocalKeys().hex
+          }
         }
       }
     }
     const event = await this.createEvent(payload)
     await this.pool.send(event)
   }
-  async addInvoice(order: SmallOrder, invoice: string) {
+  async addInvoice(order: Order, invoice: string) {
     const payload = {
-      version: 0,
-      pubkey: this.getLocalKeys().npub,
-      order_id: order.id,
-      action: 'AddInvoice',
-      content: {
-        PaymentRequest: [
-          null,
-          invoice
-        ]
+      Order: {
+        version: 1,
+        pubkey: this.getLocalKeys().hex,
+        id: order.id,
+        action: 'AddInvoice',
+        content: {
+          PaymentRequest: [
+            null,
+            invoice
+          ]
+        }
       }
     }
     const event = await this.createEvent(payload)
@@ -343,42 +384,51 @@ class Mostro {
   }
   async release(order: Order) {
     const payload = {
-      version: 0,
-      pubkey: this.getLocalKeys().npub,
-      action: 'Release',
-      order_id: order.id
+      Order: {
+        version: 1,
+        pubkey: this.getLocalKeys().hex,
+        action: 'Release',
+        id: order.id,
+        content: null,
+      }
     }
     const event = await this.createEvent(payload)
     await this.pool.send(event)
   }
   async fiatSent(order: Order) {
     const payload = {
-      version: 0,
-      pubkey: this.getLocalKeys().npub,
-      action: 'FiatSent',
-      order_id: order.id
+      Order: {
+        version: 1,
+        pubkey: this.getLocalKeys().hex,
+        action: 'FiatSent',
+        id: order.id
+      }
     }
     const event = await this.createEvent(payload)
     await this.pool.send(event)
   }
   async dispute(order: Order) {
     const payload = {
-      version: 0,
-      pubkey: this.getLocalKeys().npub,
-      action: 'Dispute',
-      order_id: order.id,
-      content: null
+      Order: {
+        version: 1,
+        pubkey: this.getLocalKeys().hex,
+        action: 'Dispute',
+        id: order.id,
+        content: null,
+      }
     }
     const event = await this.createEvent(payload)
     await this.pool.send(event)
   }
   async cancel(order: Order) {
     const payload = {
-      version: 0,
-      pubkey: this.getLocalKeys().npub,
-      action: 'Cancel',
-      order_id: order.id,
-      content: null
+      Order: {
+        version: 1,
+        pubkey: this.getLocalKeys().hex,
+        action: 'Cancel',
+        id: order.id,
+        content: null,
+      }
     }
     const event = await this.createEvent(payload)
     await this.pool.send(event)
@@ -409,6 +459,10 @@ class Mostro {
 
   getNpub() {
     return this.pubkeyCache.npub
+  }
+
+  getUserPublicKey() {
+    return this.pubkeyCache
   }
 
   getMostroPublicKey(type: PublicKeyType) {

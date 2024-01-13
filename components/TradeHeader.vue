@@ -29,7 +29,8 @@
 </template>
 <script lang="ts">
 import type { PropType } from 'vue'
-import { ThreadSummary, OrderType } from '~/stores/types'
+import { OrderType } from '~/stores/types'
+import type { ThreadSummary } from '~/stores/types'
 import * as timeago from 'timeago.js'
 export default {
   props: {

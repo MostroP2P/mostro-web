@@ -21,7 +21,7 @@
 </template>
 <script lang="ts">
 import type { PropType } from 'vue'
-import { MostroMessage } from '~/stores/types'
+import type { MostroMessage } from '~/stores/types'
 import * as timeago from 'timeago.js'
 import textMessage from '~/mixins/text-message'
 
@@ -40,25 +40,25 @@ export default {
   },
   computed: {
     orderId() {
-      return this.message.order_id
+      return this.message.Order.id
     },
     satsAmount() {
-      return this.message.content.SmallOrder?.amount
+      return this.message.Order.content.SmallOrder?.amount
     },
     sellerId() {
-      return this.message.content.SmallOrder?.seller_pubkey
+      return this.message.Order.content.SmallOrder?.seller_pubkey
     },
     fiatAmount() {
-      return this.message.content.SmallOrder?.fiat_amount
+      return this.message.Order.content.SmallOrder?.fiat_amount
     },
     fiatCode() {
-      return this.message.content.SmallOrder?.fiat_code
+      return this.message.Order.content.SmallOrder?.fiat_code
     },
     paymentMethod() {
-      return this.message.content.SmallOrder?.payment_method
+      return this.message.Order.content.SmallOrder?.payment_method
     },
     creationDate() {
-      return this.message.created_at * 1e3
+      return this.message.Order.created_at * 1e3
     }
   }
 }

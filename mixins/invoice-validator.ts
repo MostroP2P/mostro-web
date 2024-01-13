@@ -73,7 +73,9 @@ export default {
     },
     invoiceValueSats() {
       let amount = NaN
+      // @ts-ignore
       if (this.decodedInvoice?.complete) {
+        // @ts-ignore
         const decoded: DecodedInvoice = this.decodedInvoice
         if (decoded?.satoshis) {
           amount = decoded.satoshis
