@@ -1,6 +1,6 @@
 <template>
   <NuxtLayout name="no-scroll-layout">
-    <v-container class="d-flex flex-column mt-0" fill-height style="height: calc(100vh - 120px)" id="my-trades">
+    <v-container v-if="hasOrderIdParam" class="d-flex flex-column mt-0" fill-height style="height: calc(100vh - 120px)" id="my-trades">
       <div class="message-list-wrapper">
         <v-alert
           class="mb-4"
@@ -57,6 +57,8 @@ const TAB_NORMAL = 'messages'
 const TAB_DISPUTE = 'dispute'
 const tabs = ref([TAB_NORMAL])
 const tab = ref(null as null | number)
+
+const hasOrderIdParam = computed(() => route?.params?.id ? true : false)
 
 definePageMeta({
   layout: false,
