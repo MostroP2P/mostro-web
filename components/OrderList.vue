@@ -1,39 +1,15 @@
 <template>
-  <v-card class="mx-auto">
-    <v-list v-if="getPendingOrders.length > 0" class="py-0">
-      <div v-for="order in getPendingOrders" :key="order.id">
-        <v-list-item
-          three-line
-          link
-        >
-          <v-list-item-title class="d-flex justify-space-between">
-            {{ order.fiat_amount }} {{ order.fiat_code.toUpperCase() }} {{ getFlag(order.fiat_code) }}
-            <v-chip
-              class="my-2 px-4 "
-              label
-              size="small"
-              style="cursor: pointer"
-              :color="order.kind === 'Sell' ? 'red' : 'green'"
-            >
-              {{ order.kind.toUpperCase() === 'BUY' ? 'BUY ORDER' : 'SELL ORDER' }}
-            </v-chip>
-          </v-list-item-title>
-          <v-list-item-subtitle>
-            {{ summary(order) }}
-          </v-list-item-subtitle>
-          <v-list-item-subtitle>
-            <div class="d-flex justify-space-between">
-              Payment via: {{ order.payment_method }} - id: {{ order.id }}
-              <take-sell-order-dialog v-if="showTakeSell(order) && !order.is_mine" :order="order"/>
-              <take-buy-order-dialog v-if="showTakeBuy(order) && !order.is_mine" :order="order"/>
-            </div>
-          </v-list-item-subtitle>
-        </v-list-item>
-        <v-divider/>
-      </div>
-    </v-list>
-    <no-orders v-else/>
-  </v-card>
+  <div>
+    <v-card class="mx-auto">
+      <v-list v-if="getPendingOrders.length > 0">
+        <div v-for="order in getPendingOrders" :key="order.id">
+          <OrderDetailsDialog :order="order"/>
+          <v-divider/>
+        </div>
+      </v-list>
+      <no-orders v-else/>
+    </v-card>
+  </div>
 </template>
 
 <script lang="ts">
@@ -60,12 +36,16 @@ export default defineComponent({
     const authStore = useAuth()
     const ordersStore = useOrders()
     const getPendingOrders = computed(() => ordersStore.getPendingOrders)
+    const selectedOrder = ref<Order | undefined>(undefined)
+    const showDialog = ref(true)
 
     return {
       fiatMap: fiat as { [key: string]: Partial<FiatData> },
       headerHeight: 64,
       authStore,
-      getPendingOrders
+      getPendingOrders,
+      selectedOrder,
+      showDialog
     }
   },
   methods: {
@@ -106,6 +86,10 @@ export default defineComponent({
       } else {
         return `${order.fiat_amount} ${order.fiat_code.toUpperCase()}`
       }
+    },
+    handleEntryClick(order: Order) {
+      this.selectedOrder = order
+      this.showDialog = true
     }
   },
 })
