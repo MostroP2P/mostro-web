@@ -17,7 +17,8 @@ export default defineNuxtConfig({
         lang: 'en'
       },
       script: [
-        { src: 'https://kit.fontawesome.com/090ca49637.js', crossorigin: 'anonymous' }
+        { src: 'https://kit.fontawesome.com/090ca49637.js', crossorigin: 'anonymous' },
+        { src: 'https://kit.fontawesome.com/090ca49637.js', crossorigin: 'anonymous' },
       ],
       meta: [
         { charset: 'utf-8' },
@@ -26,7 +27,7 @@ export default defineNuxtConfig({
         { name: 'format-detection', content: 'telephone=no' }
       ],
       link: [
-        { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }
+        { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
       ]
     }
   },
