@@ -31,7 +31,7 @@
       <v-window v-model="tab" class="flex-grow-1" style="height: 10%;">
         <v-window-item :key="TAB_NORMAL">
           <div>
-            <message-list :order-id="$route.params.id" />
+            <message-list :order-id="($route.params.id as string)" />
             <trade-actions @dispute="() => openDispute()"></trade-actions>
           </div>
         </v-window-item>
@@ -104,8 +104,8 @@ onMounted(() => {
   stopWatch = watch(
     () => orderStore.orders[route.params.id as string],
     (newOrder, oldOrder) => {
+      if (!newOrder || !oldOrder) return
       // This function will be executed whenever the specific order changes
-      console.log(`Order with id ${route.params.id}, new: `, newOrder.status, ', old: ', oldOrder.status)
       if (newOrder.status === OrderStatus.WAITING_BUYER_INVOICE || newOrder.status === OrderStatus.WAITING_PAYMENT) {
         // If the order is in the WAITING_BUYER_INVOICE or WAITING_PAYMENT state, show the countdown
         showCountdown.value = true
