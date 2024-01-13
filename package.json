@@ -1,7 +1,7 @@
 {
   "name": "mostro-web",
   "private": true,
-  "version": "0.0.12",
+  "version": "0.0.13",
   "description": "Mostro web client",
   "scripts": {
     "prebuild": "echo \"export const GIT_COMMIT = '$(git rev-parse HEAD)'\" > ./constants/version.js",
@@ -10,13 +10,15 @@
     "dev": "npm run type-check && nuxt dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
-    "postinstall": "nuxt prepare"
+    "postinstall": "nuxt prepare",
+    "version": "auto-changelog -p && git add CHANGELOG.md"
   },
   "devDependencies": {
     "@nuxt/devtools": "latest",
     "@types/node": "^18",
     "@vueuse/core": "^10.2.1",
     "@vueuse/nuxt": "^10.2.1",
+    "auto-changelog": "^2.4.0",
     "nuxt": "^3.5.2"
   },
   "dependencies": {
