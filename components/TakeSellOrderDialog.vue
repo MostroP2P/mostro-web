@@ -1,7 +1,7 @@
 <template>
   <v-dialog width="500" v-model="showDialog">
     <template v-slot:activator="{ props }">
-      <v-btn :disabled="order.is_mine" color="success" variant="outlined" v-bind="props" class="mb-2">
+      <v-btn :disabled="order.is_mine" color="success" variant="outlined" v-bind="props" class="my-0">
         Take
       </v-btn>
     </template>

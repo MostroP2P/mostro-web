@@ -7,7 +7,7 @@
       <v-list-item-title class="d-flex justify-space-between">
         {{ order.fiat_amount }} {{ order.fiat_code.toUpperCase() }} {{ getFlag(order.fiat_code) }}
         <v-chip
-          class="my-2 px-4 "
+          class="mt-2 px-4 "
           label
           size="small"
           style="cursor: pointer"
@@ -20,7 +20,7 @@
         {{ summary(order) }}
       </v-list-item-subtitle>
       <v-list-item-subtitle>
-        <div class="d-flex justify-space-between">
+        <div class="d-flex justify-space-between" style="min-height: 2.5em">
           Payment via: {{ order.payment_method }} - id: {{ order.id }}
           <take-sell-order-dialog v-if="showTakeSell(order) && !order.is_mine" :order="order"/>
           <take-buy-order-dialog v-if="showTakeBuy(order) && !order.is_mine" :order="order"/>

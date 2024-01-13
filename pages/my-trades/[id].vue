@@ -1,6 +1,6 @@
 <template>
   <NuxtLayout name="no-scroll-layout">
-    <v-container class="d-flex flex-column mt-0" fill-height style="height: calc(100vh - 120px)" id="my-trades">
+    <v-container v-if="hasOrderIdParam" class="d-flex flex-column mt-0" fill-height style="height: calc(100vh - 120px)" id="my-trades">
       <div class="message-list-wrapper">
         <v-alert
           class="mb-4"
@@ -31,7 +31,7 @@
       <v-window v-model="tab" class="flex-grow-1" style="height: 10%;">
         <v-window-item :key="TAB_NORMAL">
           <div>
-            <message-list :order-id="$route.params.id" />
+            <message-list :order-id="($route.params.id as string)" />
             <trade-actions @dispute="() => openDispute()"></trade-actions>
           </div>
         </v-window-item>
@@ -57,6 +57,8 @@ const TAB_NORMAL = 'messages'
 const TAB_DISPUTE = 'dispute'
 const tabs = ref([TAB_NORMAL])
 const tab = ref(null as null | number)
+
+const hasOrderIdParam = computed(() => route?.params?.id ? true : false)
 
 definePageMeta({
   layout: false,
@@ -104,8 +106,8 @@ onMounted(() => {
   stopWatch = watch(
     () => orderStore.orders[route.params.id as string],
     (newOrder, oldOrder) => {
+      if (!newOrder || !oldOrder) return
       // This function will be executed whenever the specific order changes
-      console.log(`Order with id ${route.params.id}, new: `, newOrder.status, ', old: ', oldOrder.status)
       if (newOrder.status === OrderStatus.WAITING_BUYER_INVOICE || newOrder.status === OrderStatus.WAITING_PAYMENT) {
         // If the order is in the WAITING_BUYER_INVOICE or WAITING_PAYMENT state, show the countdown
         showCountdown.value = true

@@ -6,7 +6,8 @@ import type {
 } from './types'
 import {
   Order,
-  Action
+  Action,
+  OrderStatus
 } from './types'
 import { useOrders } from './orders'
 import type { MostroEvent } from '~/plugins/02-mostro'
@@ -82,6 +83,9 @@ export const useMessages = defineStore('messages', {
         return { orderId, messageCount, order }
       })
       .filter((summary: ThreadSummary) => summary.order !== undefined)
+      .filter((summary: ThreadSummary) => summary.order.status !== OrderStatus.PENDING)
+      .filter((summary: ThreadSummary) => summary.order.status !== OrderStatus.CANCELED)
+      .filter((summary: ThreadSummary) => summary.order.status !== OrderStatus.EXPIRED)
       .sort((summaryA: ThreadSummary, summaryB: ThreadSummary) => summaryB.order.created_at - summaryA.order.created_at)
     },
     getPeerThreadSummaries(

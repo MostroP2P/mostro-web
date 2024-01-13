@@ -13,14 +13,14 @@
       <v-card-text>
         <span v-if="order.is_mine">You are </span>
         <span v-else>Someone is </span>
-        {{ getOrderVerb() }} <strong>{{ order.fiat_amount }} {{ order.fiat_code }} {{ fiatFlag }}</strong>
-        <span v-if="isFixedPrice"> for <strong>{{ order.amount }} sats</strong></span>
+        {{ getOrderVerb() }} <strong class="highlight">{{ order.fiat_amount }} {{ order.fiat_code }} {{ fiatFlag }}</strong>
+        <span v-if="isFixedPrice"> for <strong class="highlight">{{ order.amount }} <i class="fak fa-bold"></i></strong></span>
         <span v-if="!isFixedPrice"> at market price </span>
-        <span v-if="hasPremiumOrDiscount">with a {{order.premium}} {{ delta }}</span>
-        <span v-else>with no premium or discount.</span>
+        <span v-if="hasPremiumOrDiscount">with a <strong class="highlight">{{order.premium}}</strong> {{ delta }}</span>
+        <span v-else-if="!isFixedPrice">with no premium or discount.</span>
       </v-card-text>
       <v-card-text>
-        The payment method is <strong>{{ order.payment_method }}</strong>
+        The payment method is <strong class="highlight">{{ order.payment_method }}</strong>
       </v-card-text>
       <v-tooltip text="Order ID" location="top">
         <template v-slot:activator="{props}">
@@ -118,10 +118,6 @@ const hasPremiumOrDiscount = computed(() => {
   return props.order.premium && props.order.premium !== 0
 })
 
-const take = computed(() => {
-  return props.order.kind === OrderType.BUY ? 'Sell' : 'Buy'
-})
-
 const copyOrderId = (orderId: string) => {
   navigator.clipboard.writeText(orderId)
 }
@@ -156,3 +152,11 @@ const isAuthenticated = computed(() => authStore.isAuthenticated)
 const emits = defineEmits(['update:showDialog'])
 
 </script>
+
+<style scoped>
+.highlight {
+  background-color: #00695d3b; /* Clear green */
+  border-radius: 10px; /* Rounded corners */
+  padding: 2px 8px; /* Some padding */
+}
+</style>

@@ -24,7 +24,8 @@ import NPub from '~/components/NPub.vue'
 export default {
   data() {
     return {
-      timeago
+      timeago,
+      route: useRoute()
     }
   },
   components: {
@@ -38,9 +39,10 @@ export default {
   },
   computed: {
     ...mapState(useOrders, ['getOrderById']),
-    order() : Order {
-      const route = useRoute()
-      return this.getOrderById(route.params.id as string)
+    order() : Order | null {
+      const orderId = this.route?.params?.id as string
+      if (!orderId) return null
+      return this.getOrderById(orderId)
     },
     sellerPubkey() {
       return this.order?.master_seller_pubkey
