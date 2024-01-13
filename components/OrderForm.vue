@@ -97,23 +97,11 @@ import type { PropType } from 'vue'
 import * as bolt11 from 'light-bolt11-decoder'
 import invoiceValidator from '~/mixins/invoice-validator'
 import { OrderStatus, OrderPricingMode, OrderType } from '@/stores/types'
-import type { NewOrder } from '@/stores/types'
+import type { FiatData, NewOrder } from '@/stores/types'
 import fiat from '~/assets/fiat.json'
 
-interface FiatCurrency {
-  symbol: string;
-  name: string;
-  symbol_native: string;
-  decimal_digits: number;
-  rounding: number;
-  code: string;
-  emoji: string;
-  name_plural: string;
-  price: boolean;
-}
-
 interface Fiat {
-  [key: string]: FiatCurrency;
+  [key: string]: FiatData;
 }
 
 export default defineComponent({
@@ -122,12 +110,12 @@ export default defineComponent({
     return {
       valid: false,
       fiatAmount: 0,
-      selectedFiat: null as FiatCurrency | null,
+      selectedFiat: null as FiatData | null,
       amount: 0,
       paymentMethod: '',
       isMarketPricing: true,
       buyerInvoice: '',
-      fiatCurrencies: ([...Object.values(fiat)] as FiatCurrency[]).map((f: FiatCurrency) => {
+      fiatCurrencies: ([...Object.values(fiat)] as FiatData[]).map((f: FiatData) => {
         return {
           ...f,
           title: `${f.code} ${f.emoji}`
@@ -176,7 +164,7 @@ export default defineComponent({
     const config = useRuntimeConfig()
     if (config.public.nodeEnv === 'development') {
       this.fiatAmount = 5
-      this.selectedFiat = this.fiatCurrencies.find((f: FiatCurrency) => f.code === 'USD') || null
+      this.selectedFiat = this.fiatCurrencies.find((f: FiatData) => f.code === 'USD') || null
       this.paymentMethod = 'Cash'
     }
   },
@@ -224,10 +212,10 @@ export default defineComponent({
         this.onProcessingUpdate(false)
       }
     },
-    getTitle(item: FiatCurrency) {
+    getTitle(item: FiatData) {
       return `${item.code} ${item.emoji}`
     },
-    getFullName(item: FiatCurrency) {
+    getFullName(item: FiatData) {
       return item.name
     },
     clearSelectedFiat() {
