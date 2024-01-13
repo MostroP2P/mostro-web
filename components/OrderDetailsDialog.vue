@@ -118,10 +118,6 @@ const hasPremiumOrDiscount = computed(() => {
   return props.order.premium && props.order.premium !== 0
 })
 
-const take = computed(() => {
-  return props.order.kind === OrderType.BUY ? 'Sell' : 'Buy'
-})
-
 const copyOrderId = (orderId: string) => {
   navigator.clipboard.writeText(orderId)
 }
