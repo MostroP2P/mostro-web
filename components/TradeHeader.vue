@@ -29,7 +29,7 @@
 </template>
 <script lang="ts">
 import type { PropType } from 'vue'
-import { OrderType } from '~/stores/types'
+import { OrderStatus, OrderType } from '~/stores/types'
 import type { ThreadSummary } from '~/stores/types'
 import * as timeago from 'timeago.js'
 export default {
@@ -53,15 +53,31 @@ export default {
       const order = this.threadSummary.order
       if (order.is_mine) {
         if (this.orderType === OrderType.BUY) {
-          return 'You are Buying'
+          if (order.status === OrderStatus.SUCCESS) {
+            return 'You Bought'
+          } else {
+            return 'You are buying'
+          }
         } else {
-          return 'Your are Selling'
+          if (order.status === OrderStatus.SUCCESS) {
+            return 'You Sold'
+          } else {
+            return 'You are selling'
+          }
         }
       } else {
         if (this.orderType === OrderType.BUY) {
-          return 'You are Selling'
+          if (order.status === OrderStatus.SUCCESS) {
+            return 'You Sold'
+          } else {
+            return 'You are Selling'
+          }
         } else {
-          return 'You are Buying'
+          if (order.status === OrderStatus.SUCCESS) {
+            return 'You Bought'
+          } else {
+            return 'You are Buying'
+          }
         }
       }
     },
