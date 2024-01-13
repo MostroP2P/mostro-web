@@ -189,11 +189,12 @@ export class Mostro {
     const status = tags.get('s') as OrderStatus
     const fiat_code = tags.get('f') as string
     const fiat_amount = Number(tags.get('fa'))
+    const amount = Number(tags.get('amt'))
     const payment_method = tags.get('pm') as string
     const premium = Number(tags.get('premium'))
     const created_at = ev.created_at
 
-    return new Order(id, kind, status, fiat_code, fiat_amount, payment_method, premium, created_at)
+    return new Order(id, kind, status, fiat_code, fiat_amount, payment_method, premium, created_at, amount)
   }
 
   handlePublicEvent(ev: Event) {

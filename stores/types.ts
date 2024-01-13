@@ -150,7 +150,8 @@ export class Order {
     fiat_amount: number,
     payment_method: string,
     premium: number,
-    created_at: number
+    created_at: number,
+    amount: number
   ) {
     this.id = id;
     this.kind = kind;
@@ -160,6 +161,7 @@ export class Order {
     this.payment_method = payment_method;
     this.premium = premium;
     this.created_at = created_at;
+    this.amount = amount
   }
   static deepEqual(order1: Order | NewOrder, order2: Order): boolean {
 
