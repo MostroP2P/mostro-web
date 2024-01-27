@@ -36,7 +36,6 @@ export class Nostr {
   }
 
   setOrderCallback(callback: OrderCallback) {
-    console.log('>> setting order callback, this: ', this)
     this.orderCallback = callback
   }
 
@@ -45,8 +44,6 @@ export class Nostr {
   }
 
   private _handlePublicEvent(event: NDKEvent, relay: NDKRelay, subscription: NDKSubscription) {
-    console.log('>> order event: ', event)
-    console.log('>> this: ', this)
     if (this.orderCallback) {
       this.orderCallback(event)
     } else {
@@ -60,7 +57,7 @@ export class Nostr {
     timeSinceFirstSeen: number,
     subscription: NDKSubscription
   ) {
-    console.log('>> 🧑‍🤝‍🧑 duplicate public event. time: ', timeSinceFirstSeen)
+    console.debug('🧑‍🤝‍🧑 duplicate public event. time: ', timeSinceFirstSeen)
   }
 
   private _handleCloseOrderSubscription(subscription: NDKSubscription) {
@@ -69,7 +66,6 @@ export class Nostr {
   }
 
   private _handlePrivateEvent(event: NDKEvent) {
-    console.log('>> DM event: ', event)
     if (this.dmCallback) {
       this.dmCallback(event)
     } else {
@@ -83,7 +79,7 @@ export class Nostr {
     timeSinceFirstSeen: number,
     subscription: NDKSubscription
   ) {
-    console.log('>> 🧑‍🤝‍🧑 duplicate private event. time: ', timeSinceFirstSeen)
+    console.debug('🧑‍🤝‍🧑 duplicate private event. time: ', timeSinceFirstSeen)
   }
 
   private _handleClosePrivateEvent(subscription: NDKSubscription) {
@@ -91,7 +87,7 @@ export class Nostr {
   }
 
   subscribeOrders() {
-    console.log('📣📣 subscribing to orders')
+    console.log('📣 subscribing to orders')
     const config = useRuntimeConfig()
     const mostroNpub = config.public.mostroPubKey
     const mostroDecoded = nip19.decode(mostroNpub)
@@ -111,7 +107,7 @@ export class Nostr {
   }
 
   subscribeDMs(myPubkey: string) {
-    console.log('📭📭 subscribing to DMs')
+    console.log('📭 subscribing to DMs')
     const filters = {
       kinds: [NOSTR_ENCRYPTED_DM_KIND],
       '#p': [myPubkey],

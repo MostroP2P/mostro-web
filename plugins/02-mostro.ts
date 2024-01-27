@@ -138,11 +138,11 @@ export class Mostro {
           })
           const plaintext = await this.signer!.decrypt!(sender, ev.content)
           if (ev.pubkey === mostroPubKey) {
-            console.info('< 💬 [🧌 -> me]: ', plaintext, ', ev: ', nEvent)
+            console.info('< [🧌 -> me]: ', plaintext, ', ev: ', nEvent)
             const msg = { ...JSON.parse(plaintext), created_at: ev.created_at }
             this.messageStore.addMostroMessage({ message: msg, event: ev as MostroEvent})
           } else {
-            console.info('< 💬 [🍐 -> me]: ', plaintext, ', ev: ', nEvent)
+            console.info('< [🍐 -> me]: ', plaintext, ', ev: ', nEvent)
             // Peer DMs
             const peerNpub = nip19.npubEncode(ev.pubkey)
             this.messageStore.addPeerMessage({
@@ -165,9 +165,9 @@ export class Mostro {
           })
           const plaintext = await this.signer!.decrypt!(recipient, ev.content)
           if (recipient === mostroPubKey)
-            console.log('< 💬 [me -> 🧌]: ', plaintext, ', ev: ', nEvent)
+            console.log('< [me -> 🧌]: ', plaintext, ', ev: ', nEvent)
           else
-            console.log('< 💬 [me -> 🍐]: ', plaintext, ', ev: ', nEvent)
+            console.log('< [me -> 🍐]: ', plaintext, ', ev: ', nEvent)
           const peerNpub = nip19.npubEncode(recipientPubKey)
           this.messageStore.addPeerMessage({
             id: ev.id,
@@ -209,7 +209,7 @@ export class Mostro {
     event.pubkey = myPubKey
     event.tags = [['p', mostroPubKey]]
     const nEvent = await event.toNostrEvent()
-    console.info('> 💬 [me -> 🧌]: ', cleartext, ', ev: ', nEvent)
+    console.info('> [me -> 🧌]: ', cleartext, ', ev: ', nEvent)
     return event
   }
 
