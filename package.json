@@ -1,7 +1,7 @@
 {
   "name": "mostro-web",
   "private": true,
-  "version": "0.0.14",
+  "version": "0.0.15",
   "description": "Mostro web client",
   "scripts": {
     "prebuild": "echo \"export const GIT_COMMIT = '$(git rev-parse HEAD)'\" > ./constants/version.js",
@@ -23,11 +23,11 @@
   },
   "dependencies": {
     "@mdi/font": "^7.2.96",
+    "@nostr-dev-kit/ndk-cache-dexie": "^2.2.4",
     "@pinia/nuxt": "^0.4.11",
     "buffer": "^6.0.3",
     "crypto-js": "^4.1.1",
     "light-bolt11-decoder": "github:bilthon/light-bolt11-decoder",
-    "nostr": "^0.2.8",
     "nostr-tools": "^1.12.0",
     "pinia": "^2.1.4",
     "qrcode.vue": "^3.4.0",
