@@ -1,12 +1,11 @@
 import { watch } from 'vue'
-import { RelayPool } from 'nostr'
-import { nip19, getEventHash, verifySignature, Kind } from 'nostr-tools'
-import type { UnsignedEvent, Relay, Event } from 'nostr-tools'
+import { NDKEvent, type NDKSigner, NDKUser, NDKPrivateKeySigner, NDKNip07Signer } from '@nostr-dev-kit/ndk'
+import { nip19, type Event } from 'nostr-tools'
 import { useAuth } from '@/stores/auth'
 import { useOrders } from '@/stores/orders'
 import { useMessages } from '@/stores/messages'
 import { Order, OrderStatus, OrderType } from '../stores/types'
-import { BaseSigner, ExtensionSigner, LocalSigner } from './01-signer'
+import type { Nostr } from './01-nostr'
 
 /**
  * Maximum number of seconds to be returned in the initial query
@@ -21,7 +20,7 @@ export type MostroEvent = Event<typeof NOSTR_REPLACEABLE_EVENT_KIND | typeof NOS
 
 type MostroOptions = {
   mostroPubKey: string,
-  relays: string[]
+  nostr: Nostr
 }
 
 type PublicKeyCache = {
@@ -35,10 +34,9 @@ export enum PublicKeyType {
 }
 
 export class Mostro {
-  _signer: BaseSigner | undefined
-  pool: any
+  _signer: NDKSigner | undefined
   mostro: string
-  relays: string[]
+  nostr: Nostr
   orderMap: Map<string, string> // Maps order id -> event id
   orders_sub_id: string
   dm_sub_id: string
@@ -46,52 +44,37 @@ export class Mostro {
   orderStore: ReturnType<typeof useOrders>
   messageStore: ReturnType<typeof useMessages>
 
-  // Maps id to boolean, true if we've already handled the event
-  eventMap: Map<string, boolean> = new Map<string, boolean>()
-
   constructor(opts: MostroOptions) {
-    this.relays = opts.relays
     this.mostro = opts.mostroPubKey
     this.orderMap = new Map<string, string>
     this.orders_sub_id = this.generateRandomSubId()
     this.dm_sub_id = this.generateRandomSubId()
     this.orderStore = useOrders()
     this.messageStore = useMessages()
+    this.nostr = opts.nostr
+    this.nostr.setOrderCallback(this.handlePublicEvent.bind(this))
+    this.nostr.setDMCallback(this.handlePrivateEvent.bind(this))
+    this.nostr.subscribeOrders()
   }
 
-  public set signer(signer: BaseSigner | undefined) {
+  public set signer(signer: NDKSigner | undefined) {
     this._signer = signer
     if (this._signer) {
-      this._signer.getPublicKey()
-        .then((publicKey: string) => {
-          const npub = nip19.npubEncode(publicKey)
+      this._signer.user()
+        .then((user: NDKUser) => {
           this.pubkeyCache = {
-            hex: publicKey,
-            npub
+            hex: user.pubkey,
+            npub: user.npub
           }
         })
         .catch(err => console.error('Error while getting public key from signer. err: ', err))
     }
   }
 
-  public get signer() : BaseSigner | undefined {
+  public get signer() : NDKSigner | undefined {
     return this._signer
   }
 
-  lock() {
-    if (this.signer instanceof LocalSigner) {
-      this.signer.locked = true
-    }
-  }
-
-  close() {
-    // We'll issue unsubscribe notices to all relays and close the
-    // connection CONNECTION_CLOSE_TIMEOUT milliseconds later.
-    const CONNECTION_CLOSE_TIMEOUT =  800
-    this.pool.unsubscribe(this.dm_sub_id)
-    this.pool.unsubscribe(this.orders_sub_id)
-    setTimeout(() => this.pool.close(), CONNECTION_CLOSE_TIMEOUT)
-  }
 
   private generateRandomSubId() {
     const RANDOM_CHAR_COUNT = 15
@@ -100,90 +83,13 @@ export class Mostro {
       .map(() => Math.random().toString(36)[2]).join('')
   }
 
-  subscribeOrders() {
-    console.log('📣 subscribing to orders')
-    const mostroPubKey = nip19.decode(this.mostro).data
-    const filters = {
-      kinds: [NOSTR_REPLACEABLE_EVENT_KIND],
-      since: Math.floor(Date.now() / 1e3) - EVENT_INTEREST_WINDOW,
-      authors: [mostroPubKey]
-    }
-    this.pool.subscribe(this.orders_sub_id, filters)
-  }
-
-  subscribeDMs() {
-    console.log('📭 subscribing to DMs')
-    const filters = {
-      kinds: [NOSTR_ENCRYPTED_DM_KIND],
-      '#p': [this.pubkeyCache.hex],
-      since: Math.floor(Date.now() / 1e3) - EVENT_INTEREST_WINDOW,
-    }
-    this.pool.subscribe(this.dm_sub_id, filters)
-  }
-
-  unsubscribeDMs() {
-    this.pool.unsubscribe(this.dm_sub_id)
-  }
-
-  handleReconnection() {
-    if (this.signer instanceof LocalSigner) {
-      // In case of local signer, we only subscribe to DMs if the signer is unlocked
-      if (!this.signer.locked) {
-        this.subscribeDMs()
-      }
-    } else {
-      // ExtensionSigner
-      this.subscribeDMs()
-    }
-  }
-
-  init() {
-    this.pool = RelayPool(this.relays)
-    this.pool.on('open', (relay: any) => {
-      console.info('🌟 relay opened: ', relay)
-      // We always subscribe to orders
-      this.subscribeOrders()
-      if (this.signer) {
-        // If we have a signer already assigned, it probably means this is
-        // a reconnection event, in which case we need to resubscribe to DMs
-        console.debug('🔄 probably a reconnection')
-        this.handleReconnection()
-      }
-    })
-    this.pool.on('close', (relay: Relay) => {
-      console.warn('💀 relay closed: ', relay)
-    })
-    this.pool.on('ok', async (relay: Relay, id: string, accepted: boolean, msg: string) => {
-      // TODO: Do more with this
-      console.debug(`👍 got an ok event. id: ${id}, accepted: ${accepted}, msg: ${msg}`)
-    })
-    this.pool.on('event', async (relay: Relay, sub_id: string, ev: Event) => {
-      const hasValidSignature = verifySignature(ev)
-      if (!hasValidSignature) {
-        // Discarding event with invalid signature
-        console.warn(`🗑️ dropping event due to invalid signature. id: ${ev.id}, sig: ${ev.sig}`)
-        return
-      }
-      if (this.eventMap.has(ev.id)) {
-        // We've already handled this event
-        // console.debug('< 🦜 repeated event: ', ev.id)
-        return
-      }
-      this.eventMap.set(ev.id, true)
-      await this.handleEvent(ev)
-    })
-  }
-
-  extractOrderFromEvent(tags: Map<string, string>, ev: Event): Order {
-    // Create a map from the tags array for easy access
-    // const tags = new Map<string, string>(ev.tags as [string, string][])
-
+  extractOrderFromEvent(tags: Map<string, string>, ev: NDKEvent): Order {
     if (!tags.has('d') || !tags.has('k') || !tags.has('s') || !tags.has('fa') || !tags.has('pm') || !tags.has('premium') || !tags.has('f')) {
       console.error('Missing required tags in event to extract order. ev.tags: ', ev.tags)
       throw Error('Missing required tags in event to extract order')
     }
 
-     // Extract values from the tags map
+    // Extract values from the tags map
     const id = tags.get('d') as string
     const kind = tags.get('k') as OrderType
     const status = tags.get('s') as OrderStatus
@@ -192,18 +98,19 @@ export class Mostro {
     const amount = Number(tags.get('amt'))
     const payment_method = tags.get('pm') as string
     const premium = Number(tags.get('premium'))
-    const created_at = ev.created_at
+    const created_at = ev.created_at || 0
 
     return new Order(id, kind, status, fiat_code, fiat_amount, payment_method, premium, created_at, amount)
   }
 
-  handlePublicEvent(ev: Event) {
+  async handlePublicEvent(ev: NDKEvent) {
+    const nEvent = await ev.toNostrEvent()
     // Create a map from the tags array for easy access
     const tags = new Map<string, string>(ev.tags as [string, string][])
     if (tags.get('z') === 'order') {
       // Order
       const order = this.extractOrderFromEvent(tags, ev)
-      console.info('< [🧌 -> 📢]', JSON.stringify(order), ', ev: ', ev)
+      console.info('< [🧌 -> 📢]', JSON.stringify(order), ', ev: ', nEvent)
       if (this.orderMap.has(order.id)) {
         // Updates existing order
         this.orderStore.updateOrder({ order: order, event: ev as MostroEvent }, true)
@@ -217,7 +124,8 @@ export class Mostro {
     }
   }
 
-  async handlePrivateEvent(ev: Event) {
+  async handlePrivateEvent(ev: NDKEvent) {
+    const nEvent = await ev.toNostrEvent()
     const tags = new Map<string, string>(ev.tags as [string, string][])
     if (tags.has('p')) {
       const recipient = tags.get('p') as string
@@ -225,13 +133,16 @@ export class Mostro {
       const myPubKey = this.pubkeyCache.hex
       if (myPubKey === recipient) {
         try {
-          const plaintext = await this.signer!.decrypt!(ev.pubkey, ev.content)
+          const sender = new NDKUser({
+            hexpubkey: ev.pubkey
+          })
+          const plaintext = await this.signer!.decrypt!(sender, ev.content)
           if (ev.pubkey === mostroPubKey) {
-            console.info('< 💬 [🧌 -> me]: ', plaintext, ', ev: ', ev)
+            console.info('< [🧌 -> me]: ', plaintext, ', ev: ', nEvent)
             const msg = { ...JSON.parse(plaintext), created_at: ev.created_at }
             this.messageStore.addMostroMessage({ message: msg, event: ev as MostroEvent})
           } else {
-            console.info('< 💬 [🍐 -> me]: ', plaintext, ', ev: ', ev)
+            console.info('< [🍐 -> me]: ', plaintext, ', ev: ', nEvent)
             // Peer DMs
             const peerNpub = nip19.npubEncode(ev.pubkey)
             this.messageStore.addPeerMessage({
@@ -239,7 +150,7 @@ export class Mostro {
               text: plaintext,
               peerNpub: peerNpub,
               sender: 'other',
-              created_at: ev.created_at
+              created_at: ev.created_at || 0
             })
           }
         } catch (err) {
@@ -249,18 +160,21 @@ export class Mostro {
         // DMs I created
         try {
           const [[, recipientPubKey]] = ev.tags
-          const plaintext = await this.signer!.decrypt!(recipientPubKey, ev.content)
+          const recipient = new NDKUser({
+            hexpubkey: recipientPubKey
+          })
+          const plaintext = await this.signer!.decrypt!(recipient, ev.content)
           if (recipient === mostroPubKey)
-            console.log('< 💬 [me -> 🧌]: ', plaintext, ', ev: ', ev)
+            console.log('< [me -> 🧌]: ', plaintext, ', ev: ', nEvent)
           else
-            console.log('< 💬 [me -> 🍐]: ', plaintext, ', ev: ', ev)
-          const peerNpub = nip19.npubEncode(recipient)
+            console.log('< [me -> 🍐]: ', plaintext, ', ev: ', nEvent)
+          const peerNpub = nip19.npubEncode(recipientPubKey)
           this.messageStore.addPeerMessage({
             id: ev.id,
             text: plaintext,
             peerNpub: peerNpub,
             sender: 'me',
-            created_at: ev.created_at
+            created_at: ev.created_at || 0
           })
         } catch (err) {
           console.error('Error while decrypting message: ', err)
@@ -274,39 +188,29 @@ export class Mostro {
     }
   }
 
-  async handleEvent(ev: Event) {
-    let { kind } = ev
-    if (!this.signer && kind.valueOf() !== NOSTR_REPLACEABLE_EVENT_KIND) {
-    // We shouldn't have any events other than kind NOSTR_REPLACEABLE_EVENT_KIND at this point, but just in case
-      console.warn('dropping event due to lack of signer')
-      return
+  async createEvent(payload: object): Promise<NDKEvent | null> {
+    if (!this.signer) {
+      console.error('❗ No signer found')
+      return null
     }
-    if (kind.valueOf() === NOSTR_REPLACEABLE_EVENT_KIND) {
-      this.handlePublicEvent(ev)
-    } else if (kind === NOSTR_ENCRYPTED_DM_KIND) {
-      this.handlePrivateEvent(ev)
-    } else {
-      console.info(`Got event with kind: ${kind}, ev: `, ev)
-    }
-  }
-
-  async createEvent(payload: object) {
-    const publicKey = nip19.decode(this.mostro).data as string
-    const ciphertext = await this.signer!.encrypt!(publicKey, JSON.stringify(payload))
+    const mostroPubKey = nip19.decode(this.mostro).data as string
+    const mostro = new NDKUser({ hexpubkey: mostroPubKey })
+    const cleartext = JSON.stringify(payload)
+    const ciphertext = await this.signer.encrypt(mostro, cleartext)
     const myPubKey = this.pubkeyCache.hex
-    let event = {
-      id: undefined as undefined | string,
-      sig: undefined,
-      kind: NOSTR_ENCRYPTED_DM_KIND,
-      created_at: Math.floor(Date.now() / 1000),
-      content: ciphertext,
-      pubkey: myPubKey,
-      tags: [ ['p', publicKey] ]
+    if (!myPubKey) {
+      console.error(`No pubkey found`)
+      return null
     }
-    event.id = getEventHash(event as UnsignedEvent<Kind.EncryptedDirectMessage>)
-    event = await this.signer?.signEvent(event)
-    console.info('> 💬 [me -> 🧌]: ', JSON.stringify(payload), ', ev: ', event)
-    return ['EVENT', event]
+    const event = new NDKEvent(this.nostr.ndk)
+    event.kind = NOSTR_ENCRYPTED_DM_KIND
+    event.created_at = Math.floor(Date.now() / 1000)
+    event.content = ciphertext
+    event.pubkey = myPubKey
+    event.tags = [['p', mostroPubKey]]
+    const nEvent = await event.toNostrEvent()
+    console.info('> [me -> 🧌]: ', cleartext, ', ev: ', nEvent)
+    return event
   }
 
   getLocalKeys() {
@@ -328,7 +232,10 @@ export class Mostro {
       }
     }
     const event = await this.createEvent(payload)
-    await this.pool.send(event)
+    if (event) {
+      await event.sign(this.signer)
+      await this.nostr.publishEvent(event)
+    }
   }
   async takeSell(order: Order, invoice: string) {
     const payload = {
@@ -346,7 +253,10 @@ export class Mostro {
       }
     }
     const event = await this.createEvent(payload)
-    await this.pool.send(event)
+    if (event) {
+      await event.sign(this.signer)
+      await this.nostr.publishEvent(event)
+    }
   }
   async takeBuy(order: Order) {
     const payload = {
@@ -363,7 +273,10 @@ export class Mostro {
       }
     }
     const event = await this.createEvent(payload)
-    await this.pool.send(event)
+    if (event) {
+      await event.sign(this.signer)
+      await this.nostr.publishEvent(event)
+    }
   }
   async addInvoice(order: Order, invoice: string) {
     const payload = {
@@ -381,7 +294,10 @@ export class Mostro {
       }
     }
     const event = await this.createEvent(payload)
-    await this.pool.send(event)
+    if (event) {
+      await event.sign(this.signer)
+      await this.nostr.publishEvent(event)
+    }
   }
   async release(order: Order) {
     const payload = {
@@ -394,7 +310,10 @@ export class Mostro {
       }
     }
     const event = await this.createEvent(payload)
-    await this.pool.send(event)
+    if (event) {
+      await event.sign(this.signer)
+      await this.nostr.publishEvent(event)
+    }
   }
   async fiatSent(order: Order) {
     const payload = {
@@ -406,7 +325,10 @@ export class Mostro {
       }
     }
     const event = await this.createEvent(payload)
-    await this.pool.send(event)
+    if (event) {
+      await event.sign(this.signer)
+      await this.nostr.publishEvent(event)
+    }
   }
   async dispute(order: Order) {
     const payload = {
@@ -419,7 +341,10 @@ export class Mostro {
       }
     }
     const event = await this.createEvent(payload)
-    await this.pool.send(event)
+    if (event) {
+      await event.sign(this.signer)
+      await this.nostr.publishEvent(event)
+    }
   }
   async cancel(order: Order) {
     const payload = {
@@ -432,30 +357,38 @@ export class Mostro {
       }
     }
     const event = await this.createEvent(payload)
-    await this.pool.send(event)
-  }
-  async submitDirectMessage(message: string, npub: string, replyTo: string) {
-    const destinationPubKey = nip19.decode(npub).data as string
-    const myPublicKey = await this.signer?.getPublicKey()
-    const ciphertext = await this.signer?.encrypt!(destinationPubKey, message)
-    let event = {
-      id: undefined as undefined | string,
-      sig: undefined as undefined | string,
-      kind: NOSTR_ENCRYPTED_DM_KIND,
-      created_at: Math.floor(Date.now() / 1000),
-      content: ciphertext,
-      pubkey: myPublicKey,
-      tags: [
-        ['p', destinationPubKey],
-        ['p', myPublicKey]
-      ]
+    if (event) {
+      await event.sign(this.signer)
+      await this.nostr.publishEvent(event)
     }
+  }
+  async submitDirectMessage(message: string, npub: string, replyTo: string): Promise<NDKEvent | null> {
+    if (!this.signer) {
+      console.error('❗ No signer found')
+      return null
+    }
+    if (!this?.pubkeyCache?.hex) {
+      console.error('❗ No pubkey found')
+      return null 
+    }
+    const myPubkey = this.pubkeyCache.hex
+    const destinationPubKey = nip19.decode(npub).data as string
+    const recipient = new NDKUser({ hexpubkey: destinationPubKey })
+    const ciphertext = await this.signer.encrypt(recipient, message)
+    const event = new NDKEvent(this.nostr.ndk)
+    event.kind = NOSTR_ENCRYPTED_DM_KIND
+    event.created_at = Math.floor(Date.now() / 1000)
+    event.content = ciphertext
+    event.pubkey = myPubkey
+    event.tags = [
+      ['p', destinationPubKey],
+      ['p', myPubkey]
+    ]
     if (replyTo) {
       event.tags.push(['e', replyTo, '', 'reply'])
     }
-    event.id = getEventHash(event as UnsignedEvent<Kind.EncryptedDirectMessage>)
-    event = await this.signer?.signEvent(event)
-    await this.pool.send(['EVENT', event])
+    await event.sign(this.signer)
+    return event
   }
 
   getNpub() {
@@ -479,28 +412,28 @@ export class Mostro {
 }
 
 export default defineNuxtPlugin((nuxtApp) => {
+  const nostr = nuxtApp.$nostr as Nostr
   const config = useRuntimeConfig()
-  const { public: { relays, mostroPubKey } } = config
+  const { public: { mostroPubKey } } = config
   const opts: MostroOptions = {
-    relays: relays.split(','),
+    nostr,
     mostroPubKey
   }
   const mostro = new Mostro(opts)
   nuxtApp.provide('mostro', mostro)
-  // We need to wait a bit before initializing the mostro object, otherwise the
-  // client & server-side rendering versions won't match for some reason.
-  setTimeout(() => mostro.init(), 1e3)
 
   // Registering a watcher for the nsec
   const authStore = useAuth()
   watch(() => authStore.nsec, (newValue) => {
     if (newValue) {
       // If we have a signer, we can request DMs
-      mostro.signer = new LocalSigner()
-      mostro.subscribeDMs()
+      mostro.signer = new NDKPrivateKeySigner(newValue)
+      const myPubkey = newValue
+      // mostro.subscribeDMs()
+      nostr.subscribeDMs(myPubkey)
     } else {
-      mostro.lock()
-      mostro.unsubscribeDMs()
+      // mostro.lock()
+      nostr.unsubscribeDMs()
     }
   })
 
@@ -511,11 +444,12 @@ export default defineNuxtPlugin((nuxtApp) => {
         hex: newValue,
         npub: nip19.npubEncode(newValue)
       }
-      mostro.signer = new ExtensionSigner()
-      mostro.subscribeDMs()
+      mostro.signer = new NDKNip07Signer()
+      const myPubkey = newValue
+      nostr.subscribeDMs(myPubkey)
     } else {
-      mostro.lock()
-      mostro.unsubscribeDMs()
+      // mostro.lock()
+      nostr.unsubscribeDMs()
     }
   })
 })
