@@ -47,6 +47,7 @@ export const useMessages = defineStore('messages', {
           if (order)
             orderStore.updateOrder({ order, event })
         }
+        orderStore.updateOrderStatus(message.Order.id, orderMessage.action, event)
         this.messages.mostro.push(message)
       } else if (message.CantDo) {
         console.warn(`>>> [${message.CantDo.id}] CantDo, id: ${message.CantDo.id} message: ${message.CantDo?.content?.TextMessage}`)
@@ -142,6 +143,7 @@ export const useMessages = defineStore('messages', {
         if (!reduced) return []
         // Converting back to an array
         return Object.values(reduced)
+          .sort((a: MostroMessage, b: MostroMessage) => a.created_at - b.created_at)
       }
     },
     getPeerMessagesByNpub(state: MessagesState) : (npub: string) => PeerMessage[] {
