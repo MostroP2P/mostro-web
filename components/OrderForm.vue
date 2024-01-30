@@ -95,7 +95,7 @@
 import { defineComponent } from 'vue'
 import type { PropType } from 'vue'
 import * as bolt11 from 'light-bolt11-decoder'
-import invoiceValidator from '~/mixins/invoice-validator'
+import invoiceValidator, { type DecodedInvoice, type Section } from '~/mixins/invoice-validator'
 import { OrderStatus, OrderPricingMode, OrderType } from '@/stores/types'
 import type { FiatData, NewOrder } from '@/stores/types'
 import fiat from '~/assets/fiat.json'
@@ -137,7 +137,7 @@ export default defineComponent({
       required: true
     },
     onProcessingUpdate: {
-      type: Function as PropType<(arg: boolean) => boolean>,
+      type: Function as PropType<(arg: boolean) => void>,
       default: () => (arg: boolean) => false,
       required: true
     },
@@ -149,13 +149,22 @@ export default defineComponent({
   },
   mixins: [ invoiceValidator ],
   watch: {
-    buyerInvoice(newValue) {
-      // @ts-ignore
-      this.decodedInvoice = {}
+    buyerInvoice(newValue: string) {
+      this.decodedInvoice = {} as DecodedInvoice
       try {
-        // @ts-ignore
-        this.decodedInvoice = bolt11.decode(newValue)
-      } catch(err) {}
+        const decoded = bolt11.decode(newValue) as DecodedInvoice
+        decoded.sectionsMap = new Map<string, Section>
+        for (const section of decoded.sections) {
+          decoded.sectionsMap.set(section.name, section)
+        }
+        this.decodedInvoice = decoded
+      } catch(err : unknown) {
+        this.decodedInvoice = {} as DecodedInvoice
+        if (typeof err === 'object' && err !== null && 'message' in err) {
+          this.decodedInvoice.error = err.message as string
+        }
+        console.error('Error while decoding invoice: ', err)
+      }
     }
   },
   mounted() {

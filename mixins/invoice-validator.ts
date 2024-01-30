@@ -1,89 +1,126 @@
-import * as bolt11 from 'light-bolt11-decoder'
 
-type DecodedInvoice = {
-  complete: boolean,
-  millisatoshis: string,
-  satoshis: number
+export interface DecodedInvoice {
+  paymentRequest: string
+  sections: Section[]
+  sectionsMap: Map<string, Section> | undefined
+  expiry: number
+  route_hints: any[]
+  error?: string
 }
 
-export default {
+export interface Section {
+  name: string
+  letters: string
+  value?: string | number | CoinNetworkValue | FeatureBitsValue
+  tag?: string
+}
+
+export interface CoinNetworkValue {
+  bech32: string
+  pubKeyHash: number
+  scriptHash: number
+  validWitnessVersions: number[]
+}
+
+export interface FeatureBitsValue {
+  option_data_loss_protect: 'unsupported' | 'supported'
+  initial_routing_sync: 'unsupported' | 'supported'
+  option_upfront_shutdown_script: 'unsupported' | 'supported'
+  gossip_queries: 'unsupported' | 'supported'
+  var_onion_optin: 'unsupported' | 'supported'
+  gossip_queries_ex: 'unsupported' | 'supported'
+  option_static_remotekey: 'unsupported' | 'supported'
+  payment_secret: 'unsupported' | 'required'
+  basic_mpp: 'unsupported' | 'supported'
+  option_support_large_channel: 'unsupported' | 'supported'
+  extra_bits: ExtraBits
+}
+
+export interface ExtraBits {
+  start_bit: number
+  bits: number[]
+  has_required: boolean
+}
+
+export default defineComponent({
   data() {
     return {
-      decodedInvoice: {} as DecodedInvoice,
+      requiredSatsAmount: null as number | null,
+      decodedInvoice: {} as DecodedInvoice | null,
       rules: {
         required: (value: string) => !!value || 'Enter a LN invoice',
-        // @ts-ignore
-        isInvoice: () => this.decodedInvoice.complete || 'Not a valid invoice',
-        // @ts-ignore
-        network: () => this.isInvoiceNetwork || 'Wrong invoice network',
-        // @ts-ignore
-        value: () => this.isValueCorrect || this.wrongAmountErrorMessage,
-        // @ts-ignore
-        expired: () => this.isExpired || 'Expired invoice'
-      }
+        isInvoice: () => !!this.isInvoice || 'Not a valid LN invoice',
+        network: () => !!this.isInvoiceNetwork || 'Wrong invoice network',
+        value: () => !!this.isValueCorrect || this.wrongAmountErrorMessage,
+        expired: () => !this.isExpired || 'Expired invoice'
+      },
+      isProduction: process.env.NODE_ENV === 'production'
     }
   },
-  methods: {
-    isInvoice(text: string) {
-      try {
-        bolt11.decode(text)
-        return true
-      } catch(err) {
-        return 'Not a valid invoice'
-      }
-    },
-  },
   computed: {
+    isInvoice(): boolean | string {
+      if (!this.decodedInvoice) return false
+      if (this.decodedInvoice.error) {
+        let errorMsg = this.decodedInvoice.error
+        const regex = /Invalid checksum in (.*): expected "(.*)"/
+        const match = errorMsg.match(regex)
+        if (match) {
+          errorMsg = `Invalid checksum, expected: ${match[2]}`
+        }
+        return errorMsg
+      }
+      return this.decodedInvoice.paymentRequest !== undefined
+    },
     isValueCorrect(): boolean {
-      // @ts-ignore
+      if (!this.decodedInvoice) return false
       if (!this.requiredSatsAmount) {
-        // If a required amount has not been specified,
-        // we just return true to this check 
         return true
       }
-      let msat = 0
       try {
-        // @ts-ignore
-        const decoded = this.decodedInvoice
-        if (decoded) {
-          // @ts-ignore
-          if (decoded.satoshis) {
-            // @ts-ignore
-            msat = decoded.satoshis * 1e3
-            // @ts-ignore
-          } else if (decoded.millisatoshis !== null && decoded.millisatoshis !== undefined) {
-            // @ts-ignore
-            msat = parseInt(decoded.millisatoshis)
-          }
-        }
-        // @ts-ignore
-        const requiredMsat = this.requiredSatsAmount * 1e3
-        return msat !== 0 && msat === requiredMsat
+        const sectionsMap = this.decodedInvoice.sectionsMap
+        const amountSection = sectionsMap?.get('amount')
+        if (!amountSection) return false
+        const msats = amountSection.value as string
+        const sats = parseInt(msats) / 1e3
+        return sats === this.requiredSatsAmount
       } catch(err) {
         return false
       }
     },
     isExpired() : boolean {
-      // @ts-ignore
-      return this.decodedInvoice.timeExpireDate > Date.now() / 1e3
+      if (!this.decodedInvoice) return false
+      const sectionsMap = this.decodedInvoice.sectionsMap
+      if (!sectionsMap) return false
+      const expiresSection = sectionsMap.get('expiry')
+      const timestampSection = sectionsMap.get('timestamp')
+      if (!expiresSection || !timestampSection) {
+        return true
+      }
+      const expires = expiresSection.value as number
+      const timestamp = timestampSection.value as number
+      const expirationTimesamp = timestamp + expires
+      const now = Date.now() / 1E3
+      return expirationTimesamp < now
     },
     isInvoiceNetwork() {
-      // TODO: This should be 'bcrt' in dev mode and 'bc' in production
-      return true
+      if (this.isProduction) {
+        // If this is production, we want to be a bit more
+        // strict with the bolt11 invoice
+        const sectionsMap = this.decodedInvoice?.sectionsMap
+        if (!sectionsMap) return 'Could not find network'
+        const networkSection = sectionsMap.get('coin_network')
+        return networkSection?.letters === 'bc'
+      } else {
+        return true
+      }
     },
     invoiceValueSats() {
-      let amount = NaN
-      // @ts-ignore
-      if (this.decodedInvoice?.complete) {
-        // @ts-ignore
-        const decoded: DecodedInvoice = this.decodedInvoice
-        if (decoded?.satoshis) {
-          amount = decoded.satoshis
-        } else if (decoded?.millisatoshis && decoded?.millisatoshis) {
-          amount = Math.floor(parseInt(decoded.millisatoshis) / 1e3)
-        }
-      }
-      return amount
+      if (!this.decodedInvoice) return NaN
+      const sectionsMap = this.decodedInvoice.sectionsMap
+      const amountSection = sectionsMap?.get('amount')
+      if (!amountSection) return NaN
+      const msats = amountSection.value as string
+      return parseInt(msats) / 1e3
     }
   }
-}
+})
