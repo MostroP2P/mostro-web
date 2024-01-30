@@ -47,6 +47,7 @@ export const useMessages = defineStore('messages', {
           if (order)
             orderStore.updateOrder({ order, event })
         }
+        orderStore.updateOrderStatus(message.Order.id, orderMessage.action, event)
         this.messages.mostro.push(message)
       } else if (message.CantDo) {
         console.warn(`>>> [${message.CantDo.id}] CantDo, id: ${message.CantDo.id} message: ${message.CantDo?.content?.TextMessage}`)

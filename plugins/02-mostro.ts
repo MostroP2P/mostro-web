@@ -16,7 +16,7 @@ const EVENT_INTEREST_WINDOW = 60 * 60 * 24 * 7 // 7 days
 const NOSTR_REPLACEABLE_EVENT_KIND = 38383
 const NOSTR_ENCRYPTED_DM_KIND = 4
 
-export type MostroEvent = Event<typeof NOSTR_REPLACEABLE_EVENT_KIND | typeof NOSTR_ENCRYPTED_DM_KIND>
+export type MostroEvent = NDKEvent
 
 type MostroOptions = {
   mostroPubKey: string,

@@ -1,5 +1,6 @@
+import { NDKEvent } from '@nostr-dev-kit/ndk'
 import type { MostroEvent } from '~/plugins/02-mostro'
-import type { OrderMapType, OrderOwnershipMapType, ScheduledOrderUpdatePayload } from './types'
+import { Action, OrderStatus, type OrderMapType, type OrderOwnershipMapType } from './types'
 import { Order } from './types'
 
 export const useOrders = defineStore('orders', {
@@ -22,7 +23,7 @@ export const useOrders = defineStore('orders', {
         this.orders[order.id] = order
       }
     },
-    addUserOrder({ order, event }: {order: Order, event: MostroEvent}) {
+    addUserOrder({ order, event }: {order: Order, event: NDKEvent}) {
       if (!this.orders[order.id]) {
         // If the order doesn't yet exist, we add it
         this.orders[order.id] = order
@@ -57,11 +58,68 @@ export const useOrders = defineStore('orders', {
           existingOrder.status = order.status
         }
         // Adds or updates the 'update_at' field
-        existingOrder.updated_at = !existingOrder.updated_at ?  order.created_at : Math.max(existingOrder.updated_at, event.created_at)
+        existingOrder.updated_at = !existingOrder.updated_at ?  order.created_at : Math.max(existingOrder.updated_at, event.created_at as number)
       } else {
         console.warn(`Could not find order with id ${order.id} to update`)
       }
     },
+    updateOrderStatus(orderId: string, action: Action, event: NDKEvent) {
+      const existingOrder = this.orders[orderId]
+      console.log(`[${orderId}]: ${existingOrder.status}`)
+      if (
+        existingOrder.updated_at &&
+        event.created_at &&
+        existingOrder.updated_at > event.created_at
+      ) {
+        console.debug(`Ignoring event ${event.id} for order ${orderId} because it's older than the current state`)
+        return
+      }
+      switch(action) {
+        case Action.AddInvoice:
+          if (existingOrder.status === OrderStatus.WAITING_PAYMENT) {
+            existingOrder.status = OrderStatus.WAITING_BUYER_INVOICE
+            existingOrder.updated_at = Math.floor(Date.now() / 1E3)
+          }
+          if (existingOrder.status === OrderStatus.WAITING_BUYER_INVOICE) {
+            existingOrder.status = OrderStatus.WAITING_PAYMENT
+            existingOrder.updated_at = Math.floor(Date.now() / 1E3)
+          }
+          // When the buyer is the taker
+          if (existingOrder.status === OrderStatus.PENDING) {
+            existingOrder.status = OrderStatus.WAITING_BUYER_INVOICE
+            existingOrder.updated_at = Math.floor(Date.now() / 1E3)
+          }
+          break
+        case Action.WaitingSellerToPay:
+          if (existingOrder.status === OrderStatus.PENDING) {
+            existingOrder.status = OrderStatus.WAITING_PAYMENT
+            existingOrder.updated_at = Math.floor(Date.now() / 1E3)
+          }
+          break
+        case Action.PayInvoice:
+          if (existingOrder.status === OrderStatus.PENDING) {
+            existingOrder.status = OrderStatus.WAITING_PAYMENT
+            existingOrder.updated_at = Math.floor(Date.now() / 1E3)
+          }
+          break
+        case Action.FiatSent:
+          if (existingOrder.status === OrderStatus.ACTIVE) {
+            existingOrder.status = OrderStatus.FIAT_SENT
+            existingOrder.updated_at = Math.floor(Date.now() / 1E3)
+          }
+          break
+        case Action.PurchaseCompleted:
+          existingOrder.status = OrderStatus.SUCCESS
+          existingOrder.updated_at = Math.floor(Date.now() / 1E3)
+          break
+        case Action.WaitingSellerToPay:
+          if (existingOrder.status === OrderStatus.WAITING_BUYER_INVOICE) {
+            existingOrder.status = OrderStatus.WAITING_PAYMENT
+            existingOrder.updated_at = Math.floor(Date.now() / 1E3)
+          }
+          break
+      }
+    }
   },
   getters: {
     getPendingOrders(state) {
