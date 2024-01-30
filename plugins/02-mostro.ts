@@ -1,20 +1,11 @@
 import { watch } from 'vue'
 import { NDKEvent, type NDKSigner, NDKUser, NDKPrivateKeySigner, NDKNip07Signer } from '@nostr-dev-kit/ndk'
-import { nip19, type Event } from 'nostr-tools'
+import { nip19 } from 'nostr-tools'
 import { useAuth } from '@/stores/auth'
 import { useOrders } from '@/stores/orders'
 import { useMessages } from '@/stores/messages'
 import { Order, OrderStatus, OrderType } from '../stores/types'
-import type { Nostr } from './01-nostr'
-
-/**
- * Maximum number of seconds to be returned in the initial query
- */
-const EVENT_INTEREST_WINDOW = 60 * 60 * 24 * 7 // 7 days
-
-// Message kinds
-const NOSTR_REPLACEABLE_EVENT_KIND = 38383
-const NOSTR_ENCRYPTED_DM_KIND = 4
+import { NOSTR_ENCRYPTED_DM_KIND, type Nostr } from './01-nostr'
 
 export type MostroEvent = NDKEvent
 

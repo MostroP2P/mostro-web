@@ -10,8 +10,8 @@ const EVENT_INTEREST_WINDOW = 60 * 60 * 24 * 7 // 7 days
 
 // Message kinds
 type ExtendedNDKKind = NDKKind | 38383
-const NOSTR_REPLACEABLE_EVENT_KIND: ExtendedNDKKind = 38383
-const NOSTR_ENCRYPTED_DM_KIND = NDKKind.EncryptedDirectMessage
+export const NOSTR_REPLACEABLE_EVENT_KIND: ExtendedNDKKind = 38383
+export const NOSTR_ENCRYPTED_DM_KIND = NDKKind.EncryptedDirectMessage
 
 export type OrderCallback = (event: NDKEvent) => void
 export type DMCallback = (event: NDKEvent) => void
