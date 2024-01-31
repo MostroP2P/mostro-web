@@ -117,6 +117,11 @@ export const useOrders = defineStore('orders', {
             existingOrder.updated_at = Math.floor(Date.now() / 1E3)
           }
           break
+        case Action.HoldInvoicePaymentAccepted:
+        case Action.BuyerTookOrder:
+          existingOrder.status = OrderStatus.ACTIVE
+          existingOrder.updated_at = Math.floor(Date.now() / 1E3)
+          break
       }
     }
   },
