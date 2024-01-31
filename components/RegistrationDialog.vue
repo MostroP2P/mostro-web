@@ -20,8 +20,8 @@
               v-model="privateKey"
               outlined
               :rules="[
-                (v) => rules.isNotEmpty(v),
-                (v) => rules.isValidNsec(v) || rules.isValidHex(v) || 'Not a valid NSEC or HEX'
+                (v: string) => rules.isNotEmpty(v),
+                (v: string) => rules.isValidNsec(v) || rules.isValidHex(v) || 'Not a valid NSEC or HEX'
               ]"
               label="Enter your nsec or hex"
               :disabled="isProcessing"
@@ -103,7 +103,7 @@ import { AuthMethod, useAuth } from '~/stores/auth'
 // Minimum password length
 const MIN_PASSWORD_LENGTH = 10
 
-export default {
+export default defineComponent({
   data() {
     return {
       MIN_PASSWORD_LENGTH,
@@ -188,5 +188,5 @@ export default {
       }
     }
   }
-}
+})
 </script>
