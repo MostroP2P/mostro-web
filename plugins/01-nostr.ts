@@ -126,6 +126,7 @@ export class Nostr {
   unsubscribeDMs() {
     if (this.dmSubscription) {
       this.dmSubscription.stop()
+      this.dmSubscription = undefined
     }
   }
 

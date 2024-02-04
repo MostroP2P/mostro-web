@@ -17,38 +17,22 @@
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent, watch } from 'vue'
-import { useLocalStorage } from '@vueuse/core'
+<script lang="ts" setup>
+import { computed } from 'vue'
 import { useAuth } from '@/stores/auth'
-import { AUTH_LOCAL_STORAGE_ENCRYPTED_KEY } from '@/stores/types'
 
-export default defineComponent({
-  setup() {
-    const authStore = useAuth()
-    const encryptedPrivKey = useLocalStorage(AUTH_LOCAL_STORAGE_ENCRYPTED_KEY, '')
+const authStore = useAuth()
 
-    watch(encryptedPrivKey, (newVal) => {
-      encryptedPrivKey.value = newVal
-    })
+const onLogout = () => {
+  authStore.logout()
+}
 
-    return {
-      authStore,
-      encryptedPrivKey
-    }
-  },
-  methods: {
-    onLogout() {
-      this.authStore.logout()
-    },
-  },
-  computed: {
-    hasEncryptedKey(): boolean {
-      return this.encryptedPrivKey !== ''
-    },
-    isLoggedIn(): boolean {
-      return !!this.authStore.publicKey || !!this.authStore.nsec
-    }
-  }
+const hasEncryptedKey = computed<boolean>(() => {
+  return authStore.encryptedPrivateKey !== null
+})
+
+const isLoggedIn = computed<boolean>(() => {
+  return !!authStore.publicKey || !!authStore.nsec
 })
 </script>
+

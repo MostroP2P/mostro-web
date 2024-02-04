@@ -106,7 +106,6 @@ interface Fiat {
 
 export default defineComponent({
   data() {
-    const fmap = fiat as unknown as Fiat
     return {
       valid: false,
       fiatAmount: 0,

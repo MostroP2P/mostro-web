@@ -1,6 +1,6 @@
+import { watch } from 'vue'
 import { AUTH_LOCAL_STORAGE_ENCRYPTED_KEY, AUTH_LOCAL_STORAGE_DECRYPTED_KEY } from './types'
 import type { EncryptedPrivateKey } from './types'
-import { useLocalStorage } from '@vueuse/core'
 import { nip19 } from 'nostr-tools'
 
 export enum AuthMethod {
@@ -50,11 +50,22 @@ export const useAuth = defineStore('auth', {
       if(encryptedPrivKey) {
         this.encryptedPrivateKey = JSON.parse(encryptedPrivKey)
       }
-      const decryptedPrivKey = useLocalStorage(AUTH_LOCAL_STORAGE_DECRYPTED_KEY, '')
-      if (decryptedPrivKey) {
-        this.setKey({ privateKey: decryptedPrivKey.value })
-        this.authMethod = AuthMethod.LOCAL
+      const decryptedPrivKey = ref<string | null>(localStorage.getItem(AUTH_LOCAL_STORAGE_DECRYPTED_KEY))
+      if (decryptedPrivKey.value) {
+        try {
+          this.setKey({ privateKey: decryptedPrivKey.value })
+          this.authMethod = AuthMethod.LOCAL
+        } catch(err) {
+          console.warn('Error setting local key from local storage: ', err)
+          this.delete()
+        }
       }
+      watch(() => this.encryptedPrivateKey, (newVal) => {
+        localStorage.setItem(AUTH_LOCAL_STORAGE_ENCRYPTED_KEY, JSON.stringify(newVal))
+      })
+      watch(() => this.nsec, (newVal) => {
+        localStorage.setItem(AUTH_LOCAL_STORAGE_DECRYPTED_KEY, newVal || '')
+      })
     },
     login(loginPayload: LoginPayload) {
       this.authMethod = loginPayload.authMethod
@@ -71,16 +82,18 @@ export const useAuth = defineStore('auth', {
       if (isNsec(privateKey)) {
         this.nsec = privateKey
       } else {
-        try {
-          const encoded = nip19.nsecEncode(privateKey)
-          this.nsec = encoded
-        } catch (err) {
-          console.error('Error decoding private key to nip-19: ', err)
-        }
+        const encoded = nip19.nsecEncode(privateKey)
+        this.nsec = encoded
       }
     },
     setEncryptedPrivateKey(encryptedPrivateKey: EncryptedPrivateKey | null) {
       this.encryptedPrivateKey = encryptedPrivateKey
+    },
+    delete() {
+      this.nsec = null
+      this.encryptedPrivateKey = null
+      this.publicKey = null
+      this.authMethod = AuthMethod.NOT_SET
     },
     logout() {
       if (this.nsec) {
@@ -89,10 +102,7 @@ export const useAuth = defineStore('auth', {
       if (this.authMethod === AuthMethod.NIP07) {
         this.publicKey = null
       }
-      const decryptedPrivKey = useLocalStorage(AUTH_LOCAL_STORAGE_DECRYPTED_KEY, '')
-      if (decryptedPrivKey) {
-        decryptedPrivKey.value = ''
-      }
+      localStorage.removeItem(AUTH_LOCAL_STORAGE_DECRYPTED_KEY)
       this.authMethod = AuthMethod.NOT_SET
     },
   },

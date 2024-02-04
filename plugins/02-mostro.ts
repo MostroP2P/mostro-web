@@ -1,6 +1,6 @@
 import { watch } from 'vue'
 import { NDKEvent, type NDKSigner, NDKUser, NDKPrivateKeySigner, NDKNip07Signer } from '@nostr-dev-kit/ndk'
-import { nip19 } from 'nostr-tools'
+import { nip19, getPublicKey } from 'nostr-tools'
 import { useAuth } from '@/stores/auth'
 import { useOrders } from '@/stores/orders'
 import { useMessages } from '@/stores/messages'
@@ -415,21 +415,24 @@ export default defineNuxtPlugin((nuxtApp) => {
 
   // Registering a watcher for the nsec
   const authStore = useAuth()
-  watch(() => authStore.nsec, (newValue) => {
-    if (newValue) {
-      // If we have a signer, we can request DMs
-      mostro.signer = new NDKPrivateKeySigner(newValue)
-      const myPubkey = newValue
-      // mostro.subscribeDMs()
-      nostr.subscribeDMs(myPubkey)
+  watch(() => authStore.nsec, (newNsec: string | null) => {
+    if (newNsec) {
+      try {
+        const decoded = nip19.decode(newNsec)
+        // If we have a signer, we can request DMs
+        mostro.signer = new NDKPrivateKeySigner(decoded.data as string)
+        const myPubkey = getPublicKey(decoded.data as string)
+        nostr.subscribeDMs(myPubkey)
+      } catch (err) {
+        console.error('Error while trying to decode nsec: ', err)
+      }
     } else {
-      // mostro.lock()
       nostr.unsubscribeDMs()
     }
   })
 
   // Registering a watcher for public key
-  watch(() => authStore.publicKey, (newValue) => {
+  watch(() => authStore.publicKey, (newValue: string | null | undefined) => {
     if (newValue) {
       mostro.pubkeyCache = {
         hex: newValue,

@@ -20,8 +20,8 @@
               v-model="privateKey"
               outlined
               :rules="[
-                (v) => rules.isNotEmpty(v),
-                (v) => rules.isValidNsec(v) || rules.isValidHex(v) || 'Not a valid NSEC or HEX'
+                (v: string) => rules.isNotEmpty(v),
+                (v: string) => rules.isValidNsec(v) || rules.isValidHex(v) || 'Not a valid NSEC or HEX'
               ]"
               label="Enter your nsec or hex"
               :disabled="isProcessing"
@@ -91,102 +91,85 @@
   </v-dialog>
 </template>
 
-<script lang="ts">
-import * as CryptoJS from 'crypto-js'
-import secretValidator from '~/mixins/secret-validator'
-import crypto from '~/mixins/crypto'
-import nip07 from '~/mixins/nip-07'
-import { useLocalStorage } from '@vueuse/core'
-import { AUTH_LOCAL_STORAGE_ENCRYPTED_KEY } from '~/stores/types'
+<script lang="ts" setup>
+import { ref, computed } from 'vue'
+import CryptoJS from 'crypto-js'
 import { AuthMethod, useAuth } from '~/stores/auth'
+import { useCrypto } from '~/composables/useCrypto'
+import { useSecretValidator } from '~/composables/useSecretValidator'
 
-// Minimum password length
 const MIN_PASSWORD_LENGTH = 10
+const showDialog = ref(false)
+const tab = ref(null)
+const nsecVisible = ref(false)
+const privateKey = ref('')
+const password = ref('')
+const confirmation = ref('')
+const isProcessing = ref(false)
+const authStore = useAuth()
 
-export default {
-  data() {
-    return {
-      MIN_PASSWORD_LENGTH,
-      showDialog: false,
-      tab: null,
-      privateKey: '',
-      nsecVisible: false,
-      password: '',
-      confirmation: '',
-      worker: null,
-      isProcessing: false
-    }
-  },
-  setup() {
-    const authStore = useAuth()
-    const encryptedPrivKey = useLocalStorage(AUTH_LOCAL_STORAGE_ENCRYPTED_KEY, '')
+const { rules } = useSecretValidator()
+const { isValidNsec, isValidHex, isNotEmpty } = rules
+const { generateSalt, deriveKey } = useCrypto()
 
-    watch(encryptedPrivKey, (newVal) => {
-      encryptedPrivKey.value = newVal
+const toggleNsecVisibility = () => {
+  nsecVisible.value = !nsecVisible.value
+}
+
+const onPrivateKeyConfirmed = async function () {
+  isProcessing.value = true
+  try {
+    const salt = generateSalt()
+    const key = await deriveKey(password.value, salt.toString('base64'), ['encrypt', 'decrypt'])
+    let rawKey = await window.crypto.subtle.exportKey('raw', key)
+    let rawKeyBytes = Buffer.from(rawKey)
+    let base64Key = rawKeyBytes.toString('base64')
+    const ciphertext = CryptoJS.AES.encrypt(privateKey.value, base64Key).toString()
+    authStore.encryptedPrivateKey = { ciphertext, salt: salt.toString('base64') }
+    authStore.login({
+      privateKey: privateKey.value,
+      authMethod: AuthMethod.LOCAL
     })
-
-    return { authStore, encryptedPrivKey }
-  },
-  mixins: [secretValidator, crypto, nip07],
-  methods: {
-    toggleNsecVisibility() {
-      this.nsecVisible = !this.nsecVisible
-    },
-    async onPrivateKeyConfirmed() {
-      this.isProcessing = true
-      try {
-        // @ts-ignore
-        const salt = this.generateSalt()
-        // @ts-ignore
-        const key = await this.deriveKey(this.password, salt, ['encrypt', 'decrypt'])
-        let rawKey = await window.crypto.subtle.exportKey('raw', key)
-        let rawKeyBytes = Buffer.from(rawKey)
-        let base64Key = rawKeyBytes.toString('base64')
-        const ciphertext = CryptoJS.AES.encrypt(this.privateKey, base64Key).toString()
-        this.encryptedPrivKey = JSON.stringify({ ciphertext, salt: salt.toString('base64') })
-        this.authStore.login({
-          privateKey: this.privateKey,
-          authMethod: AuthMethod.LOCAL
-        })
-      } catch(err) {
-        console.error('Error while generating encryption key. Err: ', err)
-      } finally {
-        this.isProcessing = false
-      }
-    },
-    async onNip07() {
-      // @ts-ignore
-      const publicKey = await this.getPublicKey()
-      this.authStore.login({
-        authMethod: AuthMethod.NIP07,
-        publicKey: publicKey
-      })
-      this.showDialog = false
-    }
-  },
-  computed: {
-    hasNIP07() {
-      // @ts-ignore
-      return window && window.nostr
-    },
-    validSecret() {
-      const v = this.privateKey
-      // @ts-ignore
-      return this.rules.isNotEmpty(v) && this.rules.isValidNsec(v) || this.rules.isValidHex(v)
-    },
-    validPassword() {
-      return this.password && this.password.length >= this.MIN_PASSWORD_LENGTH
-    },
-    validConfirmation() {
-      return this.confirmation && this.confirmation === this.password
-    },
-    registrationButtonText() {
-      if (this.hasNIP07) {
-        return 'Login'
-      } else {
-        return 'Register'
-      }
-    }
+  } catch(err) {
+    console.error('Error while generating encryption key. Err: ', err)
+  } finally {
+    isProcessing.value = false
   }
 }
+
+const onNip07 = async () => {
+  const publicKey = await window?.nostr?.getPublicKey()
+  if (publicKey) {
+    authStore.login({
+      authMethod: AuthMethod.NIP07,
+      publicKey: publicKey
+    })
+  }
+  showDialog.value = false
+}
+
+const hasNIP07 = computed(() => {
+  return window && window.nostr
+})
+
+const validSecret = computed(() => {
+  const v = privateKey.value
+  return v && isNotEmpty(v) && (isValidNsec(v) || isValidHex(v))
+})
+
+const validPassword = computed(() => {
+  return password.value && password.value.length >= MIN_PASSWORD_LENGTH
+})
+
+const validConfirmation = computed(() => {
+  return confirmation.value && confirmation.value === password.value
+})
+
+const registrationButtonText = computed(() => {
+  if (hasNIP07.value) {
+    return 'Login'
+  } else {
+    return 'Register'
+  }
+})
 </script>
