@@ -432,7 +432,7 @@ export default defineNuxtPlugin((nuxtApp) => {
   })
 
   // Registering a watcher for public key
-  watch(() => authStore.publicKey, (newValue) => {
+  watch(() => authStore.publicKey, (newValue: string | null | undefined) => {
     if (newValue) {
       mostro.pubkeyCache = {
         hex: newValue,

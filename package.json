@@ -16,8 +16,6 @@
   "devDependencies": {
     "@nuxt/devtools": "latest",
     "@types/node": "^18",
-    "@vueuse/core": "^10.2.1",
-    "@vueuse/nuxt": "^10.2.1",
     "auto-changelog": "^2.4.0",
     "nuxt": "^3.5.2"
   },
@@ -34,6 +32,8 @@
     "sass": "^1.63.6",
     "timeago.js": "^4.0.2",
     "vue": "^3.3.4",
-    "vuetify": "^3.3.5"
+    "vuetify": "^3.3.5",
+    "@vueuse/core": "^10.2.1",
+    "@vueuse/nuxt": "^10.2.1"
   }
 }
