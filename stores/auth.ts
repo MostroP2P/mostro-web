@@ -52,8 +52,13 @@ export const useAuth = defineStore('auth', {
       }
       const decryptedPrivKey = ref<string | null>(localStorage.getItem(AUTH_LOCAL_STORAGE_DECRYPTED_KEY))
       if (decryptedPrivKey.value) {
-        this.setKey({ privateKey: decryptedPrivKey.value })
-        this.authMethod = AuthMethod.LOCAL
+        try {
+          this.setKey({ privateKey: decryptedPrivKey.value })
+          this.authMethod = AuthMethod.LOCAL
+        } catch(err) {
+          console.warn('Error setting local key from local storage: ', err)
+          this.delete()
+        }
       }
       watch(() => this.encryptedPrivateKey, (newVal) => {
         localStorage.setItem(AUTH_LOCAL_STORAGE_ENCRYPTED_KEY, JSON.stringify(newVal))
@@ -77,12 +82,8 @@ export const useAuth = defineStore('auth', {
       if (isNsec(privateKey)) {
         this.nsec = privateKey
       } else {
-        try {
-          const encoded = nip19.nsecEncode(privateKey)
-          this.nsec = encoded
-        } catch (err) {
-          console.error('Error decoding private key to nip-19: ', err)
-        }
+        const encoded = nip19.nsecEncode(privateKey)
+        this.nsec = encoded
       }
     },
     setEncryptedPrivateKey(encryptedPrivateKey: EncryptedPrivateKey | null) {

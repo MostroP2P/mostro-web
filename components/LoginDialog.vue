@@ -15,17 +15,19 @@
       </v-tabs>
       <v-window v-model="tab">
         <v-window-item style="min-height: 5em">
-          <v-row class="mx-4 mt-5">
+          <v-row class="mx-4 my-5">
             <v-text-field
               v-model="password"
               outlined
               label="Password"
               type="password"
               :disabled="isProcessing"
+              @input="errorMessage = ''"
               :rules="[
                 v => !!v || 'You need a password',
                 v => validPassword || `Your password cannot be shorter than ${MIN_PASSWORD_LENGTH}`
               ]"
+              :error-messages="errorMessage"
             >
             </v-text-field>
           </v-row>
@@ -84,6 +86,7 @@ const showDialog = ref<boolean>(false)
 const tab = ref<number | null>(null)
 const password = ref<string>('')
 const isProcessing = ref<boolean>(false)
+const errorMessage = ref<string>()
 
 const onPassword = async () => {
   isProcessing.value = true
@@ -112,7 +115,8 @@ const onPassword = async () => {
     authStore.login(localLoginPayload)
     showDialog.value = false
   } catch(err) {
-    console.error('Login error: ', err)
+    console.warn('Login error: ', err)
+    errorMessage.value = 'Invalid password'
   } finally {
     isProcessing.value = false
   }
