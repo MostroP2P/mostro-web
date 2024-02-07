@@ -60,6 +60,11 @@ That's it! 🎉
 # install dependencies
 $ npm install
 
+# Production build and version generation
+# There's no need to run this every time, but run this at least once 
+# before running `npm run dev`
+$ npm run build
+
 # serve with hot reload at localhost:3000
 $ npm run dev
 
@@ -81,13 +86,16 @@ For detailed explanation on how things work, check out the [documentation](https
 -   [x] Buy flow (maker / fixed price)
 -   [x] Sell flow (maker / market rate)
 -   [x] Sell flow (maker / fixed price)
--   [ ] Buy flow (taker / market rate)
--   [ ] Buy flow (taker / fixed price)
--   [ ] Sell flow (taker / market rate)
--   [ ] Sell flow (taker / fixed price)
--   [ ] Handling multiple relays
--   [ ] NIP-07 for key management
--   [ ] Persisting old events?
+-   [x] Buy flow (taker / market rate)
+-   [x] Buy flow (taker / fixed price)
+-   [x] Sell flow (taker / market rate)
+-   [x] Sell flow (taker / fixed price)
+-   [x] Handling multiple relays
+-   [x] NIP-07 for key management
+-   [x] Persisting old events
+-   [ ] Direct message with peers
+-   [ ] Ephemeral identities
+-   [ ] Disputes
 
 ### License
 
