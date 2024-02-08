@@ -2,7 +2,9 @@
   <div>
     <v-list-item-title class="d-flex justify-space-between">
       Invoice Needed
-      <div class="text-caption text--secondary">{{ timeago.format(creationDate) }}</div>
+      <div class="text-caption text--secondary">
+        <CreatedAt :creationDate="creationDate"/>
+      </div>
     </v-list-item-title>
     <div class="wrap-text text-message">
       <p>
@@ -58,7 +60,7 @@ export default {
       return this.message.Order.content.SmallOrder?.payment_method
     },
     creationDate() {
-      return this.message.Order.created_at * 1e3
+      return this.message.created_at * 1e3
     }
   }
 }

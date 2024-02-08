@@ -2,7 +2,7 @@
   <div>
     <v-list-item-title class="d-flex justify-space-between">
       You need to Pay
-      <div class="text-caption text--secondary">{{ timeago.format(creationDate) }}</div>
+      <CreatedAt :creationDate="creationDate"/>
     </v-list-item-title>
     <div class="wrap-text text-message" v-if="isMaker">
       <p v-if="isMaker">
@@ -32,16 +32,11 @@
 <script lang="ts">
 import type { PropType } from 'vue'
 import { mapState } from 'pinia'
-import * as timeago from 'timeago.js'
+import CreatedAt from '~/components/CreatedAt.vue'
 import { useOrders } from '~/stores/orders'
 import type { MostroMessage } from '~/stores/types'
 
 export default {
-  data() {
-    return {
-      timeago
-    }
-  },
   props: {
     message: {
       type: Object as PropType<MostroMessage>,
@@ -82,7 +77,7 @@ export default {
       return 'N/A'
     },
     creationDate() {
-      return this.message.Order.created_at * 1e3
+      return this.message.created_at * 1e3
     },
     isTaker() {
       return !this.order?.is_mine

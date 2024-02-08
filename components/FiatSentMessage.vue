@@ -3,7 +3,9 @@
     <div>
       <v-list-item-title class="d-flex justify-space-between">
         Fiat Sent
-        <div class="text-caption text--secondary">{{ timeago.format(creationDate) }}</div>
+        <div class="text-caption text--secondary">
+          <CreatedAt :creationDate="creationDate"/>
+        </div>
       </v-list-item-title>
       <div class="wrap-text text-message">
         <p v-if="isLocalBuyer">
@@ -29,6 +31,7 @@ import { nip19 } from 'nostr-tools'
 import type { MostroMessage } from '~/stores/types'
 import textMessage from '~/mixins/text-message'
 import NPub from '~/components/NPub.vue'
+import CreatedAt from '~/components/CreatedAt.vue'
 export default {
   data() {
     return { timeago }

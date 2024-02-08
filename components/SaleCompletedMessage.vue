@@ -2,7 +2,9 @@
   <div>
     <v-list-item-title class="d-flex justify-space-between">
       Sale Completed
-      <div class="text-caption text--secondary">{{ timeago.format(creationDate) }}</div>
+      <div class="text-caption text--secondary">
+        <CreatedAt :creationDate="creationDate"/>
+      </div>
     </v-list-item-title>
     <div class="wrap-text text-message">
       <p>
@@ -18,6 +20,7 @@ import * as timeago from 'timeago.js'
 import textMessage from '~/mixins/text-message'
 import type { MostroMessage } from '~/stores/types'
 import { useOrders } from '@/stores/orders'
+import CreatedAt from '~/components/CreatedAt.vue'
 import NPub from '~/components/NPub.vue'
 import { mapState } from 'pinia'
 

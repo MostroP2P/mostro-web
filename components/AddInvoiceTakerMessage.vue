@@ -2,7 +2,9 @@
   <div>
     <v-list-item-title class="d-flex justify-space-between mb-2">
       Invoice Needed
-      <div class="text-caption text--secondary">{{ timeago.format(creationDate) }}</div>
+      <div class="text-caption text--secondary">
+        <CreatedAt :creationDate="creationDate"/>
+      </div>
     </v-list-item-title>
     <div class="wrap-text text-message">
       <p>
@@ -22,15 +24,10 @@
 <script lang="ts">
 import type { PropType } from 'vue'
 import type { MostroMessage } from '~/stores/types'
-import * as timeago from 'timeago.js'
+
 import textMessage from '~/mixins/text-message'
 
 export default {
-  data() {
-    return {
-      timeago
-    }
-  },
   mixins: [ textMessage ],
   props: {
     message: {
@@ -58,7 +55,7 @@ export default {
       return this.message.Order.content.SmallOrder?.payment_method
     },
     creationDate() {
-      return this.message.Order.created_at * 1e3
+      return this.message.created_at * 1e3
     }
   }
 }
