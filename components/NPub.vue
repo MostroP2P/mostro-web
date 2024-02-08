@@ -11,12 +11,12 @@
 import { nip19 } from 'nostr-tools'
 import textMessage from '~/mixins/text-message'
 import mobileDetector from '~/mixins/mobile-detector'
-export default {
+export default defineComponent({
   mixins: [mobileDetector, textMessage],
   name: 'Npub',
   props: {
     publicKey: {
-      type: String,
+      type: String as PropType<string>,
       required: true
     }
   },
@@ -32,7 +32,7 @@ export default {
       return nip19.npubEncode(this.publicKey)
     }
   }
-}
+})
 </script>
 <style scoped>
 .npub {
