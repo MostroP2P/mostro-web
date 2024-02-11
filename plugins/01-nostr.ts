@@ -5,7 +5,7 @@ import { nip19 } from 'nostr-tools'
 /**
  * Maximum number of seconds to be returned in the initial query
  */
-const EVENT_INTEREST_WINDOW = 60 * 60 * 24 * 7 // 7 days
+const EVENT_INTEREST_WINDOW = 60 * 60 * 24 * 14 // 14 days
 
 
 // Message kinds
