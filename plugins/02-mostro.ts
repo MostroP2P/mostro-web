@@ -24,6 +24,11 @@ export enum PublicKeyType {
   NPUB = 'npub'
 }
 
+interface NIP04Parties {
+  sender: NDKUser
+  recipient: NDKUser
+}
+
 export class Mostro {
   _signer: NDKSigner | undefined
   mostro: string
@@ -115,67 +120,91 @@ export class Mostro {
     }
   }
 
+  /**
+   * Function used to extract the two participating parties in this communication.
+   *
+   * @param ev - The event from which to extract the parties
+   * @returns The two parties
+   */
+  private obtainParties(ev: NDKEvent) : NIP04Parties {
+    if (ev.kind !== 4) {
+      throw Error('Trying to obtain parties of a non NIP-04 message')
+    }
+    const parties = ev.tags
+      .filter(([k, _v]) => k === 'p')
+    const _recipient = parties.find(([k, v]) => k === 'p' && v !== ev.author.pubkey)
+    if (!_recipient) {
+      throw new Error('No recipient found in event')
+    }
+    const recipient = new NDKUser({
+      hexpubkey: _recipient[1]
+    })
+    return {
+      sender: ev.author,
+      recipient
+    }
+  }
+
   async handlePrivateEvent(ev: NDKEvent) {
+    if (!this.signer) {
+      console.error('❗ No signer found, cannot decrypt DM')
+      return
+    }
+    const myPubKey = this.pubkeyCache.hex
     const nEvent = await ev.toNostrEvent()
-    const tags = new Map<string, string>(ev.tags as [string, string][])
-    if (tags.has('p')) {
-      const recipient = tags.get('p') as string
-      const mostroPubKey = nip19.decode(this.mostro).data
-      const myPubKey = this.pubkeyCache.hex
-      if (myPubKey === recipient) {
-        try {
-          const sender = new NDKUser({
-            hexpubkey: ev.pubkey
-          })
-          const plaintext = await this.signer!.decrypt!(sender, ev.content)
-          if (ev.pubkey === mostroPubKey) {
-            console.info('< [🧌 -> me]: ', plaintext, ', ev: ', nEvent)
-            const msg = { ...JSON.parse(plaintext), created_at: ev.created_at }
-            this.messageStore.addMostroMessage({ message: msg, event: ev as MostroEvent})
-          } else {
-            console.info('< [🍐 -> me]: ', plaintext, ', ev: ', nEvent)
-            // Peer DMs
-            const peerNpub = nip19.npubEncode(ev.pubkey)
-            this.messageStore.addPeerMessage({
-              id: ev.id,
-              text: plaintext,
-              peerNpub: peerNpub,
-              sender: 'other',
-              created_at: ev.created_at || 0
-            })
-          }
-        } catch (err) {
-          console.error('Error while trying to decode DM: ', err)
-        }
-      } else if (ev.pubkey === myPubKey) {
-        // DMs I created
-        try {
-          const [[, recipientPubKey]] = ev.tags
-          const recipient = new NDKUser({
-            hexpubkey: recipientPubKey
-          })
-          const plaintext = await this.signer!.decrypt!(recipient, ev.content)
-          if (recipient === mostroPubKey)
-            console.log('< [me -> 🧌]: ', plaintext, ', ev: ', nEvent)
-          else
-            console.log('< [me -> 🍐]: ', plaintext, ', ev: ', nEvent)
-          const peerNpub = nip19.npubEncode(recipientPubKey)
+    const mostroPubKey = nip19.decode(this.mostro).data
+    const { sender, recipient } = this.obtainParties(ev)
+    if (sender.pubkey === myPubKey) {
+      // DMs I created
+      try {
+        const [[, recipientPubKey]] = ev.tags
+        const recipientUser = new NDKUser({
+          hexpubkey: recipientPubKey
+        })
+        const plaintext = await this.signer.decrypt(recipientUser, ev.content)
+        if (recipientPubKey === mostroPubKey)
+          console.log('< [me -> 🧌]: ', plaintext, ', ev: ', nEvent)
+        else
+          console.log('< [me -> 🍐]: ', plaintext, ', ev: ', nEvent)
+        const peerNpub = nip19.npubEncode(recipientPubKey)
+        this.messageStore.addPeerMessage({
+          id: ev.id,
+          text: plaintext,
+          peerNpub: peerNpub,
+          sender: 'me',
+          created_at: ev.created_at || 0
+        })
+      } catch (err) {
+        console.error('Error while decrypting message: ', err)
+      }
+    } else if (recipient.pubkey === myPubKey) {
+      // DMs I received
+      try {
+        const sender = new NDKUser({
+          hexpubkey: ev.pubkey
+        })
+        const plaintext = await this.signer.decrypt(sender, ev.content)
+        if (ev.pubkey === mostroPubKey) {
+          console.info('< [🧌 -> me]: ', plaintext, ', ev: ', nEvent)
+          const msg = { ...JSON.parse(plaintext), created_at: ev.created_at }
+          this.messageStore.addMostroMessage({ message: msg, event: ev as MostroEvent})
+        } else {
+          console.info('< [🍐 -> me]: ', plaintext, ', ev: ', nEvent)
+          // Peer DMs
+          const peerNpub = nip19.npubEncode(ev.pubkey)
           this.messageStore.addPeerMessage({
             id: ev.id,
             text: plaintext,
             peerNpub: peerNpub,
-            sender: 'me',
+            sender: 'other',
             created_at: ev.created_at || 0
           })
-        } catch (err) {
-          console.error('Error while decrypting message: ', err)
         }
-      } else {
-        console.log(`> DM. ev: `, ev)
-        console.warn(`Ignoring _DM for key: ${recipient}, my pubkey is ${myPubKey}`)
+      } catch (err) {
+        console.error('Error while trying to decode DM: ', err)
       }
     } else {
-      console.warn('Ignoring DM with no recipient')
+      console.warn(`<< Ignoring DM for key: ${recipient.pubkey}, my pubkey is ${myPubKey}`)
     }
   }
 
@@ -353,14 +382,14 @@ export class Mostro {
       await this.nostr.publishEvent(event)
     }
   }
-  async submitDirectMessage(message: string, npub: string, replyTo: string): Promise<NDKEvent | null> {
+  async submitDirectMessage(message: string, npub: string, replyTo: string): Promise<void> {
     if (!this.signer) {
       console.error('❗ No signer found')
-      return null
+      return
     }
     if (!this?.pubkeyCache?.hex) {
       console.error('❗ No pubkey found')
-      return null 
+      return
     }
     const myPubkey = this.pubkeyCache.hex
     const destinationPubKey = nip19.decode(npub).data as string
@@ -379,7 +408,7 @@ export class Mostro {
       event.tags.push(['e', replyTo, '', 'reply'])
     }
     await event.sign(this.signer)
-    return event
+    await this.nostr.publishEvent(event)
   }
 
   getNpub() {
