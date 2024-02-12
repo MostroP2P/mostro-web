@@ -382,7 +382,7 @@ export class Mostro {
       await this.nostr.publishEvent(event)
     }
   }
-  async submitDirectMessage(message: string, npub: string, replyTo: string): Promise<void> {
+  async submitDirectMessage(message: string, npub: string, replyTo: string | undefined): Promise<void> {
     if (!this.signer) {
       console.error('❗ No signer found')
       return

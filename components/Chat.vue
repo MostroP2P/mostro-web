@@ -5,9 +5,9 @@
       class="flex-grow-1"
       id="messages-container"
     >
-      <div ref="scrollingContent" style="height: calc(100vh - 350px)">
+      <div id="scrollingContent" style="height: calc(100vh - 350px)">
         <v-card-text v-if="peerMessages && peerMessages.length > 0">
-          <v-row v-for="(message) in peerMessages" :key="message.id">
+          <v-row v-for="(message) in peerMessages" :key="message.id" :id="message.id">
             <v-col
               :class="message.sender === 'me' ? 'text-right' : 'text-left'"
               cols="12"
@@ -56,7 +56,7 @@
 </template>
 
 <script lang="ts">
-import { ref, onMounted, nextTick, computed } from 'vue'
+import { ref, computed } from 'vue'
 import { mapState } from 'pinia'
 import { useAuth } from '@/stores/auth'
 import { useMessages } from '~/stores/messages'
@@ -68,21 +68,16 @@ export default defineComponent({
     const inputMessage = ref('')
     const inputContainerHeight = ref(0)
     const timeago = ref(_timeago)
-    const scrollingContent = ref<HTMLElement | null>(null)
 
-    const scrollToBottom = async () => {
-      await nextTick()
-      if (scrollingContent.value) {
-        scrollingContent.value.scrollIntoView({ behavior: 'smooth', block: 'end' })
-      }
+    const scrollToBottom = async (id: string) => {
+      const msgElement = document.getElementById(id)
+      msgElement?.scrollIntoView({ behavior: 'smooth' })
     }
-
-    onMounted(scrollToBottom)
 
     const authStore = useAuth()
     const isAuthenticated = computed(() => authStore.isAuthenticated)
 
-    return { inputMessage, inputContainerHeight, timeago, scrollToBottom, scrollingContent, isAuthenticated }
+    return { inputMessage, inputContainerHeight, timeago, scrollToBottom, isAuthenticated }
   },
   props: {
     npub: {
@@ -102,7 +97,6 @@ export default defineComponent({
       await this.$mostro.submitDirectMessage(text, this.npub, id)
       // @ts-ignore
       this.inputMessage = ''
-      this.scrollToBottom()
     },
     // @ts-ignore
     getMessageTime(message: PeerMessage) {
@@ -112,9 +106,10 @@ export default defineComponent({
   },
   watch: {
     peerMessages: {
-      handler() {
-        // @ts-ignore
-        this.scrollToBottom();
+      handler(msgs) {
+        const lastMessage = msgs[msgs.length - 1]
+        const id = lastMessage.id
+        setTimeout(() => this.scrollToBottom(id), 100)
       },
       // To scroll when the component is mounted, set immediate to true
       immediate: true
