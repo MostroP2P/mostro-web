@@ -97,6 +97,7 @@ import CryptoJS from 'crypto-js'
 import { AuthMethod, useAuth } from '~/stores/auth'
 import { useCrypto } from '~/composables/useCrypto'
 import { useSecretValidator } from '~/composables/useSecretValidator'
+import { useNip19 } from '~/composables/useNip19'
 
 const MIN_PASSWORD_LENGTH = 10
 const showDialog = ref(false)
@@ -119,12 +120,19 @@ const toggleNsecVisibility = () => {
 const onPrivateKeyConfirmed = async function () {
   isProcessing.value = true
   try {
+    let privKey = null
+    const { isNsec, nsecToHex } = useNip19()
+    if (isNsec(privateKey.value)) {
+      privKey = nsecToHex(privateKey.value)
+    } else {
+      privKey = privateKey.value
+    }
     const salt = generateSalt()
     const key = await deriveKey(password.value, salt.toString('base64'), ['encrypt', 'decrypt'])
     let rawKey = await window.crypto.subtle.exportKey('raw', key)
     let rawKeyBytes = Buffer.from(rawKey)
     let base64Key = rawKeyBytes.toString('base64')
-    const ciphertext = CryptoJS.AES.encrypt(privateKey.value, base64Key).toString()
+    const ciphertext = CryptoJS.AES.encrypt(privKey, base64Key).toString()
     authStore.encryptedPrivateKey = { ciphertext, salt: salt.toString('base64') }
     authStore.login({
       privateKey: privateKey.value,

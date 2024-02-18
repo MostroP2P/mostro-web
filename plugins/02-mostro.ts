@@ -134,7 +134,8 @@ export class Mostro {
       .filter(([k, _v]) => k === 'p')
     const _recipient = parties.find(([k, v]) => k === 'p' && v !== ev.author.pubkey)
     if (!_recipient) {
-      throw new Error('No recipient found in event')
+      console.error(`No recipient found in event: `, ev.rawEvent())
+      throw new Error(`No recipient found in event with id: ${ev.rawEvent().id}`)
     }
     const recipient = new NDKUser({
       hexpubkey: _recipient[1]
@@ -442,36 +443,29 @@ export default defineNuxtPlugin((nuxtApp) => {
   const mostro = new Mostro(opts)
   nuxtApp.provide('mostro', mostro)
 
-  // Registering a watcher for the nsec
+  // Registering a watcher for the private key
   const authStore = useAuth()
-  watch(() => authStore.nsec, (newNsec: string | null) => {
-    if (newNsec) {
+  watch(() => authStore.privKey, (newPrivKey: string | null) => {
+    if (newPrivKey) {
       try {
-        const decoded = nip19.decode(newNsec)
-        // If we have a signer, we can request DMs
-        mostro.signer = new NDKPrivateKeySigner(decoded.data as string)
-        const myPubkey = getPublicKey(decoded.data as string)
-        nostr.subscribeDMs(myPubkey)
+        mostro.signer = new NDKPrivateKeySigner(newPrivKey)
       } catch (err) {
         console.error('Error while trying to decode nsec: ', err)
       }
-    } else {
-      nostr.unsubscribeDMs()
     }
   })
 
   // Registering a watcher for public key
-  watch(() => authStore.publicKey, (newValue: string | null | undefined) => {
-    if (newValue) {
+  watch(() => authStore.pubKey, (newPubKey: string | null | undefined) => {
+    if (newPubKey) {
       mostro.pubkeyCache = {
-        hex: newValue,
-        npub: nip19.npubEncode(newValue)
+        hex: newPubKey,
+        npub: nip19.npubEncode(newPubKey)
       }
       mostro.signer = new NDKNip07Signer()
-      const myPubkey = newValue
+      const myPubkey = newPubKey
       nostr.subscribeDMs(myPubkey)
     } else {
-      // mostro.lock()
       nostr.unsubscribeDMs()
     }
   })

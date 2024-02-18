@@ -32,7 +32,7 @@ const hasEncryptedKey = computed<boolean>(() => {
 })
 
 const isLoggedIn = computed<boolean>(() => {
-  return !!authStore.publicKey || !!authStore.nsec
+  return authStore.isAuthenticated
 })
 </script>
 

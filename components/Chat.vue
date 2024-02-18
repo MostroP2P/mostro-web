@@ -75,6 +75,7 @@ export default defineComponent({
     }
 
     const authStore = useAuth()
+    const publicKey = authStore.publicKey
     const isAuthenticated = computed(() => authStore.isAuthenticated)
 
     return { inputMessage, inputContainerHeight, timeago, scrollToBottom, isAuthenticated }

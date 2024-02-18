@@ -1,4 +1,4 @@
-import NDK, { NDKKind, NDKSubscription, NDKEvent, NDKRelay } from '@nostr-dev-kit/ndk'
+import NDK, { NDKKind, NDKSubscription, NDKEvent, NDKRelay, type NDKUserProfile } from '@nostr-dev-kit/ndk'
 import NDKCacheAdapterDexie from '@nostr-dev-kit/ndk-cache-dexie'
 import { nip19 } from 'nostr-tools'
 
@@ -124,6 +124,7 @@ export class Nostr {
   }
 
   unsubscribeDMs() {
+    console.log('🚫 unsubscribing to DMs')
     if (this.dmSubscription) {
       this.dmSubscription.stop()
       this.dmSubscription = undefined
@@ -132,6 +133,12 @@ export class Nostr {
 
   async publishEvent(event: NDKEvent) {
     return await event.publish()
+  }
+
+  async fetchProfile(npub: string) : Promise<NDKUserProfile | null> {
+    const user = this.ndk.getUser({ npub })
+    if (!user) return null
+    return await user.fetchProfile()
   }
 }
 
