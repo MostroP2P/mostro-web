@@ -1,6 +1,6 @@
 import { watch } from 'vue'
 import { NDKEvent, type NDKSigner, NDKUser, NDKPrivateKeySigner, NDKNip07Signer } from '@nostr-dev-kit/ndk'
-import { nip19, getPublicKey } from 'nostr-tools'
+import { nip19 } from 'nostr-tools'
 import { useAuth } from '@/stores/auth'
 import { useOrders } from '@/stores/orders'
 import { useMessages } from '@/stores/messages'
