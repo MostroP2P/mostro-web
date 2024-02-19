@@ -2,7 +2,9 @@
   <div>
     <v-list-item-title class="d-flex justify-space-between">
       Trade Started
-      <div class="text-caption text--secondary">{{ timeago.format(creationDate) }}</div>
+      <div class="text-caption text--secondary">
+        <CreatedAt :creationDate="creationDate"/>
+      </div>
     </v-list-item-title>
     <div class="wrap-text text-message">
       <p>
@@ -13,17 +15,12 @@
 </template>
 <script lang="ts">
 import type { PropType } from 'vue'
+import CreatedAt from '~/components/CreatedAt.vue'
 import { mapState } from 'pinia'
-import * as timeago from 'timeago.js'
 import { useOrders } from '~/stores/orders'
 import type { MostroMessage } from '~/stores/types'
 import { OrderType } from '~/stores/types'
 export default {
-  data() {
-    return {
-      timeago
-    }
-  },
   props: {
     message: {
       type: Object as PropType<MostroMessage>,
@@ -52,7 +49,7 @@ export default {
         }
       }
     },
-    creationDate() {
+    creationDate() : number {
       return this.message.created_at * 1e3
     }
   }

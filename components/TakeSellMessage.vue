@@ -2,7 +2,9 @@
   <div>
     <v-list-item-title class="d-flex justify-space-between">
       Waiting for your Invoice
-      <div class="text-caption text--secondary">{{ creationDate }}</div>
+      <div class="text-caption text--secondary">
+        <CreatedAt :creationDate="creationDate"/>
+      </div>
     </v-list-item-title>
     <v-list-item-subtitle>
       Please provide us with an invoice for {{ amount }} sats in order to continue.
@@ -13,7 +15,7 @@
 import { defineComponent } from 'vue'
 import type { PropType } from 'vue'
 import type { MostroMessage } from '~/stores/types'
-import * as timeago from 'timeago.js'
+import CreatedAt from '~/components/CreatedAt.vue'
 export default defineComponent({
   props: {
     message: {
@@ -26,7 +28,7 @@ export default defineComponent({
       return this.message.content?.SmallOrder?.amount
     },
     creationDate() {
-      return timeago.format(this.message.created_at * 1e3)
+      return this.message.created_at * 1e3
     }
   }
 })

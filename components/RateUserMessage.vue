@@ -3,7 +3,9 @@
     <div>
       <v-list-item-title class="d-flex justify-space-between">
         Rate User
-        <div class="text-caption text--secondary">{{ timeago.format(creationDate) }}</div>
+        <div class="text-caption text--secondary">
+          <CreatedAt :creationDate="creationDate"/>
+        </div>
       </v-list-item-title>
       <div class="wrap-text text-message">
         <p>Please rate your peer.</p>
@@ -28,6 +30,7 @@
 import type { PropType } from 'vue'
 import * as timeago from 'timeago.js'
 import type { MostroMessage } from '~/stores/types'
+import CreatedAt from '~/components/CreatedAt.vue'
 export default {
   data() {
     return { timeago }

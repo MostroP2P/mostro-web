@@ -2,7 +2,9 @@
   <div>
     <v-list-item-title class="d-flex justify-space-between">
       Invoice Accepted
-      <div class="text-caption text--secondary">{{ timeago.format(creationDate) }}</div>
+      <div class="text-caption text--secondary">
+        <CreatedAt :creationDate="creationDate"/>
+      </div>
     </v-list-item-title>
     <div class="wrap-text text-message">
       The user
@@ -20,6 +22,7 @@ import { mapState } from 'pinia'
 import { useOrders } from '~/stores/orders'
 import type { MostroMessage } from '~/stores/types'
 import textMessage from '~/mixins/text-message'
+import CreatedAt from '~/components/CreatedAt.vue'
 import NPub from '~/components/NPub.vue'
 import * as timeago from 'timeago.js'
 
@@ -74,7 +77,7 @@ export default {
       return '?'
     },
     creationDate() {
-      return this.message.Order.created_at * 1e3
+      return this.message.created_at * 1e3
     }
   }
 }

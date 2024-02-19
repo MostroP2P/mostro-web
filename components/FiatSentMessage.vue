@@ -3,14 +3,19 @@
     <div>
       <v-list-item-title class="d-flex justify-space-between">
         Fiat Sent
-        <div class="text-caption text--secondary">{{ timeago.format(creationDate) }}</div>
+        <div class="text-caption text--secondary">
+          <CreatedAt :creationDate="creationDate"/>
+        </div>
       </v-list-item-title>
       <div class="wrap-text text-message">
         <p v-if="isLocalBuyer">
           🧌 I told <npub :publicKey="sellerPubkey"/> that you have sent fiat money once the seller confirms the money was received, the sats should be sent to you.
         </p>
-        <p v-if="!isLocalBuyer">
+        <p v-if="isLocalSeller">
           <npub :publicKey="buyerPubkey"/> has informed that already sent you the fiat money, once you confirmed you received it, please release funds. You will not be able to create another order until you release funds.
+        </p>
+        <p v-else>
+          Fiat sent
         </p>
       </div>
     </div>
@@ -22,9 +27,11 @@ import { mapState } from 'pinia'
 import { useOrders } from '@/stores/orders'
 import type { PropType } from 'vue'
 import * as timeago from 'timeago.js'
+import { nip19 } from 'nostr-tools'
 import type { MostroMessage } from '~/stores/types'
 import textMessage from '~/mixins/text-message'
 import NPub from '~/components/NPub.vue'
+import CreatedAt from '~/components/CreatedAt.vue'
 export default {
   data() {
     return { timeago }
@@ -58,8 +65,28 @@ export default {
       return this.order?.master_seller_pubkey
     },
     isLocalBuyer() {
-      // @ts-ignore
-      return this?.$mostro?.getNpub() === this.order?.buyer_pubkey
+      try {
+        const masterBuyerPubKey = this.order?.master_buyer_pubkey
+        if (!masterBuyerPubKey) return false
+        const buyerNpub = nip19.npubEncode(masterBuyerPubKey)
+        // @ts-ignore
+        return this?.$mostro?.getNpub() === buyerNpub
+      } catch (err) {
+        console.error('Error checking if local buyer: ', err)
+      }
+      return false
+    },
+    isLocalSeller() {
+      try {
+        const masterSellerPubKey = this.order?.master_seller_pubkey
+        if (!masterSellerPubKey) return false
+        const sellerNpub = nip19.npubEncode(masterSellerPubKey)
+        // @ts-ignore
+        return this?.$mostro?.getNpub() === sellerNpub
+      } catch (err) {
+        console.error('Error checking if local seller: ', err)
+      }
+      return false
     },
     creationDate() {
       return this.message.created_at * 1e3

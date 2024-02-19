@@ -1,12 +1,16 @@
-import NDK, { NDKKind, NDKSubscription, NDKEvent, NDKRelay } from '@nostr-dev-kit/ndk'
+import NDK, { NDKKind, NDKSubscription, NDKEvent, NDKRelay, type NDKUserProfile } from '@nostr-dev-kit/ndk'
 import NDKCacheAdapterDexie from '@nostr-dev-kit/ndk-cache-dexie'
 import { nip19 } from 'nostr-tools'
 
 /**
  * Maximum number of seconds to be returned in the initial query
  */
-const EVENT_INTEREST_WINDOW = 60 * 60 * 24 * 7 // 7 days
+const EVENT_INTEREST_WINDOW = 60 * 60 * 24 * 14 // 14 days
 
+interface GetUserParams {
+  npub?: string
+  pubkey?: string
+}
 
 // Message kinds
 type ExtendedNDKKind = NDKKind | 38383
@@ -124,6 +128,7 @@ export class Nostr {
   }
 
   unsubscribeDMs() {
+    console.log('🚫 unsubscribing to DMs')
     if (this.dmSubscription) {
       this.dmSubscription.stop()
       this.dmSubscription = undefined
@@ -132,6 +137,12 @@ export class Nostr {
 
   async publishEvent(event: NDKEvent) {
     return await event.publish()
+  }
+
+  async fetchProfile(params: GetUserParams) : Promise<NDKUserProfile | null> {
+    const user = this.ndk.getUser(params)
+    if (!user) return null
+    return await user.fetchProfile()
   }
 }
 

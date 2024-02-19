@@ -2,7 +2,9 @@
   <div>
     <v-list-item-title class="d-flex justify-space-between">
       🤑 Payment received!
-      <div class="text-caption text--secondary">{{ creationDate }}</div>
+      <div class="text-caption text--secondary">
+        <CreatedAt :creationDate="creationDate"/>
+      </div>
     </v-list-item-title>
     <div class="wrap-text text-message">
       <p>
@@ -18,7 +20,7 @@
 <script lang="ts">
 import type { PropType } from 'vue'
 import type { MostroMessage } from '~/stores/types'
-import * as timeago from 'timeago.js'
+import CreatedAt from '~/components/CreatedAt.vue'
 export default {
   props: {
     message: {
@@ -28,7 +30,7 @@ export default {
   },
   computed: {
     creationDate() {
-      return timeago.format(this.message.created_at * 1e3)
+      return this.message.created_at * 1e3
     }
   }
 }

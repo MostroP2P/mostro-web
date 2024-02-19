@@ -104,12 +104,12 @@ const onPassword = async () => {
     let rawKeyBytes = Buffer.from(rawKey)
     let base64Key = rawKeyBytes.toString('base64')
     const plaintext = CryptoJS.AES.decrypt(ciphertext, base64Key).toString()
-    const nsec = Buffer.from(plaintext, 'hex').toString('utf8')
-    if (!nsec) {
+    const privKey = Buffer.from(plaintext, 'hex').toString('utf8')
+    if (!privKey) {
       throw Error('Invalid password')
     }
     const localLoginPayload: LocalLoginPayload = {
-      privateKey: nsec,
+      privateKey: privKey,
       authMethod: AuthMethod.LOCAL
     }
     authStore.login(localLoginPayload)

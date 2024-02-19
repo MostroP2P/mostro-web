@@ -3,18 +3,11 @@
     <template v-for="(peerThread, index) of getPeerThreadSummaries" :key="peerThread.lastMessage.id">
       <v-divider v-if="index !== 0" :key="`divider-${peerThread.lastMessage.id}`"/>
       <v-list-item ripple :to="`/messages/${peerThread.lastMessage.peerNpub}`">
-        <div>
-          <v-avatar color="secondary">
-            <v-icon dark>
-              mdi-account-circle
-            </v-icon>
-          </v-avatar>
-        </div>
-        <div>
+        <div class="mb-2">
           <v-list-item-title>
-            <div class="d-flex justify-space-between">
-              <div>{{ title(peerThread.peer) }}</div>
-              <div class="text-caption">
+            <div class="d-flex justify-space-between align-center">
+              <PeerAvatar :npub="peerThread.peer" />
+              <div class="text-caption text-disabled">
                 {{ peerThread.messageCount }}
                 <v-icon x-small>mdi-message</v-icon>
               </div>
@@ -22,7 +15,7 @@
           </v-list-item-title>
           <v-list-item-subtitle>
             <div class="d-flex justify-space-between">
-              <div>{{ peerThread.lastMessage.text }}</div>
+              <div class="mt-3 text-caption text-disabled">{{ peerThread.lastMessage.text }}</div>
               <div>{{ timeago.format(peerThread.lastMessage.created_at * 1e3) }}</div>
             </div>
           </v-list-item-subtitle>
@@ -31,25 +24,14 @@
     </template>
   </v-list>
 </template>
-<script lang="ts">
-import { defineComponent } from 'vue'
-import { mapState } from 'pinia'
+<script setup lang="ts">
 import { useMessages } from '~/stores/messages'
-import * as timeago from 'timeago.js'
-import textMessage from '~/mixins/text-message'
-import mobileDetector from '~/mixins/mobile-detector'
-export default defineComponent({
-  mixins: [ textMessage, mobileDetector ],
-  data() {
-    return { timeago }
-  },
-  methods: {
-    title(npub: string) {
-      return this.isMobile ? this.truncateMiddle(npub) :  npub
-    }
-  },
-  computed: {
-    ...mapState(useMessages, ['getPeerThreadSummaries']),
-  }
-})
+import * as _timeago from 'timeago.js'
+
+const messagesStore = useMessages()
+const getPeerThreadSummaries = computed(() => messagesStore.getPeerThreadSummaries)
+
+const timeago = ref(_timeago)
+
 </script>
+

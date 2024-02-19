@@ -65,6 +65,10 @@ export const useOrders = defineStore('orders', {
     },
     updateOrderStatus(orderId: string, action: Action, event: NDKEvent) {
       const existingOrder = this.orders[orderId]
+      if (!existingOrder) {
+        console.warn('No order to update')
+        return
+      }
       if (
         existingOrder.updated_at &&
         event.created_at &&

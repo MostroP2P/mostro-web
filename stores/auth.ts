@@ -1,7 +1,7 @@
 import { watch } from 'vue'
 import { AUTH_LOCAL_STORAGE_ENCRYPTED_KEY, AUTH_LOCAL_STORAGE_DECRYPTED_KEY } from './types'
 import type { EncryptedPrivateKey } from './types'
-import { nip19 } from 'nostr-tools'
+import { nip19, getPublicKey } from 'nostr-tools'
 
 export enum AuthMethod {
   LOCAL = 'local',
@@ -23,12 +23,12 @@ export type LoginPayload = ExtensionLoginPayload | LocalLoginPayload
 
 export interface AuthState {
   authMethod: AuthMethod
-  nsec: string | null,
   encryptedPrivateKey: EncryptedPrivateKey | null,
-  publicKey?: string // Used only in case of NIP-07
+  pubKey: string | null,
+  privKey: string | null
 }
 
-function isNsec(nsec: string): boolean {
+export function isNsec(nsec: string): boolean {
   try {
     const decoded = nip19.decode(nsec)
     return decoded.type === 'nsec'
@@ -40,9 +40,9 @@ function isNsec(nsec: string): boolean {
 export const useAuth = defineStore('auth', {
   state: () => ({
     authMethod: AuthMethod.NOT_SET,
-    nsec: null as string | null,
     encryptedPrivateKey: null as EncryptedPrivateKey | null,
-    publicKey: null as string | null | undefined
+    pubKey: null as string | null,
+    privKey: null as string | null
   }),
   actions: {
     nuxtClientInit() {
@@ -53,7 +53,8 @@ export const useAuth = defineStore('auth', {
       const decryptedPrivKey = ref<string | null>(localStorage.getItem(AUTH_LOCAL_STORAGE_DECRYPTED_KEY))
       if (decryptedPrivKey.value) {
         try {
-          this.setKey({ privateKey: decryptedPrivKey.value })
+          this.privKey = decryptedPrivKey.value
+          this.pubKey = getPublicKey(this.privKey)
           this.authMethod = AuthMethod.LOCAL
         } catch(err) {
           console.warn('Error setting local key from local storage: ', err)
@@ -63,7 +64,7 @@ export const useAuth = defineStore('auth', {
       watch(() => this.encryptedPrivateKey, (newVal) => {
         localStorage.setItem(AUTH_LOCAL_STORAGE_ENCRYPTED_KEY, JSON.stringify(newVal))
       })
-      watch(() => this.nsec, (newVal) => {
+      watch(() => this.privKey, (newVal) => {
         localStorage.setItem(AUTH_LOCAL_STORAGE_DECRYPTED_KEY, newVal || '')
       })
     },
@@ -71,45 +72,36 @@ export const useAuth = defineStore('auth', {
       this.authMethod = loginPayload.authMethod
       if (loginPayload.authMethod === AuthMethod.LOCAL) {
         const localLoginPayload = loginPayload as LocalLoginPayload
-        this.setKey({ privateKey: localLoginPayload.privateKey })
+        const { privateKey } = localLoginPayload
+        if (isNsec(privateKey)) {
+          const decoded = nip19.decode(privateKey)
+          this.privKey = decoded.data as string
+        } else {
+          this.privKey = privateKey
+        }
+        this.pubKey = getPublicKey(this.privKey)
       } else if (this.authMethod === AuthMethod.NIP07) {
         const extensionLoginPayload = loginPayload as ExtensionLoginPayload
-        this.publicKey = extensionLoginPayload.publicKey
-      }
-    },
-    setKey({ privateKey }: { privateKey: string }) {
-      if (!privateKey) return
-      if (isNsec(privateKey)) {
-        this.nsec = privateKey
-      } else {
-        const encoded = nip19.nsecEncode(privateKey)
-        this.nsec = encoded
+        this.pubKey = extensionLoginPayload.publicKey
       }
     },
     setEncryptedPrivateKey(encryptedPrivateKey: EncryptedPrivateKey | null) {
       this.encryptedPrivateKey = encryptedPrivateKey
     },
     delete() {
-      this.nsec = null
+      this.logout()
       this.encryptedPrivateKey = null
-      this.publicKey = null
-      this.authMethod = AuthMethod.NOT_SET
     },
     logout() {
-      if (this.nsec) {
-        this.nsec = null
-      }
-      if (this.authMethod === AuthMethod.NIP07) {
-        this.publicKey = null
-      }
+      this.privKey = null
+      this.pubKey = null
       localStorage.removeItem(AUTH_LOCAL_STORAGE_DECRYPTED_KEY)
       this.authMethod = AuthMethod.NOT_SET
     },
   },
   getters: {
     isAuthenticated(state) {
-      return state.authMethod !== AuthMethod.NOT_SET &&
-      (state.nsec !== null || state.publicKey !== null)
+      return state.authMethod !== AuthMethod.NOT_SET
     },
   }
 })

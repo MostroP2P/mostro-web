@@ -3,7 +3,9 @@
     <div>
       <v-list-item-title class="d-flex justify-space-between">
         Sats Released!
-        <div class="text-caption text--secondary">{{ timeago.format(creationDate) }}</div>
+        <div class="text-caption text--secondary">
+          <CreatedAt :creationDate="creationDate"/>
+        </div>
       </v-list-item-title>
       <div class="wrap-text text-message">
         <p>
@@ -17,14 +19,12 @@
 import type { PropType } from 'vue'
 import { mapState } from 'pinia'
 import { useRoute } from 'vue-router'
-import * as timeago from 'timeago.js'
 import type { MostroMessage, Order } from '~/stores/types'
 import { useOrders } from '@/stores/orders'
 import NPub from '~/components/NPub.vue'
 export default {
   data() {
     return {
-      timeago,
       route: useRoute()
     }
   },
