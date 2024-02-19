@@ -59,7 +59,7 @@ export default {
       return this.getOrderById(route.params.id)
     },
     buyerPubkey() {
-      return this.order?.master_seller_pubkey
+      return this.order?.master_buyer_pubkey
     },
     sellerPubkey() {
       return this.order?.master_seller_pubkey
