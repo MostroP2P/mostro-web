@@ -7,6 +7,10 @@ import { nip19 } from 'nostr-tools'
  */
 const EVENT_INTEREST_WINDOW = 60 * 60 * 24 * 14 // 14 days
 
+interface GetUserParams {
+  npub?: string
+  pubkey?: string
+}
 
 // Message kinds
 type ExtendedNDKKind = NDKKind | 38383
@@ -135,8 +139,8 @@ export class Nostr {
     return await event.publish()
   }
 
-  async fetchProfile(npub: string) : Promise<NDKUserProfile | null> {
-    const user = this.ndk.getUser({ npub })
+  async fetchProfile(params: GetUserParams) : Promise<NDKUserProfile | null> {
+    const user = this.ndk.getUser(params)
     if (!user) return null
     return await user.fetchProfile()
   }
