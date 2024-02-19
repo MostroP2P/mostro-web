@@ -1,6 +1,6 @@
 <template>
   <div>
-    <Chat :npub="npub"/>
+    <Chat :npub="(npub as string)"/>
   </div>
 </template>
 
