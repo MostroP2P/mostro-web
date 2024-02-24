@@ -13,9 +13,10 @@
               cols="12"
             >
               <div class="text-caption mb-1 mx-0 text-disabled">{{ getMessageTime(message) }}</div>
-              <v-chip
+              <div
                 rounded
                 :class="[
+                  'message-chip',
                   message.sender === 'me' ? 'me' : 'other',
                   'white--text',
                   'px-4',
@@ -23,7 +24,7 @@
                 ]"
               >
                 {{ message.text }}
-              </v-chip>
+              </div>
             </v-col>
           </v-row>
         </v-card-text>
@@ -148,5 +149,11 @@ export default defineComponent({
 
 .other {
   background: rgb(92, 98, 93);
+}
+
+.message-chip {
+  display: inline-block;
+  border-radius: 16px;
+  margin: 4px;
 }
 </style>
