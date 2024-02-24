@@ -109,6 +109,11 @@ const messages = useMessages()
 const peerMessages = computed(() => messages.getPeerMessagesByNpub(props.npub))
 
 watch(peerMessages, () => {
+  if (isSending.value) {
+    // We're about to display our message in the chat box, so we better
+    // delete the input field
+    inputMessage.value = ''
+  }
   const lastMessage = peerMessages.value[peerMessages.value.length - 1]
   const id = lastMessage.id
   setTimeout(() => scrollToBottom(id), 100)
