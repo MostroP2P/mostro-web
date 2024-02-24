@@ -12,7 +12,9 @@
               :class="message.sender === 'me' ? 'text-right' : 'text-left'"
               cols="12"
             >
-              <div class="text-caption mb-1 mx-0 text-disabled">{{ getMessageTime(message) }}</div>
+              <div class="text-caption mb-1 mx-0 text-disabled">
+                {{ getMessageTime(message) }}
+              </div>
               <div
                 rounded
                 :class="[
@@ -41,13 +43,15 @@
           variant="outlined"
           placeholder="Type your message here..."
           single-line
+          :append-inner-icon="isSending ? 'mdi-loading mdi-spin' : ''"
+          :disabled="isSending"
           class="flex-grow-1 mx-4"
         ></v-text-field>
         <v-btn
           class="mb-5 mr-4"
           color="primary"
           @click="sendMessage"
-          :disabled="!isAuthenticated"
+          :disabled="!isAuthenticated || isSending"
           icon="mdi-send"
         >
         </v-btn>
@@ -56,73 +60,60 @@
   </div>
 </template>
 
-<script lang="ts">
-import { ref, computed } from 'vue'
-import { mapState } from 'pinia'
+<script lang="ts" setup>
+import { ref, computed, watch } from 'vue'
 import { useAuth } from '@/stores/auth'
 import { useMessages } from '~/stores/messages'
-import * as _timeago from 'timeago.js'
+import { useTimeago } from '@/composables/timeago'
 import type { PeerMessage } from '~/stores/types'
+import type { Mostro } from '~/plugins/02-mostro'
 
-export default defineComponent({
-  setup() {
-    const inputMessage = ref('')
-    const inputContainerHeight = ref(0)
-    const timeago = ref(_timeago)
+const inputMessage = ref('')
+const isSending = ref<boolean>(false)
 
-    const scrollToBottom = async (id: string) => {
-      const msgElement = document.getElementById(id)
-      msgElement?.scrollIntoView({ behavior: 'smooth' })
-    }
+const authStore = useAuth()
+const isAuthenticated = computed(() => authStore.isAuthenticated)
 
-    const authStore = useAuth()
-    const isAuthenticated = computed(() => authStore.isAuthenticated)
+const nuxtApp = useNuxtApp()
+const $mostro: Mostro = nuxtApp.$mostro as Mostro
 
-    return { inputMessage, inputContainerHeight, timeago, scrollToBottom, isAuthenticated }
-  },
-  props: {
-    npub: {
-      type: String,
-      required: true
-    }
-  },
-  methods: {
-    async sendMessage() {
-      // @ts-ignore
-      const text = this.inputMessage.trim()
-      if (!text) return
-      // @ts-ignore
-      const lastMessage = this.peerMessages[this.peerMessages.length - 1]
-      const id = lastMessage?.id || null
-      // @ts-ignore
-      await this.$mostro.submitDirectMessage(text, this.npub, id)
-      // @ts-ignore
-      this.inputMessage = ''
-    },
-    // @ts-ignore
-    getMessageTime(message: PeerMessage) {
-      // @ts-ignore
-      return this.timeago.format(message.created_at * 1e3)
-    },
-  },
-  watch: {
-    peerMessages: {
-      handler(msgs) {
-        const lastMessage = msgs[msgs.length - 1]
-        const id = lastMessage.id
-        setTimeout(() => this.scrollToBottom(id), 100)
-      },
-      // To scroll when the component is mounted, set immediate to true
-      immediate: true
-    }
-  },
-  computed: {
-    ...mapState(useMessages, ['getPeerMessagesByNpub']),
-    peerMessages() : PeerMessage[] {
-      return this.getPeerMessagesByNpub(this.npub)
-    }
+const props = defineProps({
+  npub: {
+    type: String,
+    required: true
   }
 })
+
+const scrollToBottom = async (id: string) => {
+  const msgElement = document.getElementById(id)
+  msgElement?.scrollIntoView({ behavior: 'smooth' })
+}
+
+const sendMessage = async () => {
+  const text = inputMessage.value.trim()
+  if (!text) return
+  isSending.value = true
+  try {
+    await $mostro.submitDirectMessage(text, props.npub, undefined)
+    inputMessage.value = ''
+  } catch (err) {
+    console.error('Error at sending message: ', err)
+  } finally {
+    isSending.value = false
+  }
+}
+const { format } = useTimeago()
+const getMessageTime = (message: PeerMessage) => format(message.created_at * 1e3)
+
+const messages = useMessages()
+const peerMessages = computed(() => messages.getPeerMessagesByNpub(props.npub))
+
+watch(peerMessages, () => {
+  const lastMessage = peerMessages.value[peerMessages.value.length - 1]
+  const id = lastMessage.id
+  setTimeout(() => scrollToBottom(id), 100)
+})
+
 </script>
 
 <style scoped>
