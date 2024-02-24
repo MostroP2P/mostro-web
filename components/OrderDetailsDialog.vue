@@ -20,6 +20,9 @@
         <span v-else-if="!isFixedPrice">with no premium or discount.</span>
       </v-card-text>
       <v-card-text>
+        Created at: <strong class="highlight">{{ creationDate }}</strong>
+      </v-card-text>
+      <v-card-text>
         The payment method is <strong class="highlight">{{ order.payment_method }}</strong>
       </v-card-text>
       <v-tooltip text="Order ID" location="top">
@@ -82,6 +85,8 @@ const props = defineProps({
     required: true,
   }
 })
+
+const creationDate = computed(() => new Date(props.order.created_at * 1E3))
 
 let timeout: null | NodeJS.Timeout = null
 
