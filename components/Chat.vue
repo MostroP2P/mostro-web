@@ -157,7 +157,7 @@ watch(peerMessages, () => {
 }
 
 .me {
-  background: rgb(19, 166, 43);
+  background: rgb(20, 101, 34);
 }
 
 .other {
