@@ -10,7 +10,10 @@
           <v-row v-for="(message, index) in peerMessages" :key="message.id" :id="`message-${index}`" class="message-row">
             <v-col cols="12" :class="['d-flex', message.sender === 'me' ? 'justify-end' : '']">
               <div>
-                <div class="text-caption mb-0 mx-0 text-disabled">
+                <div
+                  class="text-caption mb-0 mx-2 text-disabled"
+                  :class="['d-flex', message.sender === 'me' ? 'flex-row-reverse' : '']"
+                >
                   {{ getMessageTime(message) }}
                 </div>
                 <div :class="['message-wrapper', message.sender]">
