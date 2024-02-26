@@ -16,11 +16,14 @@
           {{ order.kind.toUpperCase() === 'BUY' ? 'BUY ORDER' : 'SELL ORDER' }}
         </v-chip>
       </v-list-item-title>
-      <v-list-item-subtitle>
+      <v-list-item-subtitle class="my-1">
         {{ summary(order) }}
       </v-list-item-subtitle>
-      <v-list-item-subtitle>
-        <div class="d-flex justify-space-between" style="min-height: 2.5em">
+      <v-list-item-subtitle class="my-1">
+        Created <span class="font-weight-bold">{{ createdAt }}</span> | Expires <span class="font-weight-bold">{{ expiresIn }}</span> ⏳
+      </v-list-item-subtitle>
+      <v-list-item-subtitle class="my-1">
+        <div class="d-flex justify-space-between">
           Payment via: {{ order.payment_method }} - id: {{ order.id }}
           <take-sell-order-dialog v-if="showTakeSell(order) && !order.is_mine" :order="order"/>
           <take-buy-order-dialog v-if="showTakeBuy(order) && !order.is_mine" :order="order"/>
@@ -33,6 +36,7 @@
 <script setup lang="ts">
 import { Order, OrderType } from '@/stores/types'
 import { useAuth } from '@/stores/auth'
+import { useTimeago } from '@/composables/timeago'
 import fiat from '~/assets/fiat.json'
 
 const authStore = useAuth()
@@ -57,6 +61,21 @@ const props = defineProps({
     type: Object as () => Order,
     required: true,
   },
+})
+
+const ORDER_LIFETIME_IN_SECONDS = 24 * 60 * 60 * 1E3 // 24 hours
+
+const createdAt = computed(() => {
+  const createdAt = props.order.created_at * 1E3
+  const { format } = useTimeago()
+  return format(createdAt)
+})
+
+const expiresIn = computed(() => {
+  const createdAt = props.order.created_at * 1E3
+  const expiresAt = createdAt + ORDER_LIFETIME_IN_SECONDS
+  const { format } = useTimeago()
+  return format(expiresAt)
 })
 
 // Define methods

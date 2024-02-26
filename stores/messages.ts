@@ -92,7 +92,12 @@ export const useMessages = defineStore('messages', {
     getPeerThreadSummaries(
       state: MessagesState,
     ) : PeerThreadSummary[] {
+      const config = useRuntimeConfig()
+      const { public: { mostroPubKey } } = config
+      // We remove mostro's public key from here as we don't want to
+      // show the users all the NIP-04 messages we've been exchanging with mostro
       const npubs = Object.keys(state.messages.peer)
+        .filter((npub: string) => npub !== mostroPubKey)
       return npubs.map((npub: string) => {
         const peerMessages = this.getPeerMessagesByNpub(npub)
         const lastMessage = peerMessages[peerMessages.length - 1]

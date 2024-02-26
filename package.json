@@ -1,10 +1,11 @@
 {
   "name": "mostro-web",
   "private": true,
-  "version": "0.0.18",
+  "version": "0.0.19",
   "description": "Mostro web client",
   "scripts": {
     "prebuild": "echo \"export const GIT_COMMIT = '$(git rev-parse HEAD)'\" > ./constants/version.js",
+    "pregenerate": "echo \"export const GIT_COMMIT = '$(git rev-parse HEAD)'\" > ./constants/version.js",
     "type-check": "tsc --noEmit",
     "build": "nuxt build",
     "dev": "npm run type-check && nuxt dev",

@@ -7,23 +7,36 @@
     >
       <div id="scrollingContent" style="height: calc(100vh - 350px)">
         <v-card-text v-if="peerMessages && peerMessages.length > 0">
-          <v-row v-for="(message) in peerMessages" :key="message.id" :id="message.id">
-            <v-col
-              :class="message.sender === 'me' ? 'text-right' : 'text-left'"
-              cols="12"
-            >
-              <div class="text-caption mb-1 mx-0 text-disabled">{{ getMessageTime(message) }}</div>
-              <v-chip
-                rounded
-                :class="[
-                  message.sender === 'me' ? 'me' : 'other',
-                  'white--text',
-                  'px-4',
-                  'py-2'
-                ]"
-              >
-                {{ message.text }}
-              </v-chip>
+          <v-row v-for="(message, index) in peerMessages" :key="message.id" :id="`message-${index}`" class="message-row">
+            <v-col cols="12" :class="['d-flex', message.sender === 'me' ? 'justify-end' : '']">
+              <div>
+                <div
+                  class="text-caption mb-0 mx-2 text-disabled"
+                  :class="['d-flex', message.sender === 'me' ? 'flex-row-reverse' : '']"
+                >
+                  {{ getMessageTime(message) }}
+                </div>
+                <div :class="['message-wrapper', message.sender]">
+                  <v-avatar
+                    :class="['avatar', message.sender]"
+                    size="24"
+                    style="border: 0.5px solid white"
+                  >
+                    <v-img
+                      v-if="message.sender === 'me' ? myProfilePictureUrl !== null : peerProfilePictureUrl !== null"
+                      :src="message.sender === 'me' ? myProfilePictureUrl || undefined : peerProfilePictureUrl || undefined"
+                    />
+                    <v-icon dark large v-else>
+                      mdi-account-circle
+                    </v-icon>
+                  </v-avatar>
+                  <div
+                    :class="['message-chip', 'white--text', 'py-1', 'pr-2', 'pl-1']"
+                  >
+                    {{ message.text }}
+                  </div>
+                </div>
+              </div>
             </v-col>
           </v-row>
         </v-card-text>
@@ -40,13 +53,15 @@
           variant="outlined"
           placeholder="Type your message here..."
           single-line
+          :append-inner-icon="isSending ? 'mdi-loading mdi-spin' : ''"
+          :disabled="isSending"
           class="flex-grow-1 mx-4"
         ></v-text-field>
         <v-btn
           class="mb-5 mr-4"
           color="primary"
           @click="sendMessage"
-          :disabled="!isAuthenticated"
+          :disabled="!isAuthenticated || isSending"
           icon="mdi-send"
         >
         </v-btn>
@@ -55,73 +70,75 @@
   </div>
 </template>
 
-<script lang="ts">
-import { ref, computed } from 'vue'
-import { mapState } from 'pinia'
+<script lang="ts" setup>
+import { ref, computed, watch } from 'vue'
 import { useAuth } from '@/stores/auth'
 import { useMessages } from '~/stores/messages'
-import * as _timeago from 'timeago.js'
+import { useTimeago } from '@/composables/timeago'
 import type { PeerMessage } from '~/stores/types'
+import type { Mostro } from '~/plugins/02-mostro'
+import { useProfile } from '@/composables/useProfile'
 
-export default defineComponent({
-  setup() {
-    const inputMessage = ref('')
-    const inputContainerHeight = ref(0)
-    const timeago = ref(_timeago)
+const myProfilePictureUrl = ref<string | null>(null)
+const peerProfilePictureUrl = ref<string | null>(null)
+const inputMessage = ref('')
+const isSending = ref<boolean>(false)
 
-    const scrollToBottom = async (id: string) => {
-      const msgElement = document.getElementById(id)
-      msgElement?.scrollIntoView({ behavior: 'smooth' })
-    }
+const authStore = useAuth()
+const isAuthenticated = computed(() => authStore.isAuthenticated)
 
-    const authStore = useAuth()
-    const isAuthenticated = computed(() => authStore.isAuthenticated)
+const nuxtApp = useNuxtApp()
+const $mostro: Mostro = nuxtApp.$mostro as Mostro
 
-    return { inputMessage, inputContainerHeight, timeago, scrollToBottom, isAuthenticated }
-  },
-  props: {
-    npub: {
-      type: String,
-      required: true
-    }
-  },
-  methods: {
-    async sendMessage() {
-      // @ts-ignore
-      const text = this.inputMessage.trim()
-      if (!text) return
-      // @ts-ignore
-      const lastMessage = this.peerMessages[this.peerMessages.length - 1]
-      const id = lastMessage?.id || null
-      // @ts-ignore
-      await this.$mostro.submitDirectMessage(text, this.npub, id)
-      // @ts-ignore
-      this.inputMessage = ''
-    },
-    // @ts-ignore
-    getMessageTime(message: PeerMessage) {
-      // @ts-ignore
-      return this.timeago.format(message.created_at * 1e3)
-    },
-  },
-  watch: {
-    peerMessages: {
-      handler(msgs) {
-        const lastMessage = msgs[msgs.length - 1]
-        const id = lastMessage.id
-        setTimeout(() => this.scrollToBottom(id), 100)
-      },
-      // To scroll when the component is mounted, set immediate to true
-      immediate: true
-    }
-  },
-  computed: {
-    ...mapState(useMessages, ['getPeerMessagesByNpub']),
-    peerMessages() : PeerMessage[] {
-      return this.getPeerMessagesByNpub(this.npub)
-    }
+const props = defineProps({
+  npub: {
+    type: String,
+    required: true
   }
 })
+
+const { getProfile } = useProfile()
+getProfile(props.npub)
+  .then(profile => peerProfilePictureUrl.value = profile?.image ?? null)
+
+getProfile($mostro.getLocalKeys().npub as string)
+  .then(profile => myProfilePictureUrl.value = profile?.image ?? null)
+
+const scrollToBottom = async (id: string) => {
+  const msgElement = document.getElementById(id)
+  msgElement?.scrollIntoView({ behavior: 'smooth' })
+}
+
+const sendMessage = async () => {
+  const text = inputMessage.value.trim()
+  if (!text) return
+  isSending.value = true
+  try {
+    await $mostro.submitDirectMessage(text, props.npub, undefined)
+    inputMessage.value = ''
+  } catch (err) {
+    console.error('Error at sending message: ', err)
+  } finally {
+    isSending.value = false
+  }
+}
+const { format } = useTimeago()
+const getMessageTime = (message: PeerMessage) => format(message.created_at * 1e3)
+
+const messages = useMessages()
+const peerMessages = computed(() => messages.getPeerMessagesByNpub(props.npub))
+
+watch(peerMessages, () => {
+  if (isSending.value) {
+    // We're about to display our message in the chat box, so we better
+    // delete the input field
+    inputMessage.value = ''
+  }
+  const lastMessage = peerMessages.value[peerMessages.value.length - 1]
+  const id = lastMessage.id
+  setTimeout(() => scrollToBottom(id), 100)
+})
+
 </script>
 
 <style scoped>
@@ -143,10 +160,48 @@ export default defineComponent({
 }
 
 .me {
-  background: rgb(19, 166, 43);
+  background: rgb(20, 101, 34);
 }
 
 .other {
   background: rgb(92, 98, 93);
 }
+
+.message-row {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.message-wrapper {
+  display: inline-flex;
+  align-items: flex-start;
+  border-radius: 16px;
+  margin: 4px;
+}
+
+.message-wrapper.me {
+  justify-content: flex-end;
+}
+
+.avatar {
+  margin: 4px 4px 0 4px;
+}
+
+.avatar.me {
+  order: 2;
+  margin-left: 8px; /* Space between message and avatar */
+}
+
+.avatar.other {
+  order: -1;
+  margin-right: 8px; /* Space between message and avatar */
+}
+
+.message-chip {
+  max-width: calc(100% - 40px); /* Adjust based on avatar size and desired padding */
+  word-break: break-word;
+  display: inline-block;
+  margin: 4px;
+}
 </style>
+
