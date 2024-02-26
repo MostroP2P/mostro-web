@@ -7,25 +7,32 @@
     >
       <div id="scrollingContent" style="height: calc(100vh - 350px)">
         <v-card-text v-if="peerMessages && peerMessages.length > 0">
-          <v-row v-for="(message) in peerMessages" :key="message.id" :id="message.id">
-            <v-col
-              :class="message.sender === 'me' ? 'text-right' : 'text-left'"
-              cols="12"
-            >
-              <div class="text-caption mb-1 mx-0 text-disabled">
-                {{ getMessageTime(message) }}
-              </div>
-              <div
-                rounded
-                :class="[
-                  'message-chip',
-                  message.sender === 'me' ? 'me' : 'other',
-                  'white--text',
-                  'px-4',
-                  'py-2'
-                ]"
-              >
-                {{ message.text }}
+          <v-row v-for="(message, index) in peerMessages" :key="message.id" :id="`message-${index}`" class="message-row">
+            <v-col cols="12" :class="['d-flex', message.sender === 'me' ? 'justify-end' : '']">
+              <div>
+                <div class="text-caption mb-0 mx-0 text-disabled">
+                  {{ getMessageTime(message) }}
+                </div>
+                <div :class="['message-wrapper', message.sender]">
+                  <v-avatar
+                    :class="['avatar', message.sender]"
+                    size="24"
+                    style="border: 0.5px solid white"
+                  >
+                    <v-img
+                      v-if="message.sender === 'me' ? myProfilePictureUrl !== null : peerProfilePictureUrl !== null"
+                      :src="message.sender === 'me' ? myProfilePictureUrl || undefined : peerProfilePictureUrl || undefined"
+                    />
+                    <v-icon dark large v-else>
+                      mdi-account-circle
+                    </v-icon>
+                  </v-avatar>
+                  <div
+                    :class="['message-chip', 'white--text', 'py-1', 'pr-2', 'pl-1']"
+                  >
+                    {{ message.text }}
+                  </div>
+                </div>
               </div>
             </v-col>
           </v-row>
@@ -67,7 +74,10 @@ import { useMessages } from '~/stores/messages'
 import { useTimeago } from '@/composables/timeago'
 import type { PeerMessage } from '~/stores/types'
 import type { Mostro } from '~/plugins/02-mostro'
+import { useProfile } from '@/composables/useProfile'
 
+const myProfilePictureUrl = ref<string | null>(null)
+const peerProfilePictureUrl = ref<string | null>(null)
 const inputMessage = ref('')
 const isSending = ref<boolean>(false)
 
@@ -83,6 +93,13 @@ const props = defineProps({
     required: true
   }
 })
+
+const { getProfile } = useProfile()
+getProfile(props.npub)
+  .then(profile => peerProfilePictureUrl.value = profile?.image ?? null)
+
+getProfile($mostro.getLocalKeys().npub as string)
+  .then(profile => myProfilePictureUrl.value = profile?.image ?? null)
 
 const scrollToBottom = async (id: string) => {
   const msgElement = document.getElementById(id)
@@ -147,9 +164,41 @@ watch(peerMessages, () => {
   background: rgb(92, 98, 93);
 }
 
-.message-chip {
-  display: inline-block;
+.message-row {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.message-wrapper {
+  display: inline-flex;
+  align-items: flex-start;
   border-radius: 16px;
   margin: 4px;
 }
+
+.message-wrapper.me {
+  justify-content: flex-end;
+}
+
+.avatar {
+  margin: 4px 4px 0 4px;
+}
+
+.avatar.me {
+  order: 2;
+  margin-left: 8px; /* Space between message and avatar */
+}
+
+.avatar.other {
+  order: -1;
+  margin-right: 8px; /* Space between message and avatar */
+}
+
+.message-chip {
+  max-width: calc(100% - 40px); /* Adjust based on avatar size and desired padding */
+  word-break: break-word;
+  display: inline-block;
+  margin: 4px;
+}
 </style>
+
