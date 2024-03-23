@@ -46,7 +46,8 @@ export default defineComponent({
   data() {
     return {
       requiredSatsAmount: null as number | null,
-      decodedInvoice: {} as DecodedInvoice | null,
+      decodedInvoice: null as DecodedInvoice | null,
+      decodedInvoiceError: null as null | string,
       rules: {
         required: (value: string) => !!value || 'Enter a LN invoice',
         isInvoice: () => !!this.isInvoice || 'Not a valid LN invoice',
@@ -120,7 +121,8 @@ export default defineComponent({
       const amountSection = sectionsMap?.get('amount')
       if (!amountSection) return NaN
       const msats = amountSection.value as string
-      return parseInt(msats) / 1e3
+      const sats = BigInt(msats) / BigInt(1e3)
+      return Number(sats)
     }
   }
 })
