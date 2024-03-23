@@ -1,4 +1,5 @@
 <template>
+  <div class="form-container">
   <v-form v-model="valid" ref="form">
     <v-autocomplete
       v-model="selectedFiat"
@@ -32,7 +33,7 @@
     >
     </v-text-field>
     <v-divider></v-divider>
-    <v-switch class="ml-2 mb-3"
+    <v-switch class="ml-2 mb-0"
       :disabled="!hasPriceFeed"
       v-model="isMarketPricing"
       inset
@@ -42,7 +43,7 @@
     >
     </v-switch>
     <v-text-field
-      v-if="!showInvoiceInput && !isMarketPricing"
+      v-if="showSatsInput"
       v-model="amount"
       label="Sats amount"
       type="number"
@@ -50,6 +51,7 @@
       outlined
       required
       :rules="amountRules"
+      :disabled="disableAmountField"
     >
       <template v-slot:append>
         <i class="fak fa-regular"/>
@@ -59,9 +61,10 @@
       v-model="buyerInvoice"
       v-if="showInvoiceInput"
       outlined
-      :rules="[rules.required, rules.isInvoice, rules.network, rules.value, rules.expired]"
+      :rules="invoiceRules"
       label="Lightning Invoice with amount to buy"
       :hint="invoiceValueSats ? `Invoice for ${invoiceValueSats} sats` : 'Please enter an invoice'"
+      :disabled="disableInvoiceField"
     />
     <v-text-field
       v-model="paymentMethod"
@@ -90,6 +93,7 @@
       </v-btn>
     </div>
   </v-form>
+</div>
 </template>
 <script lang="ts">
 import { defineComponent } from 'vue'
@@ -125,7 +129,10 @@ export default defineComponent({
         (v: string) => /\d+(?:-\d+)?$/.test(v) || 'Invalid value or range'
       ],
       amountRules: [
-        (v: string) => !!v || 'Sats amount is required'
+        (v: string) => Number(v) > 0 || 'Sats amount is required'
+      ],
+      invoiceRules: [
+        (v: string) => !v || this.validateInvoice(v) || this.decodedInvoiceError || 'Invalid Lightning Network invoice'
       ],
       OrderPricingMode
     }
@@ -149,7 +156,7 @@ export default defineComponent({
   mixins: [ invoiceValidator ],
   watch: {
     buyerInvoice(newValue: string) {
-      this.decodedInvoice = {} as DecodedInvoice
+      this.decodedInvoice = null
       try {
         const decoded = bolt11.decode(newValue) as DecodedInvoice
         decoded.sectionsMap = new Map<string, Section>
@@ -158,11 +165,18 @@ export default defineComponent({
         }
         this.decodedInvoice = decoded
       } catch(err : unknown) {
-        this.decodedInvoice = {} as DecodedInvoice
+        this.decodedInvoice = null
         if (typeof err === 'object' && err !== null && 'message' in err) {
-          this.decodedInvoice.error = err.message as string
+          this.decodedInvoiceError = err.message as string
         }
-        console.error('Error while decoding invoice: ', err)
+        // console.error('Error while decoding invoice: ', err)
+      }
+    },
+    invoiceValueSats(newValue) {
+      if (!isNaN(newValue)) {
+        this.amount = newValue
+      } else {
+        this.amount = 0
       }
     }
   },
@@ -188,10 +202,6 @@ export default defineComponent({
         this.fiatAmount : parseFloat(this.fiatAmount)
       let satsAmount = typeof this.amount === 'number' ?
         this.amount : parseInt(this.amount)
-      if (this.showInvoiceInput) {
-        // 'invoiceValueSats' comes from the invoice-validator mixin
-        satsAmount = this.invoiceValueSats
-      }
       // @ts-ignore
       const order: NewOrder = {
         kind: this.orderType === OrderType.SELL ? OrderType.SELL : OrderType.BUY,
@@ -206,9 +216,10 @@ export default defineComponent({
       if (!this.isMarketPricing) {
         if (this.orderType === OrderType.BUY) {
           order.buyer_invoice = this.buyerInvoice
-        } else {
-          order.amount = satsAmount
         }
+        // If the order is nor market-priced,
+        // a fixed sats amount is required always
+        order.amount = satsAmount
       }
       try {
         // @ts-ignore
@@ -236,6 +247,22 @@ export default defineComponent({
           if (input) input.value = ''
         })
       }
+    },
+    validateInvoice(invoice: string) {
+      let validInvoice = true
+      if (!this.isInvoice) {
+        validInvoice = false
+        this.decodedInvoiceError = 'Not a valid invoice'
+      }
+      if (!this.isInvoiceNetwork) {
+        validInvoice = false
+        this.decodedInvoiceError = 'Invalid invoice network'
+      }
+      if (this.isExpired) {
+        validInvoice = false
+        this.decodedInvoiceError = 'Expired invoice'
+      }
+      return validInvoice
     }
   },
   computed: {
@@ -249,7 +276,32 @@ export default defineComponent({
     },
     showInvoiceInput() {
       return !this.isMarketPricing && this.orderType === 'Buy'
+    },
+    showSatsInput() {
+      return !this.isMarketPricing
+    },
+    hasSatsAmount() {
+      return Number(this.amount) > 0 || !isNaN(this.invoiceValueSats)
+    },
+    hasInvoiceWithAmount() {
+      if (this.decodedInvoice === null) {
+        return false
+      }
+      return this.decodedInvoice.sectionsMap?.has('amount')
+    },
+    disableAmountField() {
+      return this.hasInvoiceWithAmount
+    },
+    disableInvoiceField() {
+      return Number(this.amount) > 0 && !this.disableAmountField
     }
   }
 })
 </script>
+
+<style scoped>
+.form-container {
+  max-height: 50vh;
+  overflow-y: auto;
+}
+</style>
