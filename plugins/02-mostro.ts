@@ -4,7 +4,7 @@ import { nip19 } from 'nostr-tools'
 import { useAuth } from '@/stores/auth'
 import { useOrders } from '@/stores/orders'
 import { useMessages } from '@/stores/messages'
-import { Order, OrderStatus, OrderType } from '../stores/types'
+import { Action, Order, OrderStatus, OrderType } from '../stores/types'
 import { NOSTR_ENCRYPTED_DM_KIND, type Nostr } from './01-nostr'
 
 export type MostroEvent = NDKEvent
@@ -243,12 +243,12 @@ export class Mostro {
 
   async submitOrder(order: Order) {
     const payload = {
-      Order: {
+      order: {
         version: 1,
         pubkey: this.getLocalKeys().hex,
-        action: 'NewOrder',
+        action: Action.NewOrder,
         content: {
-          Order: order
+          order: order
         }
       }
     }
@@ -260,13 +260,13 @@ export class Mostro {
   }
   async takeSell(order: Order, invoice: string) {
     const payload = {
-      Order: {
+      order: {
         version: 1,
         pubkey: this.getLocalKeys().hex,
         id: order.id,
-        action: 'TakeSell',
+        action: Action.TakeSell,
         content: invoice === null ? null : {
-          PaymentRequest: [
+          payment_request: [
             null,
             invoice
           ]
@@ -281,13 +281,13 @@ export class Mostro {
   }
   async takeBuy(order: Order) {
     const payload = {
-      Order: {
+      order: {
         version: 1,
         pubkey: this.getLocalKeys().hex,
         id: order.id,
-        action: 'TakeBuy',
+        action: Action.TakeBuy,
         content: {
-          Peer: {
+          peer: {
             pubkey: this.getLocalKeys().hex
           }
         }
@@ -301,13 +301,13 @@ export class Mostro {
   }
   async addInvoice(order: Order, invoice: string) {
     const payload = {
-      Order: {
+      order: {
         version: 1,
         pubkey: this.getLocalKeys().hex,
         id: order.id,
-        action: 'AddInvoice',
+        action: Action.AddInvoice,
         content: {
-          PaymentRequest: [
+          payment_request: [
             null,
             invoice
           ]
@@ -322,10 +322,10 @@ export class Mostro {
   }
   async release(order: Order) {
     const payload = {
-      Order: {
+      order: {
         version: 1,
         pubkey: this.getLocalKeys().hex,
-        action: 'Release',
+        action: Action.Release,
         id: order.id,
         content: null,
       }
@@ -338,10 +338,10 @@ export class Mostro {
   }
   async fiatSent(order: Order) {
     const payload = {
-      Order: {
+      order: {
         version: 1,
         pubkey: this.getLocalKeys().hex,
-        action: 'FiatSent',
+        action: Action.FiatSent,
         id: order.id
       }
     }
@@ -353,10 +353,10 @@ export class Mostro {
   }
   async dispute(order: Order) {
     const payload = {
-      Order: {
+      order: {
         version: 1,
         pubkey: this.getLocalKeys().hex,
-        action: 'Dispute',
+        action: Action.Dispute,
         id: order.id,
         content: null,
       }
@@ -369,10 +369,10 @@ export class Mostro {
   }
   async cancel(order: Order) {
     const payload = {
-      Order: {
+      order: {
         version: 1,
         pubkey: this.getLocalKeys().hex,
-        action: 'Cancel',
+        action: Action.Cancel,
         id: order.id,
         content: null,
       }

@@ -80,7 +80,7 @@ export default {
   },
   methods: {
     async submitInvoice() {
-      const order = this.message.Order.content.Order
+      const order = this.message.order.content.order
       try {
         // @ts-ignore
         await this.$mostro.addInvoice(order, this.invoice)
@@ -155,7 +155,7 @@ export default {
       return true
     },
     satsAmount() {
-      return this.message.Order.content.Order?.amount ?? '?'
+      return this.message.order.content.order?.amount ?? '?'
     },
     wrongAmountErrorMessage() {
       // @ts-ignore

@@ -46,7 +46,7 @@ export default {
   computed: {
     ...mapState(useOrders, ['getOrderById']),
     buyerPubkey() {
-      const orderMessage = this.message.Order
+      const orderMessage = this.message.order
       const buyerPubkey = this.getOrderById(orderMessage.id).master_buyer_pubkey
       return buyerPubkey ? buyerPubkey : '?'
     },

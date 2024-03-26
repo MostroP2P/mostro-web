@@ -52,14 +52,14 @@ export default {
       return this.getOrderById(this.$route.params.id)
     },
     fiatAmount() {
-      const order = this.message.Order.content.Order
+      const order = this.message.order.content.order
       if (order) {
         return order.fiat_amount
       }
       return NaN
     },
     fiatCode() {
-      const order = this.message.Order.content.Order
+      const order = this.message.order.content.order
       if (order) {
         return order.fiat_code
       }
@@ -70,7 +70,7 @@ export default {
       return this?.order?.payment_method
     },
     buyerPubkey() {
-      const order = this.message.Order.content.Order
+      const order = this.message.order.content.order
       if (order && order.master_buyer_pubkey) {
         return order.master_buyer_pubkey
       }

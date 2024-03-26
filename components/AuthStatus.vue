@@ -60,6 +60,7 @@ watch(() => authStore.pubKey, async (newPubkey: string | null) => {
 
 if (authStore.pubKey) {
   getProfile(hexToNpub(authStore.pubKey)).then(profile => {
+    if (!profile) return
     const { image, username } = profile as Profile
     if (image) {
       profilePic.value = image

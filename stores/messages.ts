@@ -32,25 +32,25 @@ export const useMessages = defineStore('messages', {
     async addMostroMessage(
       { message, event } : { message: MostroMessage, event: MostroEvent }
     ) {
-      if (message.Order) {
-        const orderMessage = message.Order
+      if (message.order) {
+        const orderMessage = message.order
         const orderStore = useOrders()
         if (orderMessage?.action === Action.NewOrder) {
-          const order: Order = orderMessage.content.Order as Order
+          const order: Order = orderMessage.content.order as Order
           orderStore.addUserOrder({ order, event })
         } else if (
           orderMessage?.action === Action.BuyerTookOrder ||
           orderMessage?.action === Action.HoldInvoicePaymentAccepted ||
           orderMessage?.action === Action.HoldInvoicePaymentSettled
         ) {
-          const order: Order = orderMessage?.content?.Order as Order
+          const order: Order = orderMessage?.content?.order as Order
           if (order)
             orderStore.updateOrder({ order, event })
         }
-        orderStore.updateOrderStatus(message.Order.id, orderMessage.action, event)
+        orderStore.updateOrderStatus(message.order.id, orderMessage.action, event)
         this.messages.mostro.push(message)
-      } else if (message.CantDo) {
-        console.warn(`>>> [${message.CantDo.id}] CantDo, id: ${message.CantDo.id} message: ${message.CantDo?.content?.TextMessage}`)
+      } else if (message.cant_do) {
+        console.warn(`>>> [${message.cant_do.id}] CantDo, id: ${message.cant_do.id} message: ${message.cant_do?.content?.text_message}`)
       } else {
         console.warn('>>> addMostroMessage: message has unknown property property. ev id: ', event.id)
       }
@@ -69,8 +69,8 @@ export const useMessages = defineStore('messages', {
       const messageMap = new Map<string, number>()
       // Loop that fills the map
       for (const message of state.messages.mostro) {
-        if (!message.Order) continue
-        const orderMessage = message.Order
+        if (!message.order) continue
+        const orderMessage = message.order
         if (!messageMap.has(orderMessage.id)) {
           messageMap.set(orderMessage.id, 1)
         } else {
@@ -129,15 +129,15 @@ export const useMessages = defineStore('messages', {
         const messageSlice = state.messages.mostro.slice(0)
         // Filtering messages by order id
         const messages = messageSlice
-          .filter((message: MostroMessage) => message.Order)
-          .filter((message: MostroMessage) => message.Order.id === orderId)
+          .filter((message: MostroMessage) => message.order)
+          .filter((message: MostroMessage) => message.order.id === orderId)
 
         // Reducing messages to only the last one for each action
         type ReducerAcc = { [key: string]: MostroMessage }
         const reduced = messages.reduce<ReducerAcc>((acc: ReducerAcc, message: MostroMessage) => {
-          if (!message.Order) return acc
-          const orderMessage = message.Order
-          if(acc[orderMessage.action] && acc[orderMessage.action].Order.created_at < orderMessage.created_at) {
+          if (!message.order) return acc
+          const orderMessage = message.order
+          if(acc[orderMessage.action] && acc[orderMessage.action].order.created_at < orderMessage.created_at) {
             acc[orderMessage.action] = message
           } else if (!acc[orderMessage.action]) {
             acc[orderMessage.action] = message

@@ -42,22 +42,22 @@ export default {
   },
   computed: {
     orderId() {
-      return this.message.Order.id
+      return this.message.order.id
     },
     satsAmount() {
-      return this.message.Order.content.SmallOrder?.amount
+      return this.message.order.content.small_order?.amount
     },
     sellerId() {
-      return this.message.Order.content.SmallOrder?.seller_pubkey
+      return this.message.order.content.small_order?.seller_pubkey
     },
     fiatAmount() {
-      return this.message.Order.content.SmallOrder?.fiat_amount
+      return this.message.order.content.small_order?.fiat_amount
     },
     fiatCode() {
-      return this.message.Order.content.SmallOrder?.fiat_code
+      return this.message.order.content.small_order?.fiat_code
     },
     paymentMethod() {
-      return this.message.Order.content.SmallOrder?.payment_method
+      return this.message.order.content.small_order?.payment_method
     },
     creationDate() {
       return this.message.created_at * 1e3
