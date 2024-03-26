@@ -52,7 +52,7 @@ export const useMessages = defineStore('messages', {
       } else if (message.cant_do) {
         console.warn(`>>> [${message.cant_do.id}] CantDo, id: ${message.cant_do.id} message: ${message.cant_do?.content?.text_message}`)
       } else {
-        console.warn('>>> addMostroMessage: message has unknown property property. ev id: ', event.id)
+        console.warn('>>> addMostroMessage: message has unknown property property. message: ', message, ', ev: ', event)
       }
     },
     addPeerMessage(peerMessage: PeerMessage) {
