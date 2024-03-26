@@ -1,59 +1,59 @@
 <template>
   <v-list-item three-line :disabled="disabled">
     <pay-invoice-message
-      v-if="message.Order.action === action.PayInvoice"
+      v-if="message.order.action === action.PayInvoice"
       :message="message"
     />
     <order-taken-message
-      v-if="message.Order.action === action.NewOrder"
+      v-if="message.order.action === action.NewOrder"
       :message="message"
     />
     <waiting-buyer-invoice-message
-      v-if="message.Order.action === action.WaitingBuyerInvoice"
+      v-if="message.order.action === action.WaitingBuyerInvoice"
       :message="message"
     />
     <take-sell-message
-      v-if="message.Order.action === action.TakeSell"
+      v-if="message.order.action === action.TakeSell"
       :message="message"
     />
     <invoice-accepted-message
-      v-if="message.Order.action === action.BuyerTookOrder"
+      v-if="message.order.action === action.BuyerTookOrder"
       :message="message"
     />
     <fiat-sent-message
-      v-if="message.Order.action === action.FiatSent"
+      v-if="message.order.action === action.FiatSent"
       :message="message"
     />
     <sale-completed-message
-      v-if="message.Order.action === action.HoldInvoicePaymentSettled"
+      v-if="message.order.action === action.HoldInvoicePaymentSettled"
       :message="message"
     />
     <waiting-seller-to-pay
-      v-if="message.Order.action === action.WaitingSellerToPay"
+      v-if="message.order.action === action.WaitingSellerToPay"
       :message="message"
     />
     <add-invoice-maker-message
-      v-if="message.Order.action === action.AddInvoice && isLocalMaker"
+      v-if="message.order.action === action.AddInvoice && isLocalMaker"
       :message="message"
     />
     <add-invoice-taker-message
-      v-if="message.Order.action === action.AddInvoice && !isLocalMaker"
+      v-if="message.order.action === action.AddInvoice && !isLocalMaker"
       :message="message"
     />
     <hodl-invoice-payment-accepted
-      v-if="message.Order.action === action.HoldInvoicePaymentAccepted"
+      v-if="message.order.action === action.HoldInvoicePaymentAccepted"
       :message="message"
     />
     <released-message
-      v-if="message.Order.action === action.Release"
+      v-if="message.order.action === action.Release"
       :message="message"
     />
     <purchase-completed-message
-      v-if="message.Order.action === action.PurchaseCompleted"
+      v-if="message.order.action === action.PurchaseCompleted"
       :message="message"
     />
     <rate-user-message
-      v-if="message.Order.action === action.RateUser"
+      v-if="message.order.action === action.RateUser"
       :message="message"
     />
   </v-list-item>

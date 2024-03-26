@@ -66,12 +66,12 @@ export default {
       const orderId = this.$route.params.id as string
       const messages = this.getMostroMessagesByOrderId(orderId)
       return messages
-        .find((msg: MostroMessage) => msg.Order.action === Action.WaitingSellerToPay || msg.Order.action === Action.PayInvoice)
+        .find((msg: MostroMessage) => msg.order.action === Action.WaitingSellerToPay || msg.order.action === Action.PayInvoice)
     },
     giveInvoiceMessage() {
       const orderId = this.$route.params.id as string
       const messages = this.getMostroMessagesByOrderId(orderId)
-      return messages.find((msg: MostroMessage) => msg.Order.action === Action.AddInvoice || msg.Order.action === Action.TakeSell)
+      return messages.find((msg: MostroMessage) => msg.order.action === Action.AddInvoice || msg.order.action === Action.TakeSell)
     },
     currentOrderStatus(): OrderStatus {
       return this.getOrderStatus(this.orderId)
@@ -120,7 +120,7 @@ export default {
     showPayInvoice() {
       const messages: MostroMessage[] = this.getMostroMessagesByOrderId(this.orderId)
       if (!messages || messages.length === 0) return false
-      return messages[messages.length - 1].Order.action === Action.PayInvoice &&
+      return messages[messages.length - 1].order.action === Action.PayInvoice &&
         this.currentOrderStatus !== OrderStatus.CANCELED
     },
     isCancelled() {

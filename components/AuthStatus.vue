@@ -1,7 +1,7 @@
 <template>
   <div class="d-flex justify-center align-center flex-column mt-0 pt-2 mb-3">
     <v-avatar color="primary" size="x-large" style="border: 1.2px solid rgba(38, 82, 49, 0.3);" variant="elevated">
-      <v-img :src="profilePic" v-if="hasProfilepic"/>
+      <v-img :src="profilePic" v-if="profilePic !== undefined"/>
       <v-icon dark large v-else>
         mdi-account-circle
       </v-icon>
@@ -25,39 +25,51 @@
 import { computed, watch } from 'vue'
 import { useAuth } from '@/stores/auth'
 import type { Nostr } from '~/plugins/01-nostr'
+import { useProfile } from '~/composables/useProfile'
+import { useNip19 } from '~/composables/useNip19'
+
+const { hexToNpub } = useNip19()
+const { getProfile } = useProfile()
 
 const profilePic = ref<string | undefined>(undefined)
 const userName = ref<string | undefined>(undefined)
 
-const hasProfilepic = computed<boolean>(() => profilePic.value !== undefined)
-
 const authStore = useAuth()
-
-watch(() => authStore.pubKey, (newPubkey: string | null) => {
+watch(() => authStore.pubKey, async (newPubkey: string | null) => {
   if (newPubkey) {
     const nuxt = useNuxtApp()
     const $nostr: Nostr = nuxt.$nostr as Nostr
     if ($nostr) {
-      $nostr.fetchProfile({ pubkey: newPubkey }).then(profile => {
-        if (profile) {
-          const { name, image, username } = profile
-          if (image) {
-            profilePic.value = image
-          }
-          if (username) {
-            userName.value = username
-          }
-          if (name) {
-            userName.value = name
-          }
+      const npub = hexToNpub(newPubkey)
+      const profile = await getProfile(npub)
+      if (profile) {
+        const { image, username } = profile
+        if (image) {
+          profilePic.value = image
         }
-      })
+        if (username) {
+          userName.value = username
+        }
+      }
     }
   } else {
     profilePic.value = undefined
     userName.value = undefined
   }
 })
+
+if (authStore.pubKey) {
+  getProfile(hexToNpub(authStore.pubKey)).then(profile => {
+    if (!profile) return
+    const { image, username } = profile as Profile
+    if (image) {
+      profilePic.value = image
+    }
+    if (username) {
+      userName.value = username
+    }
+  })
+}
 
 const onLogout = () => {
   authStore.logout()

@@ -12,5 +12,15 @@ export function useNip19 () {
   const nsecToHex = (nsec: string) : string => {
     return nip19.decode(nsec).data as string
   }
-  return { isNsec, nsecToHex }
+  const hexToNsec = (hex: string) : string => {
+    return nip19.nsecEncode(hex)
+  }
+
+  const hexToNpub = (hex: string) : string => {
+    return nip19.npubEncode(hex)
+  }
+  const npubToHex = (npub: string) : string => {
+    return nip19.decode(npub).data as string
+  }
+  return { isNsec, nsecToHex, hexToNpub, npubToHex, hexToNsec }
 }

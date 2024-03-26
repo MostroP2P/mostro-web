@@ -66,11 +66,11 @@ export default {
   methods: {
     getInvoice() {
       if (
-        this.message.Order &&
-        this.message.Order.content &&
-        this.message.Order.content.PaymentRequest
+        this.message.order &&
+        this.message.order.content &&
+        this.message.order.content.payment_request
       ) {
-        return this.message.Order.content.PaymentRequest[1]
+        return this.message.order.content.payment_request[1]
       }
       return ''
     }
@@ -78,8 +78,8 @@ export default {
   computed: {
     hasMessage() : boolean {
       return this.message &&
-        this.message.Order.content &&
-        this.message.Order.content.PaymentRequest !== undefined
+        this.message.order.content &&
+        this.message.order.content.payment_request !== undefined
     }
   }
 }

@@ -134,7 +134,7 @@ export const useOrders = defineStore('orders', {
       const orderList: Order[] = []
       Object.values(state.orders).forEach(order => orderList.push(order))
       return orderList
-        .filter(order => order.status === 'Pending')
+        .filter(order => order.status === OrderStatus.PENDING)
         .sort((orderA, orderB) => orderB.created_at - orderA.created_at)
     },
     getOrderStatus(state) {

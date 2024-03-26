@@ -34,25 +34,25 @@ type Peer = {
  * Message sent by mostro
  */
 export type MostroMessage = {
-  Order: {
+  order: {
     version: number,
     id: string,
     action: Action,
     content: {
-      PaymentRequest?: PaymentRequest,
-      SmallOrder?: SmallOrder,
-      Peer?: Peer,
-      Order?: Order
+      payment_request?: PaymentRequest,
+      small_order?: SmallOrder,
+      peer?: Peer,
+      order?: Order
     },
     created_at: number
   },
-  CantDo: {
+  cant_do: {
     version: number,
     id: string,
     pubkey: string | null,
     action: Action.CantDo,
     content: {
-      TextMessage: string,
+      text_message: string,
     }
   }
   created_at: number
@@ -67,23 +67,24 @@ export type TextMessage = {
 }
 
 export enum Action {
-  Order = 'Order',
-  NewOrder = 'NewOrder',
-  TakeSell = 'TakeSell',
-  TakeBuy = 'TakeBuy',
-  PayInvoice = 'PayInvoice',
-  BuyerTookOrder = 'BuyerTookOrder',
-  FiatSent = 'FiatSent',
-  WaitingSellerToPay = 'WaitingSellerToPay',
-  WaitingBuyerInvoice = 'WaitingBuyerInvoice',
-  AddInvoice = 'AddInvoice',
-  HoldInvoicePaymentAccepted = 'HoldInvoicePaymentAccepted',
-  HoldInvoicePaymentSettled = 'HoldInvoicePaymentSettled',
-  Release = 'Release',
-  Cancel = 'Cancel',
-  PurchaseCompleted = 'PurchaseCompleted',
-  RateUser = 'RateUser',
-  CantDo = 'CantDo'
+  Order = 'order',
+  NewOrder = 'new-order',
+  TakeSell = 'take-sell',
+  TakeBuy = 'take-buy',
+  PayInvoice = 'pay-invoice',
+  BuyerTookOrder = 'buyer-took-order',
+  FiatSent = 'fiat-sent',
+  WaitingSellerToPay = 'waiting-seller-to-pay',
+  WaitingBuyerInvoice = 'waiting-buyer-invoice',
+  AddInvoice = 'add-invoice',
+  HoldInvoicePaymentAccepted = 'hold-invoice-payment-accepted',
+  HoldInvoicePaymentSettled = 'hold-invoice-payment-settled',
+  Release = 'release',
+  Cancel = 'cancel',
+  PurchaseCompleted = 'purchase-completed',
+  RateUser = 'rate-user',
+  Dispute = 'dispute',
+  CantDo = 'cant-do'
 }
 
 // Peer messages
@@ -102,23 +103,23 @@ export type PeerMessage = {
 }
 
 export enum OrderType {
-  BUY = 'Buy',
-  SELL = 'Sell'
+  BUY = 'buy',
+  SELL = 'sell'
 }
 
 export enum OrderStatus {
-  ACTIVE = 'Active',
-  CANCELED = 'Canceled',
-  CANCELED_BY_ADMIN = 'CanceledByAdmin',
-  COMPLETED_BY_ADMIN = 'CompletedByAdmin',
-  DISPUTE = 'Dispute',
-  EXPIRED = 'Expired',
-  FIAT_SENT = 'FiatSent',
-  SETTLE_HODL_INVOICE = 'SettledHoldInvoice',
-  PENDING = 'Pending',
-  SUCCESS = 'Success',
-  WAITING_BUYER_INVOICE = 'WaitingBuyerInvoice',
-  WAITING_PAYMENT = 'WaitingPayment'
+  ACTIVE = 'active',
+  CANCELED = 'canceled',
+  CANCELED_BY_ADMIN = 'canceled-by-admin',
+  COMPLETED_BY_ADMIN = 'completed-by-admin',
+  DISPUTE = 'dispute',
+  EXPIRED = 'expired',
+  FIAT_SENT = 'fiat-sent',
+  SETTLE_HODL_INVOICE = 'settled-hold-invoice',
+  PENDING = 'pending',
+  SUCCESS = 'success',
+  WAITING_BUYER_INVOICE = 'waiting-buyer-invoice',
+  WAITING_PAYMENT = 'waiting-payment'
 }
 
 /**

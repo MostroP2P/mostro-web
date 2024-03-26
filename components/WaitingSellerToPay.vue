@@ -29,7 +29,7 @@ export default {
   },
   computed: {
     orderId() {
-      return this.message.Order.id
+      return this.message.order.id
     },
     creationDate() {
       return this.message.created_at * 1e3
