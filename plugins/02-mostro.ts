@@ -1,7 +1,7 @@
 import { watch } from 'vue'
 import { NDKEvent, type NDKSigner, NDKUser, NDKPrivateKeySigner, NDKNip07Signer } from '@nostr-dev-kit/ndk'
 import { nip19 } from 'nostr-tools'
-import { useAuth } from '@/stores/auth'
+import { AuthMethod, useAuth } from '@/stores/auth'
 import { useOrders } from '@/stores/orders'
 import { useMessages } from '@/stores/messages'
 import { Action, Order, OrderStatus, OrderType } from '../stores/types'
@@ -457,14 +457,18 @@ export default defineNuxtPlugin((nuxtApp) => {
 
   // Registering a watcher for public key
   watch(() => authStore.pubKey, (newPubKey: string | null | undefined) => {
-    if (newPubKey) {
-      mostro.pubkeyCache = {
-        hex: newPubKey,
-        npub: nip19.npubEncode(newPubKey)
+    // Updated the pubkey cache
+    mostro.pubkeyCache = {
+      hex: newPubKey ? newPubKey : null,
+      npub: newPubKey ? nip19.npubEncode(newPubKey) : null
+    }
+    if (authStore.authMethod === AuthMethod.NIP07) {
+      if (newPubKey) {
+        mostro.signer = new NDKNip07Signer()
       }
-      mostro.signer = new NDKNip07Signer()
-      const myPubkey = newPubKey
-      nostr.subscribeDMs(myPubkey)
+    }
+    if (newPubKey) {
+      nostr.subscribeDMs(newPubKey)
     } else {
       nostr.unsubscribeDMs()
     }

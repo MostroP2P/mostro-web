@@ -1,6 +1,7 @@
 import NDK, { NDKKind, NDKSubscription, NDKEvent, NDKRelay, type NDKUserProfile } from '@nostr-dev-kit/ndk'
 import NDKCacheAdapterDexie from '@nostr-dev-kit/ndk-cache-dexie'
 import { nip19 } from 'nostr-tools'
+import { useRelays } from '~/stores/relays'
 
 /**
  * Maximum number of seconds to be returned in the initial query
@@ -153,6 +154,22 @@ export default defineNuxtPlugin((nuxtApp) => {
   for (const relay of relays.split(',')) {
     nostr.ndk.addExplicitRelay(relay)
   }
+  const relaysStatus = useRelays()
+  nostr.ndk.pool.on('relay:connect', (r: NDKRelay) => {
+    relaysStatus.updateRelayStatus(r.url, 'greenyellow')
+  })
+  nostr.ndk.pool.on('relay:ready', (r: NDKRelay) => {
+    relaysStatus.updateRelayStatus(r.url, 'green')
+  })
+  nostr.ndk.pool.on('relay:disconnect', (r: NDKRelay) => {
+    relaysStatus.updateRelayStatus(r.url, 'red')
+  })
+  nostr.ndk.pool.on('fapping', (r: NDKRelay) => {
+    relaysStatus.updateRelayStatus(r.url, 'orange')
+  })
+  nostr.ndk.pool.on('notice', (r: NDKRelay) => {
+    relaysStatus.updateRelayStatus(r.url, 'blue')
+  })
   nuxtApp.provide('nostr', nostr)
 })
 
