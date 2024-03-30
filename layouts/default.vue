@@ -24,6 +24,23 @@
         </v-list-item>
       </v-list>
       <template v-slot:append>
+        <div class="d-flex justify-center relay-status">
+          <v-tooltip
+            v-for="relay in relaysStore.relays"
+            location="top"
+            :text="relay.url"
+            open-on-click
+          >
+            <template v-slot:activator="{ props }">
+              <div
+                v-bind="props"
+                :key="relay.url"
+                class="relay-dot"
+                :style="{ backgroundColor: relay.status }">
+              </div>
+            </template>
+          </v-tooltip>
+        </div>
         <div class="text-caption text-disabled d-flex justify-center">
           Version: {{ version }}
         </div>
@@ -69,6 +86,7 @@
 import { ref, onMounted } from 'vue'
 import { useDisplay } from 'vuetify'
 import { useAuth } from '@/stores/auth'
+import { useRelays } from '@/stores/relays'
 import { GIT_COMMIT } from '~/constants/version'
 import useEllipsis from '~/composables/useEllipsis'
 import pkg from '~/package.json'
@@ -77,6 +95,7 @@ const { ellipsizedText, originalText } = useEllipsis(GIT_COMMIT, 10)
 const commitHash = ellipsizedText.value
 const version = ref(pkg.version)
 
+const relaysStore = useRelays()
 const authStore = useAuth()
 const drawer = ref(true)
 const items = ref([
@@ -114,3 +133,17 @@ onMounted(() => {
   }
 })
 </script>
+
+<style scoped>
+.relay-status {
+  margin: 10px;
+  border-radius: 5px;
+  background: #bbf3be;
+}
+.relay-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin: 5px;
+}
+</style>
