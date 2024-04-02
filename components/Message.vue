@@ -21,7 +21,7 @@
       :message="message"
     />
     <fiat-sent-message
-      v-if="message.order.action === action.FiatSentOk"
+      v-if="message.order.action === action.FiatSentOk || message.order.action === action.FiatSent"
       :message="message"
     />
     <sale-completed-message
