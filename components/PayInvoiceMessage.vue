@@ -54,14 +54,14 @@ export default {
       return `You're selling ${this.satsAmount} sats for ${this.fiatCode} ${this.fiatAmount}`
     },
     satsAmount() {
-      const paymentRequest = this.message.Order.content.PaymentRequest
+      const paymentRequest = this.message.order.content.payment_request
       if (paymentRequest && Array.isArray(paymentRequest)) {
         // @ts-ignore
         return paymentRequest[0].amount
       }
     },
     fiatCode() {
-      const paymentRequest = this.message.Order.content.PaymentRequest
+      const paymentRequest = this.message.order.content.payment_request
       if (paymentRequest && Array.isArray(paymentRequest)) {
         // @ts-ignore
         return paymentRequest[0].fiat_code
@@ -69,7 +69,7 @@ export default {
       return 'N/A'
     },
     fiatAmount() {
-      const paymentRequest = this.message.Order.content.PaymentRequest
+      const paymentRequest = this.message.order.content.payment_request
       if (paymentRequest && Array.isArray(paymentRequest)) {
         // @ts-ignore
         return paymentRequest[0].fiat_amount
