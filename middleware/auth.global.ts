@@ -1,10 +1,10 @@
-import { AuthMethod, useAuth } from '~/stores/auth'
+import { useAuth } from '~/stores/auth'
 
 export default defineNuxtRouteMiddleware((to, from) => {
-  // Use the isLocked getter to determine if the user is authenticated
   const authStore = useAuth()
 
-  if (!authStore.isAuthenticated) {
+  const allowedPaths = ['/', '/about']
+  if (!authStore.isAuthenticated && !allowedPaths.includes(to.path)) {
     // Redirect them to the login page if they're not authenticated
     return navigateTo('/')
   }

@@ -62,7 +62,6 @@ const hasOrderIdParam = computed(() => route?.params?.id ? true : false)
 
 definePageMeta({
   layout: false,
-  middleware: ['auth'],
 })
 
 const isCancelled = computed(() => {
