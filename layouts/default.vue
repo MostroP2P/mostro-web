@@ -24,6 +24,14 @@
         </v-list-item>
       </v-list>
       <template v-slot:append>
+        <div class="d-flex justify-center">
+          <div class="text-subtitle-1 text-disabled mr-2">
+            Relay Health
+          </div>
+          <v-icon class="text-disabled d-flex justify-center">
+            mdi-signal
+          </v-icon>
+        </div>
         <div class="d-flex justify-center relay-status">
           <v-tooltip
             v-for="relay in relaysStore.relays"
@@ -143,6 +151,7 @@ onMounted(() => {
 .relay-dot {
   width: 10px;
   height: 10px;
+  border: 0.5px solid #000;
   border-radius: 50%;
   margin: 5px;
 }

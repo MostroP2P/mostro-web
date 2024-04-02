@@ -46,33 +46,31 @@ export default {
   computed: {
     ...mapState(useOrders, ['getOrderById']),
     order() {
-      // @ts-ignore
-      return this.getOrderById(this.$route.params.id)
+      if (typeof this.$route.params.id === 'string') {
+        return this.getOrderById(this.$route.params.id)
+      }
+      return null
     },
     messageText() {
-      // @ts-ignore
       return `You're selling ${this.satsAmount} sats for ${this.fiatCode} ${this.fiatAmount}`
     },
     satsAmount() {
-      const paymentRequest = this.message.Order.content.PaymentRequest
+      const paymentRequest = this.message.order.content.payment_request
       if (paymentRequest && Array.isArray(paymentRequest)) {
-        // @ts-ignore
-        return paymentRequest[0].amount
+        return paymentRequest[0]?.amount
       }
     },
     fiatCode() {
-      const paymentRequest = this.message.Order.content.PaymentRequest
+      const paymentRequest = this.message.order.content.payment_request
       if (paymentRequest && Array.isArray(paymentRequest)) {
-        // @ts-ignore
-        return paymentRequest[0].fiat_code
+        return paymentRequest[0]?.fiat_code
       }
       return 'N/A'
     },
     fiatAmount() {
-      const paymentRequest = this.message.Order.content.PaymentRequest
+      const paymentRequest = this.message.order.content.payment_request
       if (paymentRequest && Array.isArray(paymentRequest)) {
-        // @ts-ignore
-        return paymentRequest[0].fiat_amount
+        return paymentRequest[0]?.fiat_amount
       }
       return 'N/A'
     },

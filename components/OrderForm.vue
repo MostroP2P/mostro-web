@@ -150,7 +150,7 @@ export default defineComponent({
     orderType: {
       type: String,
       required: true,
-      validator: (value: string) => ['Sell', 'Buy'].includes(value)
+      validator: (value: OrderType) => [OrderType.SELL, OrderType.BUY].includes(value)
     }
   },
   mixins: [ invoiceValidator ],
@@ -275,7 +275,7 @@ export default defineComponent({
       return hasPriceFeed
     },
     showInvoiceInput() {
-      return !this.isMarketPricing && this.orderType === 'Buy'
+      return !this.isMarketPricing && this.orderType === OrderType.BUY
     },
     showSatsInput() {
       return !this.isMarketPricing

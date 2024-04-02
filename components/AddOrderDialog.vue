@@ -25,7 +25,7 @@
             <order-form
               :onClose="() => showDialog = false"
               :onProcessingUpdate="onProcessingUpdate"
-              orderType="Sell"
+              :orderType="OrderType.SELL"
             />
           </v-card-text>
         </v-window-item>
@@ -34,7 +34,7 @@
             <order-form
               :onClose="() => showDialog = false"
               :onProcessingUpdate="onProcessingUpdate"
-              orderType="Buy"
+              :orderType="OrderType.BUY"
             />
           </v-card-text>
         </v-window-item>
@@ -46,6 +46,7 @@
 <script lang="ts" setup>
 import { computed } from 'vue'
 import { useAuth } from '@/stores/auth'
+import { OrderType } from '@/stores/types'
 const authStore = useAuth()
 const isAuthenticated = computed(() => authStore.isAuthenticated)
 </script>
@@ -56,7 +57,8 @@ export default {
     return {
       showDialog: false,
       isProcessing: false,
-      tabs: null
+      tabs: null,
+      OrderType,
     }
   },
   methods: {

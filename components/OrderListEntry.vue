@@ -11,7 +11,7 @@
           label
           size="small"
           style="cursor: pointer"
-          :color="order.kind === 'Sell' ? 'red' : 'green'"
+          :color="order.kind === OrderType.SELL ? 'red' : 'green'"
         >
           {{ order.kind.toUpperCase() === 'BUY' ? 'BUY ORDER' : 'SELL ORDER' }}
         </v-chip>
@@ -106,7 +106,7 @@ const summary = (order: Order) => {
     else
       return `Buying sats for ${tradeOut(order)}`
   } else {
-    if (order.kind === 'Sell')
+    if (order.kind === OrderType.SELL)
       return `Selling ${tradeOut(order)} for ${tradeIn(order)}`
     else
       return `Buying ${tradeIn(order)} for ${tradeOut(order)}`

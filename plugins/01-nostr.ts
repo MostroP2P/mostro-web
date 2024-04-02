@@ -156,7 +156,7 @@ export default defineNuxtPlugin((nuxtApp) => {
   }
   const relaysStatus = useRelays()
   nostr.ndk.pool.on('relay:connect', (r: NDKRelay) => {
-    relaysStatus.updateRelayStatus(r.url, 'greenyellow')
+    relaysStatus.updateRelayStatus(r.url, 'yellow')
   })
   nostr.ndk.pool.on('relay:ready', (r: NDKRelay) => {
     relaysStatus.updateRelayStatus(r.url, 'green')
@@ -167,7 +167,8 @@ export default defineNuxtPlugin((nuxtApp) => {
   nostr.ndk.pool.on('fapping', (r: NDKRelay) => {
     relaysStatus.updateRelayStatus(r.url, 'orange')
   })
-  nostr.ndk.pool.on('notice', (r: NDKRelay) => {
+  nostr.ndk.pool.on('notice', (r: NDKRelay, arg2: any) => {
+    console.log('>> notice', r, arg2)
     relaysStatus.updateRelayStatus(r.url, 'blue')
   })
   nuxtApp.provide('nostr', nostr)
