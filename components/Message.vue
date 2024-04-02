@@ -45,7 +45,7 @@
       :message="message"
     />
     <released-message
-      v-if="message.order.action === action.Released"
+      v-if="message.order.action === action.Released || message.order.action === action.Release"
       :message="message"
     />
     <purchase-completed-message
@@ -53,7 +53,7 @@
       :message="message"
     />
     <rate-user-message
-      v-if="message.order.action === action.Rate"
+      v-if="message.order.action === action.Rate || message.order.action === action.RateUser"
       :message="message"
     />
   </v-list-item>
