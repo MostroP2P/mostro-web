@@ -23,7 +23,7 @@
         </v-btn-toggle>
       </div>
       <v-card-text v-if="hasMessage && invoiceMode === 0" class="d-flex justify-center align-center mt-2">
-        <qrcode-vue :value="getInvoice()" :size="300" level="H"/>
+        <qrcode-vue :margin="5" :value="getInvoice()" :size="330" level="L" class="qr-code"/>
       </v-card-text>
       <v-card-text v-if="hasMessage && invoiceMode === 1" class="text-caption mt-2">
         {{ getInvoice() }}
@@ -84,3 +84,9 @@ export default {
   }
 }
 </script>
+<style scoped>
+.qr-code {
+  border-radius: 10px;
+}
+</style>
+
