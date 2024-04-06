@@ -47,7 +47,12 @@ export default {
     ...mapState(useOrders, ['getOrderById']),
     buyerPubkey() {
       const orderMessage = this.message.order
-      const buyerPubkey = this.getOrderById(orderMessage.id).master_buyer_pubkey
+      const storedOrder = this.getOrderById(orderMessage.id)
+      if (!storedOrder) {
+        console.warn(`Order with id ${orderMessage.id} not found`)
+        return 'N/A'
+      }
+      const buyerPubkey = storedOrder.master_buyer_pubkey
       return buyerPubkey ? buyerPubkey : '?'
     },
     creationDate() {

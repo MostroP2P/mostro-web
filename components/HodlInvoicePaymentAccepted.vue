@@ -58,7 +58,9 @@ export default {
       const orderId = this.message.order.content.order?.id
       if (orderId) {
         const order = this.getOrderById(orderId)
-        return order.fiat_code
+        if (order) {
+          return order.fiat_code
+        }
       }
       return '?'
     },
@@ -66,7 +68,9 @@ export default {
       const orderId = this.message.order.content.order?.id
       if (orderId) {
         const order = this.getOrderById(orderId)
-        return order.fiat_amount
+        if (order) {
+          return order.fiat_amount
+        }
       }
       return '?'
     },
@@ -74,7 +78,9 @@ export default {
       const orderId = this.message.order.content.order?.id
       if (orderId) {
         const order = this.getOrderById(orderId)
-        return order.payment_method
+        if (order) {
+          return order.payment_method
+        }
       }
       return '?'
     },

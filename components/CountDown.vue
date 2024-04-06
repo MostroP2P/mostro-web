@@ -34,6 +34,10 @@ const isCloseToEnd = computed(() => progressRemaining.value < CLOSE_TO_END_THRES
 
 const updateCountdown = () => {
   const order = orderStore.getOrderById(route.params.id as string)
+  if (!order) {
+    console.warn(`Order with id ${route.params.id} not found`)
+    return
+  }
   if (order.status === OrderStatus.WAITING_BUYER_INVOICE || order.status === OrderStatus.WAITING_PAYMENT) {
     const now = new Date().getTime()
     const lastUpdate = order.updated_at ? order.updated_at * 1e3 : order.created_at * 1e3

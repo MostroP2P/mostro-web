@@ -144,7 +144,7 @@ export const useOrders = defineStore('orders', {
     getOrderStatus(state) {
       return (orderId: string) => state.orders[orderId]?.status
     },
-    getOrderById(state) {
+    getOrderById(state) : (orderId: string) => Order | undefined {
       return (orderId: string) => state.orders[orderId]
     },
     getUserOrderIds(state) {

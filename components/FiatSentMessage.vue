@@ -55,8 +55,7 @@ export default {
     ...mapState(useOrders, ['getOrderById']),
     order() {
       const route = useRoute()
-      // @ts-ignore
-      return this.getOrderById(route.params.id)
+      return this.getOrderById(route.params.id as string)
     },
     buyerPubkey() {
       return this.order?.master_buyer_pubkey
