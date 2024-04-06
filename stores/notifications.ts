@@ -140,7 +140,7 @@ export const useNotifications = defineStore('notifications', () => {
   const dismiss = (notification: Notification) => {
     const index = notifications.value.findIndex(n => n.orderId === notification.orderId)
     if (index !== -1) {
-      notification.dismissed = true
+      notifications.value[index].dismissed = true
     }
   }
   const getActiveNotifications = computed(() => {
