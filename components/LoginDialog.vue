@@ -10,8 +10,8 @@
     <v-card>
       <v-card-title>Login method</v-card-title>
       <v-tabs v-model="tab">
-        <v-tab>Nsec</v-tab>
-        <v-tab>NIP07</v-tab>
+        <v-tab prepend-icon="mdi-key">Nsec</v-tab>
+        <v-tab prepend-icon="mdi-puzzle">Extension</v-tab>
       </v-tabs>
       <v-window v-model="tab">
         <v-window-item style="min-height: 5em">
