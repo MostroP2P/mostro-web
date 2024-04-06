@@ -242,6 +242,7 @@ export interface Notification {
   title: string,
   subtitle: string,
   orderId: string,
+  orderStatus: OrderStatus,
   dismissed: boolean
 }
 

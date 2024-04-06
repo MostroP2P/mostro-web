@@ -78,7 +78,7 @@ export const useNotifications = defineStore('notifications', () => {
     const notification: Notification = {
       timestamp: timestamp,
       title: title,
-      // subtitle: `Order for ${newOrder.fiat_amount} ${newOrder.fiat_code.toUpperCase()} - T: ${timestamp}, S: ${newOrder.status}`,
+      orderStatus: newOrder.status,
       subtitle: subtitle,
       orderId: newOrder.id,
       dismissed: false
