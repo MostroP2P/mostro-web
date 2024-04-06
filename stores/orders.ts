@@ -55,7 +55,11 @@ export const useOrders = defineStore('orders', {
         // This is because we want to update when receving a replaceable event, but
         // not necessarily when receiving a DM
         if (updateStatus) {
-          existingOrder.status = order.status
+          // We don't want to update an order's status if the event timestamp is older
+          // than the `updated_at` field of the stored order, if we have one
+          if (!existingOrder.updated_at || event.created_at && event?.created_at > existingOrder?.updated_at) {
+            existingOrder.status = order.status
+          }
         }
         // Adds or updates the 'update_at' field
         existingOrder.updated_at = !existingOrder.updated_at ?  order.created_at : Math.max(existingOrder.updated_at, event.created_at as number)
