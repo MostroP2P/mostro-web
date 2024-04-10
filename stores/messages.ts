@@ -80,7 +80,7 @@ export const useMessages = defineStore('messages', {
       }
       return Array.from(messageMap).map(([orderId, messageCount]) => {
         const orderStore = useOrders()
-        const order = orderStore.getOrderById(orderId)
+        const order = orderStore.getOrderById(orderId) as Order
         return { orderId, messageCount, order }
       })
       .filter((summary: ThreadSummary) => summary.order !== undefined)
