@@ -25,8 +25,11 @@
       <v-card-text v-if="hasMessage && invoiceMode === 0" class="d-flex justify-center align-center mt-2">
         <qrcode-vue :margin="5" :value="getInvoice()" :size="330" level="L" class="qr-code"/>
       </v-card-text>
-      <v-card-text v-if="hasMessage && invoiceMode === 1" class="text-caption mt-2">
+      <v-card-text v-if="hasMessage && invoiceMode === 1" class="text-caption mt-2 invoice">
         {{ getInvoice() }}
+      </v-card-text>
+      <v-card-text class="d-flex justify-center align-center">
+        <v-btn icon="mdi-content-copy" variant="tonal" class="ml-2" @click="onCopyInvoice"/>
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
@@ -73,6 +76,19 @@ export default {
         return this.message.order.content.payment_request[1]
       }
       return ''
+    },
+    async onCopyInvoice() {
+      const invoice = this.getInvoice()
+      if (invoice) {
+      try {
+        await navigator.clipboard.writeText(invoice)
+        // Show a success message or perform any other desired action
+        console.log('Invoice copied to clipboard')
+      } catch (err) {
+        // Handle any errors that occurred during copying
+        console.error('Failed to copy invoice: ', err)
+      }
+      }
     }
   },
   computed: {
@@ -87,6 +103,9 @@ export default {
 <style scoped>
 .qr-code {
   border-radius: 10px;
+}
+.invoice {
+  font-weight: bold;
 }
 </style>
 
