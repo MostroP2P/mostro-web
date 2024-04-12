@@ -46,6 +46,12 @@ export const useMessages = defineStore('messages', {
           const order: Order = orderMessage?.content?.order as Order
           if (order)
             orderStore.updateOrder({ order, event })
+        } else if (orderMessage?.action === Action.RateReceived) {
+          const order: Order = orderMessage?.content?.order as Order
+          if (order) {
+            // TODO: figure out a way of getting the rating back, and pass it down here
+            // orderStore.updateOrderRating({ order, event })
+          }
         }
         orderStore.updateOrderStatus(message.order.id, orderMessage.action, event)
         this.messages.mostro.push(message)

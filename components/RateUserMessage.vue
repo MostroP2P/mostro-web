@@ -17,34 +17,47 @@
         hover
         dense
         light
-        :value="3"
+        v-model="rating"
       >
       </v-rating>
       <div>
-        <v-btn variant="text">Rate</v-btn>
+        <v-btn variant="text" @click="rateUser">Rate</v-btn>
       </div>
     </div>
   </div>
 </template>
-<script lang="ts">
+<script lang="ts" setup>
+import { computed, ref } from 'vue'
 import type { PropType } from 'vue'
-import * as timeago from 'timeago.js'
 import type { MostroMessage } from '~/stores/types'
 import CreatedAt from '~/components/CreatedAt.vue'
-export default {
-  data() {
-    return { timeago }
-  },
-  props: {
-    message: {
-      type: Object as PropType<MostroMessage>,
-      required: true
-    }
-  },
-  computed: {
-    creationDate() {
-      return this.message.created_at * 1e3
-    }
+import type { Mostro } from '~/plugins/02-mostro'
+import { useOrders } from '~/stores/orders'
+
+const rating = ref<number>(0)
+
+const props = defineProps({
+  message: {
+    type: Object as PropType<MostroMessage>,
+    required: true
+  }
+})
+
+const creationDate = computed(() => {
+  return props.message.created_at * 1e3
+})
+
+const rateUser = async () => {
+  console.log(rating.value)
+  const nuxtApp = useNuxtApp()
+  const $mostro: Mostro = nuxtApp.$mostro as Mostro
+  const orders = useOrders()
+  const order = orders.getOrderById(props.message.order.id)
+  if (order) {
+    await $mostro.rateUser(order, rating.value)
+  } else {
+    console.error(`Could not find order with id: ${props.message.order.id}`)
   }
 }
 </script>
+

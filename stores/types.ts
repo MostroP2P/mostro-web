@@ -86,6 +86,7 @@ export enum Action {
   PurchaseCompleted = 'purchase-completed',
   Rate = 'rate',
   RateUser = 'rate-user',
+  RateReceived = 'rate-received',
   AdminTookDispute = 'admin-took-dispute',
   AdminCanceled = 'admin-canceled',
   AdminSettled = 'admin-settled',
@@ -148,6 +149,10 @@ export class Order {
   master_buyer_pubkey?: string
   is_mine?: boolean = false
   updated_at?: number
+  rating?: {
+    value: number | undefined,
+    confirmed: boolean | undefined
+  } | undefined
 
   constructor(
     id: string,
