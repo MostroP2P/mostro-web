@@ -67,7 +67,7 @@ export const useOrders = defineStore('orders', {
         console.warn(`Could not find order with id ${order.id} to update`)
       }
     },
-    updateOrderRating({ order, rating, confirmed }: {order: Order, event: MostroEvent, rating: number, confirmed: boolean}) {
+    updateOrderRating({ order, rating, confirmed }: {order: Order, rating: number, confirmed: boolean}) {
       const existingOrder = this.orders[order.id]
       if (!existingOrder) {
         console.warn(`Could not find order with id ${order.id} to update`)

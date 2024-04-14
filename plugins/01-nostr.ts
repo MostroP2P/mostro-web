@@ -121,7 +121,7 @@ export class Nostr {
     if (!this.dmSubscription) {
       this.dmSubscription = this.ndk.subscribe(filters)
       this.dmSubscription.on('event', this._handlePrivateEvent.bind(this))
-      // this.dmSubscription.on('event:dup', this._handleDupPrivateEvent.bind(this))
+      this.dmSubscription.on('event:dup', this._handleDupPrivateEvent.bind(this))
       this.dmSubscription.on('close', this._handleClosePrivateEvent.bind(this))
     } else {
       console.error('❌ Attempting to subcribe to DMs when already subscribed')

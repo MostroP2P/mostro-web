@@ -30,6 +30,7 @@ export default {
     orderMessages() {
       const orderMsgs =  this.getMostroMessagesByOrderId(this.orderId)
         .filter((msg: MostroMessage) => msg.order.action !== Action.CantDo)
+        .filter((msg: MostroMessage) => msg.order.action !== Action.RateReceived)
       return orderMsgs
     },
     isCancelled() {

@@ -8,33 +8,39 @@
         </div>
       </v-list-item-title>
       <div class="wrap-text text-message">
-        <p>Please rate your peer.</p>
+        <p>{{ rateMessage }}.</p>
       </div>
       <v-rating
         color="warning"
         length="5"
         size="32"
-        hover
+        :hover="!isRated"
+        :readonly="isRated"
         dense
         light
         v-model="rating"
       >
       </v-rating>
       <div>
-        <v-btn variant="text" @click="rateUser">Rate</v-btn>
+        <v-btn
+          v-if="!isRated"
+          variant="text"
+          @click="rateUser"
+        >
+          Rate
+        </v-btn>
       </div>
     </div>
   </div>
 </template>
 <script lang="ts" setup>
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import type { PropType } from 'vue'
 import type { MostroMessage } from '~/stores/types'
 import CreatedAt from '~/components/CreatedAt.vue'
 import type { Mostro } from '~/plugins/02-mostro'
 import { useOrders } from '~/stores/orders'
 
-const rating = ref<number>(0)
 
 const props = defineProps({
   message: {
@@ -42,6 +48,9 @@ const props = defineProps({
     required: true
   }
 })
+
+const storedOrder = useOrders().getOrderById(props.message.order.id)
+const rating = ref<number>(storedOrder?.rating?.value || 0)
 
 const creationDate = computed(() => {
   return props.message.created_at * 1e3
@@ -59,5 +68,13 @@ const rateUser = async () => {
     console.error(`Could not find order with id: ${props.message.order.id}`)
   }
 }
+
+const isRated = computed(() => {
+  const storedOrder = useOrders().getOrderById(props.message.order.id)
+  return storedOrder?.rating?.confirmed
+})
+
+const rateMessage = ref<string>(isRated.value ? 'User has been rated' : 'Please rate this user')
+
 </script>
 

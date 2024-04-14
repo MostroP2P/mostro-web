@@ -47,10 +47,10 @@ export const useMessages = defineStore('messages', {
           if (order)
             orderStore.updateOrder({ order, event })
         } else if (orderMessage?.action === Action.RateReceived) {
-          const order: Order = orderMessage?.content?.order as Order
-          if (order) {
-            // TODO: figure out a way of getting the rating back, and pass it down here
-            // orderStore.updateOrderRating({ order, event })
+          const rating = orderMessage?.content?.rating_user
+          const order: Order = orderStore.getOrderById(orderMessage.id) as Order
+          if (order && rating) {
+            orderStore.updateOrderRating({ order, rating, confirmed: true })
           }
         }
         orderStore.updateOrderStatus(message.order.id, orderMessage.action, event)

@@ -42,7 +42,8 @@ export type MostroMessage = {
       payment_request?: PaymentRequest,
       small_order?: SmallOrder,
       peer?: Peer,
-      order?: Order
+      order?: Order,
+      rating_user?: number
     },
     created_at: number
   },
@@ -152,7 +153,7 @@ export class Order {
   rating?: {
     value: number | undefined,
     confirmed: boolean | undefined
-  } | undefined
+  }
 
   constructor(
     id: string,
