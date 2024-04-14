@@ -11,13 +11,15 @@
         Order Details
       </v-card-title>
       <v-card-text>
-        <span v-if="order.is_mine">You are </span>
-        <span v-else>Someone is </span>
-        {{ getOrderVerb() }} <strong class="highlight">{{ order.fiat_amount }} {{ order.fiat_code }} {{ fiatFlag }}</strong>
-        <span v-if="isFixedPrice"> for <strong class="highlight">{{ order.amount }} <i class="fak fa-bold"></i></strong></span>
-        <span v-if="!isFixedPrice"> at market price </span>
-        <span v-if="hasPremiumOrDiscount">with a <strong class="highlight">{{order.premium}}</strong> {{ delta }}</span>
-        <span v-else-if="!isFixedPrice">with no premium or discount.</span>
+        <div v-if="isFixedPrice">
+          {{ getOrderSubject() }} {{ getOrderVerb() }} <strong class="highlight">{{ formattedSatsAmount }} <i class="fak fa-bold"></i></strong> for <strong class="highlight">{{ order.fiat_amount }} {{ order.fiat_code }} {{ fiatFlag }}</strong>
+        </div>
+        <div v-if="!isFixedPrice">
+          {{ getOrderSubject() }} {{ getOrderVerb() }} <strong class="highlight">{{ order.fiat_amount }} {{ order.fiat_code }} {{ fiatFlag }}</strong>
+          at market price
+          <span v-if="hasPremiumOrDiscount">with a <strong class="highlight">{{ order.premium > 0 ? '+' : '-' }}{{order.premium}}%</strong> {{ delta }}</span>
+          <span v-else>with no premium or discount.</span>
+        </div>
       </v-card-text>
       <v-card-text>
         Created at: <strong class="highlight">{{ creationDate }}</strong>
@@ -111,12 +113,22 @@ const getOrderVerb = () => {
   return props.order.kind ===  OrderType.BUY ? 'buying' : 'selling'
 }
 
+const getOrderSubject = () => {
+  return props.order.is_mine ? 'You are ' : 'Someone is '
+}
+
 const isFixedPrice = computed(() => {
   return props.order.amount && props.order.amount > 0
 })
 
+const formattedSatsAmount = computed(() => {
+  const amount = Number(props.order.amount) || 0
+  const numberFormat = new Intl.NumberFormat((nuxtApp.$i18n as any).locale, { style: 'decimal' })
+  return numberFormat.format(amount)
+})
+
 const delta = computed(() => {
-  return props.order.premium ? 'premium' : 'discount'
+  return props.order.premium > 0 ? 'premium' : 'discount'
 })
 
 const hasPremiumOrDiscount = computed(() => {

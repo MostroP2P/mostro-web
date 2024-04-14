@@ -41,8 +41,12 @@ export default defineNuxtConfig({
   },
   modules: [
     '@pinia/nuxt',
-    '@vueuse/nuxt'
+    '@vueuse/nuxt',
+    '@nuxtjs/i18n'
   ],
+  i18n: {
+    vueI18n: './i18n.config.ts'
+  },
   pinia: {
     autoImports: [
       // automatically imports `defineStore`
