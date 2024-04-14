@@ -67,6 +67,18 @@ export const useOrders = defineStore('orders', {
         console.warn(`Could not find order with id ${order.id} to update`)
       }
     },
+    updateOrderRating({ order, rating, confirmed }: {order: Order, rating: number, confirmed: boolean}) {
+      const existingOrder = this.orders[order.id]
+      if (!existingOrder) {
+        console.warn(`Could not find order with id ${order.id} to update`)
+        return
+      }
+      existingOrder.rating = {
+        value: rating,
+        confirmed
+      }
+      existingOrder.updated_at = Math.floor(Date.now() / 1E3)
+    },
     updateOrderStatus(orderId: string, action: Action, event: NDKEvent) {
       const existingOrder = this.orders[orderId]
       if (!existingOrder) {

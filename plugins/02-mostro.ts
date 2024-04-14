@@ -351,6 +351,24 @@ export class Mostro {
       await this.nostr.publishEvent(event)
     }
   }
+  async rateUser(order: Order, rating: number) {
+    const payload = {
+      order: {
+        version: 1,
+        id: order.id,
+        pubkey: null,
+        action: Action.RateUser,
+        content: {
+          rating_user: rating
+        }
+      }
+    }
+    const event = await this.createEvent(payload)
+    if (event) {
+      await event.sign(this.signer)
+      await this.nostr.publishEvent(event)
+    }
+  }
   async dispute(order: Order) {
     const payload = {
       order: {

@@ -42,7 +42,8 @@ export type MostroMessage = {
       payment_request?: PaymentRequest,
       small_order?: SmallOrder,
       peer?: Peer,
-      order?: Order
+      order?: Order,
+      rating_user?: number
     },
     created_at: number
   },
@@ -86,6 +87,7 @@ export enum Action {
   PurchaseCompleted = 'purchase-completed',
   Rate = 'rate',
   RateUser = 'rate-user',
+  RateReceived = 'rate-received',
   AdminTookDispute = 'admin-took-dispute',
   AdminCanceled = 'admin-canceled',
   AdminSettled = 'admin-settled',
@@ -148,6 +150,10 @@ export class Order {
   master_buyer_pubkey?: string
   is_mine?: boolean = false
   updated_at?: number
+  rating?: {
+    value: number | undefined,
+    confirmed: boolean | undefined
+  }
 
   constructor(
     id: string,
