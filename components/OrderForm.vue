@@ -42,6 +42,44 @@
       :label="isMarketPricing ? 'Market' : 'Fixed'"
     >
     </v-switch>
+    <div
+      v-if="isMarketPricing"
+      class="text-caption mt-3 mb-8"
+    >
+      Premium or discount
+    </div>
+    <div class="d-flex justify-center">
+      <v-slider
+        v-if="isMarketPricing"
+        class="px-0"
+        :min="-10"
+        :max="10"
+        :step="1"
+        density="compact"
+        :hint="premium > 0 ? `Premium ${premium}%` : `Discount ${premium}%`"
+        show-ticks
+        tick-size="5"
+        thumb-label="always"
+        v-model="premium"
+      >
+        <template v-slot:prepend>
+          <v-btn
+            icon="mdi-minus"
+            size="small"
+            variant="text"
+            @click="premium <= -10 ? premium = -10 : premium -= 1"
+          ></v-btn>
+        </template>
+        <template v-slot:append>
+          <v-btn
+            icon="mdi-plus"
+            size="small"
+            variant="text"
+            @click="premium >= 10 ? premium = 10 : premium += 1"
+          ></v-btn>
+        </template>
+      </v-slider>
+    </div>
     <v-text-field
       v-if="showSatsInput"
       v-model="amount"
@@ -115,6 +153,7 @@ export default defineComponent({
       fiatAmount: 0,
       selectedFiat: null as FiatData | null,
       amount: 0,
+      premium: 0,
       paymentMethod: '',
       isMarketPricing: true,
       buyerInvoice: '',
@@ -210,7 +249,7 @@ export default defineComponent({
         fiat_code: this.selectedfiatCode,
         fiat_amount: fiatAmount,
         created_at: Math.ceil(Date.now() / 1E3),
-        premium: 0,
+        premium: this.premium,
         payment_method: this.paymentMethod
       }
       if (!this.isMarketPricing) {
