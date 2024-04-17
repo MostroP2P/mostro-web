@@ -254,7 +254,7 @@ export default defineComponent({
       }
       if (!this.isMarketPricing) {
         if (this.orderType === OrderType.BUY) {
-          order.buyer_invoice = this.buyerInvoice
+          order.buyer_invoice = this.buyerInvoice !== '' ? this.buyerInvoice : null
         }
         // If the order is nor market-priced,
         // a fixed sats amount is required always
