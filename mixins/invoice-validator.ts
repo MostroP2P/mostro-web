@@ -88,6 +88,12 @@ export default defineComponent({
         return false
       }
     },
+    hasAmount(): boolean {
+      if (!this.decodedInvoice) return false
+      const sectionsMap = this.decodedInvoice.sectionsMap
+      if (!sectionsMap) return false
+      return sectionsMap?.has('amount')
+    },
     isExpired() : boolean {
       if (!this.decodedInvoice) return false
       const sectionsMap = this.decodedInvoice.sectionsMap

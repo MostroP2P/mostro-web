@@ -89,7 +89,6 @@
       outlined
       required
       :rules="amountRules"
-      :disabled="disableAmountField"
     >
       <template v-slot:append>
         <i class="fak fa-regular"/>
@@ -100,9 +99,8 @@
       v-if="showInvoiceInput"
       outlined
       :rules="invoiceRules"
-      label="Lightning Invoice with amount to buy"
+      label="Lightning Invoice without an amount"
       :hint="invoiceValueSats ? `Invoice for ${invoiceValueSats} sats` : 'Please enter an invoice'"
-      :disabled="disableInvoiceField"
     />
     <v-text-field
       v-model="paymentMethod"
@@ -171,7 +169,7 @@ export default defineComponent({
         (v: string) => Number(v) > 0 || 'Sats amount is required'
       ],
       invoiceRules: [
-        (v: string) => !v || this.validateInvoice(v) || this.decodedInvoiceError || 'Invalid Lightning Network invoice'
+        (v: string) => !v || this.validateInvoice() || this.decodedInvoiceError || 'Invalid Lightning Network invoice'
       ],
       OrderPricingMode
     }
@@ -287,7 +285,7 @@ export default defineComponent({
         })
       }
     },
-    validateInvoice(invoice: string) {
+    validateInvoice() {
       let validInvoice = true
       if (!this.isInvoice) {
         validInvoice = false
@@ -301,6 +299,11 @@ export default defineComponent({
         validInvoice = false
         this.decodedInvoiceError = 'Expired invoice'
       }
+      if (this.hasAmount) {
+        validInvoice = false
+        this.decodedInvoiceError = 'Please provide an invoice without specified amount'
+      }
+      console.log('>> validInvoice: ', validInvoice)
       return validInvoice
     }
   },
@@ -328,12 +331,6 @@ export default defineComponent({
       }
       return this.decodedInvoice.sectionsMap?.has('amount')
     },
-    disableAmountField() {
-      return this.hasInvoiceWithAmount
-    },
-    disableInvoiceField() {
-      return Number(this.amount) > 0 && !this.disableAmountField
-    }
   }
 })
 </script>
