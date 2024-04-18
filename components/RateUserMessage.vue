@@ -2,7 +2,7 @@
   <div style="width: 100%">
     <div>
       <v-list-item-title class="d-flex justify-space-between">
-        Rate User
+        {{ rateTitle }}
         <div class="text-caption text--secondary">
           <CreatedAt :creationDate="creationDate"/>
         </div>
@@ -74,7 +74,13 @@ const isRated = computed(() => {
   return storedOrder?.rating?.confirmed
 })
 
-const rateMessage = ref<string>(isRated.value ? 'User has been rated' : 'Please rate this user')
+const rateTitle = computed(() => {
+  return isRated.value ? 'User rated' : 'Feedback required'
+})
+
+const rateMessage = computed(() => {
+  return isRated.value ? 'Thanks for providing feedback' : 'Please rate your experience with this user'
+})
 
 </script>
 
