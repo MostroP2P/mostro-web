@@ -48,8 +48,7 @@ export default {
   computed: {
     ...mapState(useOrders, ['getOrderById']),
     order() {
-      // @ts-ignore
-      return this.getOrderById(this.$route.params.id)
+      return this.getOrderById(this.$route.params.id as string)
     },
     fiatAmount() {
       const order = this.message.order.content.order

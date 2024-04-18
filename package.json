@@ -1,7 +1,7 @@
 {
   "name": "mostro-web",
   "private": true,
-  "version": "0.0.22",
+  "version": "0.0.23",
   "description": "Mostro web client",
   "scripts": {
     "prebuild": "echo \"export const GIT_COMMIT = '$(git rev-parse HEAD)'\" > ./constants/version.js",
@@ -16,6 +16,7 @@
   },
   "devDependencies": {
     "@nuxt/devtools": "latest",
+    "@nuxtjs/i18n": "^8.3.0",
     "@types/node": "^18",
     "auto-changelog": "^2.4.0",
     "nuxt": "^3.5.2"
@@ -24,6 +25,8 @@
     "@mdi/font": "^7.2.96",
     "@nostr-dev-kit/ndk-cache-dexie": "^2.2.4",
     "@pinia/nuxt": "^0.4.11",
+    "@vueuse/core": "^10.2.1",
+    "@vueuse/nuxt": "^10.2.1",
     "buffer": "^6.0.3",
     "crypto-js": "^4.1.1",
     "light-bolt11-decoder": "github:bilthon/light-bolt11-decoder",
@@ -33,8 +36,6 @@
     "sass": "^1.63.6",
     "timeago.js": "^4.0.2",
     "vue": "^3.3.4",
-    "vuetify": "^3.3.5",
-    "@vueuse/core": "^10.2.1",
-    "@vueuse/nuxt": "^10.2.1"
+    "vuetify": "^3.3.5"
   }
 }

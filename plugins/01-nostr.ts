@@ -137,7 +137,13 @@ export class Nostr {
   }
 
   async publishEvent(event: NDKEvent) {
-    return await event.publish()
+    try {
+      const poolSize = this.ndk.pool.size()
+      const relays = await event.publish()
+      console.log(`📡 Event published to [${relays.size}/${poolSize}] relays`)
+    } catch (err) {
+      console.error('Error publishing event: ', err)
+    }
   }
 
   async fetchProfile(params: GetUserParams) : Promise<NDKUserProfile | null> {
@@ -156,19 +162,23 @@ export default defineNuxtPlugin((nuxtApp) => {
   }
   const relaysStatus = useRelays()
   nostr.ndk.pool.on('relay:connect', (r: NDKRelay) => {
+    console.log('>> relay:connect, ', r.url)
     relaysStatus.updateRelayStatus(r.url, 'yellow')
   })
   nostr.ndk.pool.on('relay:ready', (r: NDKRelay) => {
+    console.info('>> relay:ready, ', r.url)
     relaysStatus.updateRelayStatus(r.url, 'green')
   })
   nostr.ndk.pool.on('relay:disconnect', (r: NDKRelay) => {
+    console.warn('>> relay:disconnect, ', r.url)
     relaysStatus.updateRelayStatus(r.url, 'red')
   })
-  nostr.ndk.pool.on('fapping', (r: NDKRelay) => {
+  nostr.ndk.pool.on('flapping', (r: NDKRelay) => {
+    console.warn('>> relay:flapping, ', r.url)
     relaysStatus.updateRelayStatus(r.url, 'orange')
   })
-  nostr.ndk.pool.on('notice', (r: NDKRelay, arg2: any) => {
-    console.log('>> notice', r, arg2)
+  nostr.ndk.pool.on('notice', (r: any, err: any) => {
+    console.info('>> notice, ', r.url)
     relaysStatus.updateRelayStatus(r.url, 'blue')
   })
   nuxtApp.provide('nostr', nostr)

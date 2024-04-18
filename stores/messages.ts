@@ -46,6 +46,12 @@ export const useMessages = defineStore('messages', {
           const order: Order = orderMessage?.content?.order as Order
           if (order)
             orderStore.updateOrder({ order, event })
+        } else if (orderMessage?.action === Action.RateReceived) {
+          const rating = orderMessage?.content?.rating_user
+          const order: Order = orderStore.getOrderById(orderMessage.id) as Order
+          if (order && rating) {
+            orderStore.updateOrderRating({ order, rating, confirmed: true })
+          }
         }
         orderStore.updateOrderStatus(message.order.id, orderMessage.action, event)
         this.messages.mostro.push(message)
@@ -80,7 +86,7 @@ export const useMessages = defineStore('messages', {
       }
       return Array.from(messageMap).map(([orderId, messageCount]) => {
         const orderStore = useOrders()
-        const order = orderStore.getOrderById(orderId)
+        const order = orderStore.getOrderById(orderId) as Order
         return { orderId, messageCount, order }
       })
       .filter((summary: ThreadSummary) => summary.order !== undefined)

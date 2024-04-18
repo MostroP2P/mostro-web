@@ -21,16 +21,17 @@
             class="my-1 notification-item"
             @click="() => handleNotificationClick(notification)"
             three-line
-            prepend-icon="mdi-alert-circle"
+            :prepend-icon="getIcon(notification)"
           >
               <v-list-item-title>
-                📣 {{ notification.title }}
+                {{ notification.title }}
               </v-list-item-title>
-              <v-list-item-subtitle class="text-caption">
+              <v-list-item-subtitle class="text-caption mb-3">
                 {{ notification.subtitle }}
               </v-list-item-subtitle>
-              <v-list-item-subtitle class="text-caption text--disabled" style="max-width: 25em">
-                Order: {{ notification.orderId }}
+              <v-list-item-subtitle class="text-caption text--disabled d-flex justify-space-between">
+                <div class="order-id">{{ notification.orderId }}</div>
+                <div class="time">{{ getDateTime(notification.timestamp) }}</div>
               </v-list-item-subtitle>
               <v-divider :key="`div-${notification.orderId}`"/>
           </v-list-item>
@@ -48,7 +49,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useNotifications } from '@/stores/notifications'
-import type { Notification } from '~/stores/types'
+import { OrderStatus, type Notification } from '~/stores/types'
 import { useAuth } from '~/stores/auth'
 
 const notificationStore = useNotifications()
@@ -83,6 +84,19 @@ const handleNotificationClick = (notification: Notification) => {
   router.push(`/my-trades/${notification.orderId}`)
   menuOpen.value = false
 }
+
+const getDateTime = (timestamp: number) => {
+  return new Date(timestamp * 1E3).toLocaleString()
+}
+
+const getIcon = (notification: Notification) => {
+  switch (notification.orderStatus) {
+    case OrderStatus.SUCCESS:
+      return 'mdi-check'
+    default:
+      return 'mdi-bell'
+  }
+}
 </script>
 
 <style scoped>
@@ -102,4 +116,14 @@ const handleNotificationClick = (notification: Notification) => {
   transform: translateX(0);
 }
 
+.order-id {
+  font-size: 9px;
+  font-weight: 400;
+  color: gray;
+}
+.time {
+  font-size: 10px;
+  font-weight: 400;
+}
 </style>
+

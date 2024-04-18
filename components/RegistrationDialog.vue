@@ -10,12 +10,26 @@
     <v-card>
       <v-card-title>Authentication method</v-card-title>
       <v-tabs v-model="tab">
-        <v-tab>Nsec</v-tab>
-        <v-tab v-if="hasNIP07">NIP07</v-tab>
+        <v-tab prepend-icon="mdi-key">
+          Nsec
+        </v-tab>
+        <v-tab v-if="hasNIP07" prepend-icon="mdi-puzzle">
+          Extension
+        </v-tab>
       </v-tabs>
       <v-window v-model="tab">
         <v-window-item style="min-height: 5em">
-          <v-row class="mx-4 mt-5">
+          <v-row class="mx-4 mt-5 mb-3">
+            <div class="body-2">
+              Your private key is used to sign nostr events, if you generate one, make sure you keep a backup.
+            </div>
+          </v-row>
+          <v-row class="mx-4 my-3 d-flex justify-center">
+            <v-btn @click="onGeneratePrivateKey" variant="outlined" prepend-icon="mdi-autorenew">
+              Generate
+            </v-btn>
+          </v-row>
+          <v-row class="mx-4">
             <v-text-field
               v-model="privateKey"
               outlined
@@ -94,6 +108,7 @@
 <script lang="ts" setup>
 import { ref, computed } from 'vue'
 import CryptoJS from 'crypto-js'
+import { generatePrivateKey } from 'nostr-tools'
 import { AuthMethod, useAuth } from '~/stores/auth'
 import { useCrypto } from '~/composables/useCrypto'
 import { useSecretValidator } from '~/composables/useSecretValidator'
@@ -115,6 +130,11 @@ const { generateSalt, deriveKey } = useCrypto()
 
 const toggleNsecVisibility = () => {
   nsecVisible.value = !nsecVisible.value
+}
+
+const onGeneratePrivateKey = async () => {
+  const privKey = generatePrivateKey()
+  privateKey.value = privKey
 }
 
 const onPrivateKeyConfirmed = async function () {

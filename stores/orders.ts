@@ -55,13 +55,29 @@ export const useOrders = defineStore('orders', {
         // This is because we want to update when receving a replaceable event, but
         // not necessarily when receiving a DM
         if (updateStatus) {
-          existingOrder.status = order.status
+          // We don't want to update an order's status if the event timestamp is older
+          // than the `updated_at` field of the stored order, if we have one
+          if (!existingOrder.updated_at || event.created_at && event?.created_at > existingOrder?.updated_at) {
+            existingOrder.status = order.status
+          }
         }
         // Adds or updates the 'update_at' field
         existingOrder.updated_at = !existingOrder.updated_at ?  order.created_at : Math.max(existingOrder.updated_at, event.created_at as number)
       } else {
         console.warn(`Could not find order with id ${order.id} to update`)
       }
+    },
+    updateOrderRating({ order, rating, confirmed }: {order: Order, rating: number, confirmed: boolean}) {
+      const existingOrder = this.orders[order.id]
+      if (!existingOrder) {
+        console.warn(`Could not find order with id ${order.id} to update`)
+        return
+      }
+      existingOrder.rating = {
+        value: rating,
+        confirmed
+      }
+      existingOrder.updated_at = Math.floor(Date.now() / 1E3)
     },
     updateOrderStatus(orderId: string, action: Action, event: NDKEvent) {
       const existingOrder = this.orders[orderId]
@@ -140,7 +156,7 @@ export const useOrders = defineStore('orders', {
     getOrderStatus(state) {
       return (orderId: string) => state.orders[orderId]?.status
     },
-    getOrderById(state) {
+    getOrderById(state) : (orderId: string) => Order | undefined {
       return (orderId: string) => state.orders[orderId]
     },
     getUserOrderIds(state) {

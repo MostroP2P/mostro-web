@@ -76,20 +76,22 @@ export default {
     currentOrderStatus(): OrderStatus {
       return this.getOrderStatus(this.orderId)
     },
-    order(): Order {
+    order(): Order | undefined {
       return this.getOrderById(this.orderId)
     },
     buyerPubkey() {
-      return this.order.buyer_pubkey
+      return this.order?.buyer_pubkey ?? '?'
     },
     sellerPubkey() {
-      return this.order.seller_pubkey
+      return this.order?.seller_pubkey ?? '?'
     },
     isBuy() {
-      return this.order.kind === OrderType.BUY
+      if (!this.order) console.warn(`Order with id ${this.orderId} not found`)
+      return this.order?.kind === OrderType.BUY
     },
     isSell() {
-      return this.order.kind === OrderType.SELL
+      if (!this.order) console.warn(`Order with id ${this.orderId} not found`)
+      return this.order?.kind === OrderType.SELL
     },
     isLocalSeller() {
       const userPubKey = (this.$mostro as Mostro).getUserPublicKey()

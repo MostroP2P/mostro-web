@@ -30,8 +30,7 @@ export default {
   computed: {
     ...mapState(useOrders, ['getOrderById']),
     order() {
-      // @ts-ignore
-      return this.getOrderById(this.$route.params.id)
+      return this.getOrderById(this.$route.params.id as string)
     },
     orderTakenMessage() {
       if (!this.order) return 'Loading...'

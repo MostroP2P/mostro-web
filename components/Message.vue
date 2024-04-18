@@ -62,7 +62,7 @@
 import { mapState } from 'pinia'
 import { useOrders } from '@/stores/orders'
 import type { PropType } from 'vue'
-import type { MostroMessage } from '~/stores/types'
+import type { MostroMessage, Order } from '~/stores/types'
 import { Action } from '~/stores/types'
 export default {
   data() {
@@ -82,16 +82,15 @@ export default {
   },
   computed: {
     ...mapState(useOrders, ['getOrderById']),
-    order() {
-      // @ts-ignore
-      return this.getOrderById(this.$route.params.id)
+    order(): Order | undefined {
+      return this.getOrderById(this.$route.params.id as string)
     },
     isLocalBuyer() {
       // @ts-ignore
       return this?.$mostro?.getNpub() === this.order?.buyer_pubkey
     },
     isLocalMaker() {
-      // @ts-ignore
+      if (!this.order) console.warn(`Order with id ${this.$route.params.id} not found`)
       return this.order?.is_mine
     }
   }

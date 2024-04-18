@@ -5,7 +5,12 @@
       link
     >
       <v-list-item-title class="d-flex justify-space-between">
-        {{ order.fiat_amount }} {{ order.fiat_code.toUpperCase() }} {{ getFlag(order.fiat_code) }}
+        <div class="d-flex">
+          <div class="mr-4">
+            {{ order.fiat_amount }} {{ order.fiat_code.toUpperCase() }} {{ getFlag(order.fiat_code) }}
+          </div>
+          <PriceDeltaBadge v-if="order.amount === 0" class="mt-1" :order="order"/>
+        </div>
         <v-chip
           class="mt-2 px-4 "
           label

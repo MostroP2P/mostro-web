@@ -97,6 +97,11 @@ let stopWatch: WatchStopHandle | undefined
 onMounted(() => {
   // Get the specific order and check its status
   const order = orderStore.getOrderById(route.params.id as string)
+  if (!order) {
+    console.warn(`Order with id ${route.params.id} not found`)
+    router.replace('/')
+    return
+  }
   if (order.status === OrderStatus.WAITING_BUYER_INVOICE || order.status === OrderStatus.WAITING_PAYMENT) {
     // If the order is in the WAITING_BUYER_INVOICE or WAITING_PAYMENT state, show the countdown
     showCountdown.value = true

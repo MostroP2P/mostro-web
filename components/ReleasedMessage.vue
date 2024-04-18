@@ -39,9 +39,9 @@ export default {
   },
   computed: {
     ...mapState(useOrders, ['getOrderById']),
-    order() : Order | null {
+    order() : Order | undefined {
       const orderId = this.route?.params?.id as string
-      if (!orderId) return null
+      if (!orderId) return undefined
       return this.getOrderById(orderId)
     },
     sellerPubkey() {

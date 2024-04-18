@@ -56,7 +56,11 @@ export default {
     const onConfirm = async () => {
       isLoading.value = true
       try {
-        await $mostro.fiatSent(order.value)
+        if (order.value) {
+          await $mostro.fiatSent(order.value)
+        } else {
+          console.warn(`Order with id ${route.params.id} not found`)
+        }
         showDialog.value = false
       } catch(err) {
         console.error('Error issuing the fiatSent message: ', err)

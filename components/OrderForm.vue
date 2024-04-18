@@ -42,6 +42,44 @@
       :label="isMarketPricing ? 'Market' : 'Fixed'"
     >
     </v-switch>
+    <div
+      v-if="isMarketPricing"
+      class="text-caption mt-3 mb-8"
+    >
+      Premium or discount
+    </div>
+    <div class="d-flex justify-center">
+      <v-slider
+        v-if="isMarketPricing"
+        class="px-0"
+        :min="-10"
+        :max="10"
+        :step="1"
+        density="compact"
+        :hint="premium > 0 ? `Premium ${premium}%` : `Discount ${premium}%`"
+        show-ticks
+        tick-size="5"
+        thumb-label="always"
+        v-model="premium"
+      >
+        <template v-slot:prepend>
+          <v-btn
+            icon="mdi-minus"
+            size="small"
+            variant="text"
+            @click="premium <= -10 ? premium = -10 : premium -= 1"
+          ></v-btn>
+        </template>
+        <template v-slot:append>
+          <v-btn
+            icon="mdi-plus"
+            size="small"
+            variant="text"
+            @click="premium >= 10 ? premium = 10 : premium += 1"
+          ></v-btn>
+        </template>
+      </v-slider>
+    </div>
     <v-text-field
       v-if="showSatsInput"
       v-model="amount"
@@ -51,7 +89,6 @@
       outlined
       required
       :rules="amountRules"
-      :disabled="disableAmountField"
     >
       <template v-slot:append>
         <i class="fak fa-regular"/>
@@ -62,9 +99,8 @@
       v-if="showInvoiceInput"
       outlined
       :rules="invoiceRules"
-      label="Lightning Invoice with amount to buy"
+      label="Lightning Invoice without an amount"
       :hint="invoiceValueSats ? `Invoice for ${invoiceValueSats} sats` : 'Please enter an invoice'"
-      :disabled="disableInvoiceField"
     />
     <v-text-field
       v-model="paymentMethod"
@@ -115,6 +151,7 @@ export default defineComponent({
       fiatAmount: 0,
       selectedFiat: null as FiatData | null,
       amount: 0,
+      premium: 0,
       paymentMethod: '',
       isMarketPricing: true,
       buyerInvoice: '',
@@ -132,7 +169,7 @@ export default defineComponent({
         (v: string) => Number(v) > 0 || 'Sats amount is required'
       ],
       invoiceRules: [
-        (v: string) => !v || this.validateInvoice(v) || this.decodedInvoiceError || 'Invalid Lightning Network invoice'
+        (v: string) => !v || this.validateInvoice() || this.decodedInvoiceError || 'Invalid Lightning Network invoice'
       ],
       OrderPricingMode
     }
@@ -210,12 +247,12 @@ export default defineComponent({
         fiat_code: this.selectedfiatCode,
         fiat_amount: fiatAmount,
         created_at: Math.ceil(Date.now() / 1E3),
-        premium: 0,
+        premium: this.premium,
         payment_method: this.paymentMethod
       }
       if (!this.isMarketPricing) {
         if (this.orderType === OrderType.BUY) {
-          order.buyer_invoice = this.buyerInvoice
+          order.buyer_invoice = this.buyerInvoice !== '' ? this.buyerInvoice : null
         }
         // If the order is nor market-priced,
         // a fixed sats amount is required always
@@ -248,7 +285,7 @@ export default defineComponent({
         })
       }
     },
-    validateInvoice(invoice: string) {
+    validateInvoice() {
       let validInvoice = true
       if (!this.isInvoice) {
         validInvoice = false
@@ -262,6 +299,11 @@ export default defineComponent({
         validInvoice = false
         this.decodedInvoiceError = 'Expired invoice'
       }
+      if (this.hasAmount) {
+        validInvoice = false
+        this.decodedInvoiceError = 'Please provide an invoice without specified amount'
+      }
+      console.log('>> validInvoice: ', validInvoice)
       return validInvoice
     }
   },
@@ -289,12 +331,6 @@ export default defineComponent({
       }
       return this.decodedInvoice.sectionsMap?.has('amount')
     },
-    disableAmountField() {
-      return this.hasInvoiceWithAmount
-    },
-    disableInvoiceField() {
-      return Number(this.amount) > 0 && !this.disableAmountField
-    }
   }
 })
 </script>
