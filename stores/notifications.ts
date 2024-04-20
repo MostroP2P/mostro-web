@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { useLocalStorage } from '@vueuse/core'
 import { useOrders } from '@/stores/orders'
+import { useSoundPlayer } from '@/composables/useSoundPlayer'
 import {
   OrderStatus,
   Order,
@@ -14,6 +15,10 @@ export const useNotifications = defineStore('notifications', () => {
   const notifications = ref([] as Notification[])
 
   const generateNotification = (newOrder: Order, oldOrder: Order) => {
+    if (oldOrder !== undefined) {
+      const { playSound } = useSoundPlayer()
+      playSound('/notification.mp3')
+    }
     let title = null
     let subtitle = null
     if (newOrder.is_mine) {
