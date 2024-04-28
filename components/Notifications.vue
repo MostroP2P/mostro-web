@@ -48,11 +48,11 @@
 </template>
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { useNotifications } from '@/stores/notifications'
+import { useNotificationsStore } from '@/stores/notifications'
 import { OrderStatus, type Notification } from '~/stores/types'
 import { useAuth } from '~/stores/auth'
 
-const notificationStore = useNotifications()
+const notificationStore = useNotificationsStore()
 const router = useRouter()
 let menuOpen = ref(false)
 const authStore = useAuth()

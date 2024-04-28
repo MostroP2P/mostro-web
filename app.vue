@@ -8,9 +8,9 @@
 
 <script setup>
 import { onMounted } from 'vue'
-import { useNotifications } from '~/stores/notifications'
+import { useNotificationsStore } from '~/stores/notifications'
 
-const notificationsStore = useNotifications()
+const notificationsStore = useNotificationsStore()
 
 onMounted(() => {
   notificationsStore.init()
