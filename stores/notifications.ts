@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { useLocalStorage } from '@vueuse/core'
 import { useOrders } from '@/stores/orders'
+import { useSoundPlayer } from '@/composables/useSoundPlayer'
 import {
   OrderStatus,
   Order,
@@ -8,10 +9,17 @@ import {
   NOTIFICATIONS_KEY,
 } from './types'
 import type { Notification, OrderMapType } from './types'
+import { useNotifications } from '@/composables/useNotifications'
 
-export const useNotifications = defineStore('notifications', () => {
+const { sendNotification } = useNotifications()
+
+export const useNotificationsStore = defineStore('notifications', () => {
   const orders = useOrders()
   const notifications = ref([] as Notification[])
+
+  const generateSystemNotification = (title: string, options: NotificationOptions) => {
+    sendNotification(title, options)
+  }
 
   const generateNotification = (newOrder: Order, oldOrder: Order) => {
     let title = null
@@ -73,6 +81,16 @@ export const useNotifications = defineStore('notifications', () => {
     }
     if (!title) return
     if (!subtitle) return
+
+    if (oldOrder !== undefined) {
+      const { playSound } = useSoundPlayer()
+      playSound('/notification.mp3')
+
+      // Generating a system notification
+      generateSystemNotification(title, {
+        body: subtitle
+      })
+    }
 
     const timestamp = Math.floor(Date.now() / 1000)
     const notification: Notification = {
