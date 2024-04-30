@@ -43,6 +43,7 @@ import { Order, OrderType } from '@/stores/types'
 import { useAuth } from '@/stores/auth'
 import { useTimeago } from '@/composables/timeago'
 import fiat from '~/assets/fiat.json'
+import { ORDER_LIFETIME_IN_SECONDS } from '~/stores/orders';
 
 const authStore = useAuth()
 
@@ -68,8 +69,6 @@ const props = defineProps({
   },
 })
 
-const ORDER_LIFETIME_IN_SECONDS = 24 * 60 * 60 * 1E3 // 24 hours
-
 const createdAt = computed(() => {
   const createdAt = props.order.created_at * 1E3
   const { format } = useTimeago()
@@ -78,7 +77,7 @@ const createdAt = computed(() => {
 
 const expiresIn = computed(() => {
   const createdAt = props.order.created_at * 1E3
-  const expiresAt = createdAt + ORDER_LIFETIME_IN_SECONDS
+  const expiresAt = createdAt + ORDER_LIFETIME_IN_SECONDS * 1E3
   const { format } = useTimeago()
   return format(expiresAt)
 })
