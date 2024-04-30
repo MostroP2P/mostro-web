@@ -3,6 +3,12 @@ import type { MostroEvent } from '~/plugins/02-mostro'
 import { Action, OrderStatus, type OrderMapType, type OrderOwnershipMapType } from './types'
 import { Order } from './types'
 
+export const ORDER_LIFETIME_IN_SECONDS = 24 * 60 * 60 // 24 hours
+
+const getOrderExpiration = (order: Order) => {
+  return order.created_at + ORDER_LIFETIME_IN_SECONDS
+}
+
 export const useOrders = defineStore('orders', {
   state: (): { orders: OrderMapType, userOrders: OrderOwnershipMapType }  => ({
     orders: {},
@@ -151,6 +157,7 @@ export const useOrders = defineStore('orders', {
       Object.values(state.orders).forEach(order => orderList.push(order))
       return orderList
         .filter(order => order.status === OrderStatus.PENDING)
+        .filter(order => getOrderExpiration(order) > Math.floor(Date.now() / 1E3))
         .sort((orderA, orderB) => orderB.created_at - orderA.created_at)
     },
     getOrderStatus(state) {
