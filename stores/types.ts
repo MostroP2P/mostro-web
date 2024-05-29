@@ -154,6 +154,7 @@ export class Order {
     value: number | undefined,
     confirmed: boolean | undefined
   }
+  mostro_id: string
 
   constructor(
     id: string,
@@ -164,7 +165,8 @@ export class Order {
     payment_method: string,
     premium: number,
     created_at: number,
-    amount: number
+    amount: number,
+    mostro_id: string
   ) {
     this.id = id;
     this.kind = kind;
@@ -175,6 +177,7 @@ export class Order {
     this.premium = premium;
     this.created_at = created_at;
     this.amount = amount
+    this.mostro_id = mostro_id
   }
   static deepEqual(order1: Order | NewOrder, order2: Order): boolean {
 
