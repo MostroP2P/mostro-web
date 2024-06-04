@@ -20,7 +20,8 @@
         rows="7"
         outlined
         class="mx-5"
-        :rules="[rules.required, rules.isInvoice, rules.network, rules.value, rules.valid]"
+        :error="invoiceError"
+        :error-messages="invoiceErrorMessages"
         :hint="invoiceHint"
       />
       <v-card-actions class="mx-3 mb-3">
@@ -38,132 +39,99 @@
 </template>
 <script lang="ts">
 import type { PropType } from 'vue'
-import * as bolt11 from 'light-bolt11-decoder'
 import type { MostroMessage } from '~/stores/types'
+import type { Mostro } from '~/plugins/02-mostro'
+import { useOrders } from '~/stores/orders'
+import { useBolt11Parser } from '~/composables/useInvoice'
+import { useMostroStore } from '~/stores/mostro'
 
-type InvoiceSection = {
-  letters: string
-  name: string
-  value?: string | number | Object
-}
-
-type DecodedInvoice = {
-  sections?: InvoiceSection[]
-  expiry?: number
-}
-
-export default {
-  data() {
-    return {
-      showDialog: false,
-      invoice: '',
-      decodedInvoice: {} as DecodedInvoice,
-      isProcessing: false,
-      rules: {
-        required: (value: string) => !!value || 'Enter a LN invoice',
-        // @ts-ignore
-        isInvoice: () => true, //this.decodedInvoice.complete || 'Not a valid invoice',
-        // @ts-ignore
-        network: () => this.isInvoiceNetwork || 'Wrong invoice network',
-        // @ts-ignore
-        value: () => this.isValueCorrect || this.wrongAmountErrorMessage || 'Invalid amount',
-        // @ts-ignore
-        valid: () => !this.isExpired || 'Expired invoice'
-      }
-    }
-  },
+export default defineComponent({
   props: {
     message: {
       type: Object as PropType<MostroMessage>,
       required: true
     }
   },
-  methods: {
-    async submitInvoice() {
-      const order = this.message.order.content.order
+  setup(props) {
+    const showDialog = ref(false)
+    const invoice = ref('')
+    const isProcessing = ref(false)
+    const nuxtApp = useNuxtApp()
+    const mostro = nuxtApp.$mostro as Mostro
+    const orderStore = useOrders()
+    const mostroStore = useMostroStore()
+    const { error, parseInvoice } = useBolt11Parser()
+    const order = computed(() => {
+      return orderStore.getOrderById(props.message.order.content.order?.id ?? '')
+    })
+    const mostroInfo = mostroStore.getMostroInfo(order.value?.mostro_id ?? '')
+
+    const invoiceError = computed(() => {
+      return error.value !== undefined
+    })
+
+    const invoiceErrorMessages = computed(() => {
+      return error.value
+    })
+
+    const submitInvoice = async () => {
+      if (!order || !order.value) {
+        console.error('No order found for invoice')
+        return
+      }
       try {
-        // @ts-ignore
-        await this.$mostro.addInvoice(order, this.invoice)
+        await mostro.addInvoice(order.value, invoice.value)
       } catch(err) {
         console.error('Error while giving invoice for buy order: ', err)
       } finally {
-        this.isProcessing = false
-        this.invoice = ''
-        this.showDialog = false
+        isProcessing.value = false
+        invoice.value = ''
+        showDialog.value = false
       }
-    },
-    close() {
-      this.decodedInvoice = {}
-      this.invoice = '',
-      this.showDialog = false
-    },
-    isInvoice(text: string) {
-      try {
-        bolt11.decode(text)
-        return true
-      } catch(err) {
-        return 'Not a valid invoice'
-      }
-    },
-  },
-  watch: {
-    invoice(newValue) {
-      this.decodedInvoice = {}
-      if (!newValue) return
-      try {
-        this.decodedInvoice = bolt11.decode(newValue)
-      } catch(err) {}
     }
-  },
-  computed: {
-    invoiceHint() {
-      return this.invoice === '' ? 'Enter a valid BOLT11 invoice' : ''
-    },
-    isValueCorrect() {
-      let msat = 0
+
+    const close = () => {
+      invoice.value = ''
+      showDialog.value = false
+    }
+
+    watch(invoice, (newValue) => {
+      const params = {
+        minExpiry: mostroInfo.invoice_expiration_window,
+        expectedMsats: BigInt(satsAmount.value) * BigInt(1e3)
+      }
       try {
-        const decoded = this.decodedInvoice
-        // @ts-ignore
-        const amountSection = decoded.sections.find(section => section.name === 'amount')
-        if (amountSection !== undefined) {
-          msat = parseInt(amountSection.value as string)
-        }
-        // @ts-ignore
-        const requiredMsat = this.satsAmount * 1e3
-        return msat !== 0 && msat === requiredMsat
+        parseInvoice(newValue, params)
       } catch(err) {
-        return false
+        console.error('Error while decoding invoice: ', err)
       }
-    },
-    isExpired() {
-      // @ts-ignore
-      // return this.decodedInvoice.timeExpireDate > Date.now() / 1e3
-      let timestamp = 0
-      const decoded = this.decodedInvoice
-      if (decoded.expiry === undefined || decoded.sections === undefined) {
-        return false
-      }
-      const timestampSection = decoded.sections.find(section => section.name === 'timestamp')
-      if (timestampSection) {
-        timestamp = timestampSection.value as number
-      }
-      const now = Math.round(Date.now() / 1e3)
-      return timestamp + decoded.expiry < now
-    },
-    isInvoiceNetwork() {
-      // TODO: This should be 'bcrt' in dev mode and 'bc' in production
-      return true
-    },
-    satsAmount() {
-      return this.message.order.content.order?.amount ?? '?'
-    },
-    wrongAmountErrorMessage() {
-      // @ts-ignore
-      return `Invalid amount, please provide us with ${this.satsAmount} sats`
-    },
-    submitDisabled() {
-      return !this.isValueCorrect || this.isExpired
+    })
+
+    const invoiceHint = computed(() => {
+      return invoice.value === '' ? 'Enter a valid BOLT11 invoice' : ''
+    })
+
+    const satsAmount = computed(() => {
+      return props.message.order.content.order?.amount ?? '?'
+    })
+
+    const submitDisabled = computed(() => {
+      return error.value !== undefined || !invoice.value
+    })
+
+    return {
+      showDialog,
+      invoice,
+      invoiceError,
+      isProcessing,
+      submitInvoice,
+      close,
+      invoiceHint,
+      satsAmount,
+      invoiceErrorMessages,
+      submitDisabled,
+      mostroInfo
     }
   }
-}
+})
 </script>

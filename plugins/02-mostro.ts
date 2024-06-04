@@ -6,6 +6,7 @@ import { useOrders } from '@/stores/orders'
 import { useMessages } from '@/stores/messages'
 import { Action, Order, OrderStatus, OrderType } from '../stores/types'
 import { NOSTR_ENCRYPTED_DM_KIND, type Nostr } from './01-nostr'
+import { useMostroStore, type MostroInfo } from '@/stores/mostro'
 
 export type MostroEvent = NDKEvent
 
@@ -39,6 +40,7 @@ export class Mostro {
   pubkeyCache: PublicKeyCache = { npub: null, hex: null }
   orderStore: ReturnType<typeof useOrders>
   messageStore: ReturnType<typeof useMessages>
+  mostroStore = useMostroStore()
 
   constructor(opts: MostroOptions) {
     this.mostro = opts.mostroPubKey
@@ -95,15 +97,43 @@ export class Mostro {
     const payment_method = tags.get('pm') as string
     const premium = Number(tags.get('premium'))
     const created_at = ev.created_at || 0
+    const mostro_id = ev.author.pubkey
 
-    return new Order(id, kind, status, fiat_code, fiat_amount, payment_method, premium, created_at, amount)
+    return new Order(id, kind, status, fiat_code, fiat_amount, payment_method, premium, created_at, amount, mostro_id)
+  }
+
+  extractInfoFromEvent(ev: NDKEvent): MostroInfo {
+    const tags = new Map<string, string>(ev.tags as [string, string][])
+    const mostro_pubkey = tags.get('mostro_pubkey') as string
+    const mostro_version = tags.get('mostro_version') as string
+    const mostro_commit_id = tags.get('mostro_commit_id') as string
+    const max_order_amount = Number(tags.get('max_order_amount') as string)
+    const min_order_amount = Number(tags.get('min_order_amount') as string)
+    const expiration_hours = Number(tags.get('expiration_hours') as string)
+    const expiration_seconds = Number(tags.get('expiration_seconds') as string)
+    const fee = Number(tags.get('fee') as string)
+    const hold_invoice_expiration_window = Number(tags.get('hold_invoice_expiration_window') as string)
+    const invoice_expiration_window = Number(tags.get('invoice_expiration_window') as string)
+    return {
+      mostro_pubkey,
+      mostro_version,
+      mostro_commit_id,
+      max_order_amount,
+      min_order_amount,
+      expiration_hours,
+      expiration_seconds,
+      fee,
+      hold_invoice_expiration_window,
+      invoice_expiration_window
+    }
   }
 
   async handlePublicEvent(ev: NDKEvent) {
     const nEvent = await ev.toNostrEvent()
     // Create a map from the tags array for easy access
     const tags = new Map<string, string>(ev.tags as [string, string][])
-    if (tags.get('z') === 'order') {
+    const z = tags.get('z')
+    if (z === 'order') {
       // Order
       const order = this.extractOrderFromEvent(tags, ev)
       console.info('< [🧌 -> 📢]', JSON.stringify(order), ', ev: ', nEvent)
@@ -115,6 +145,11 @@ export class Mostro {
         this.orderStore.addOrder({ order: order, event: ev as MostroEvent })
         this.orderMap.set(order.id, ev.id)
       }
+    } else if (z === 'info') {
+      // Info
+      const info = this.extractInfoFromEvent(ev)
+      this.mostroStore.addMostroInfo(info)
+      console.info('< [🧌 -> 📢]', JSON.stringify(info), ', ev: ', nEvent)
     } else {
       // TODO: Extract other kinds of events data: Disputes & Ratings
     }
@@ -299,7 +334,7 @@ export class Mostro {
       await this.nostr.publishEvent(event)
     }
   }
-  async addInvoice(order: Order, invoice: string) {
+  async addInvoice(order: Order, invoice: string, amount: number | null = null) {
     const payload = {
       order: {
         version: 1,
@@ -309,7 +344,8 @@ export class Mostro {
         content: {
           payment_request: [
             null,
-            invoice
+            invoice,
+            amount
           ]
         }
       }
