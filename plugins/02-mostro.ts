@@ -334,7 +334,7 @@ export class Mostro {
       await this.nostr.publishEvent(event)
     }
   }
-  async addInvoice(order: Order, invoice: string) {
+  async addInvoice(order: Order, invoice: string, amount: number | null = null) {
     const payload = {
       order: {
         version: 1,
@@ -344,7 +344,8 @@ export class Mostro {
         content: {
           payment_request: [
             null,
-            invoice
+            invoice,
+            amount
           ]
         }
       }
