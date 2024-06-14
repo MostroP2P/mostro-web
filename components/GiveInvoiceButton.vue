@@ -45,6 +45,9 @@ import { useOrders } from '~/stores/orders'
 import { useBolt11Parser } from '~/composables/useInvoice'
 import { useMostroStore } from '~/stores/mostro'
 
+// Minimum invoice expiration window in seconds by default
+const DEFAULT_MIN_INVOICE_EXPIRATION_WINDOW = 300
+
 export default defineComponent({
   props: {
     message: {
@@ -96,11 +99,11 @@ export default defineComponent({
     }
 
     watch(invoice, (newValue) => {
-      const params = {
-        minExpiry: mostroInfo.invoice_expiration_window,
-        expectedMsats: BigInt(satsAmount.value) * BigInt(1e3)
-      }
       try {
+        const params = {
+          minExpiry: mostroInfo?.invoice_expiration_window ?? DEFAULT_MIN_INVOICE_EXPIRATION_WINDOW,
+          expectedMsats: BigInt(satsAmount.value) * BigInt(1e3)
+        }
         parseInvoice(newValue, params)
       } catch(err) {
         console.error('Error while decoding invoice: ', err)
