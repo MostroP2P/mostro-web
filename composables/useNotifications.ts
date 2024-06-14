@@ -12,8 +12,7 @@ export const useNotifications = () => {
     }
     options = {
       ...options,
-      icon: '/mostro-notification.png',
-      vibrate: [100, 200, 100, 200, 100]
+      icon: '/mostro-notification.png'
     }
     if (Notification.permission === 'granted') {
       new Notification(title, options)
