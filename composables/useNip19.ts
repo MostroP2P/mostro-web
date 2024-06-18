@@ -1,6 +1,6 @@
 import { nip19 } from 'nostr-tools'
 
-export function useNip19 () {
+export default function useNip19 () {
   const isNsec = (value: string) => {
     try {
       const decoded = nip19.decode(value)

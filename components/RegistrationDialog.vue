@@ -112,7 +112,7 @@ import { generatePrivateKey } from 'nostr-tools'
 import { AuthMethod, useAuth } from '~/stores/auth'
 import { useCrypto } from '~/composables/useCrypto'
 import { useSecretValidator } from '~/composables/useSecretValidator'
-import { useNip19 } from '~/composables/useNip19'
+import useNip19 from '~/composables/useNip19'
 
 const MIN_PASSWORD_LENGTH = 10
 const showDialog = ref(false)
