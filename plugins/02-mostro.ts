@@ -81,25 +81,74 @@ export class Mostro {
       .map(() => Math.random().toString(36)[2]).join('')
   }
 
-  extractOrderFromEvent(tags: Map<string, string>, ev: NDKEvent): Order {
-    if (!tags.has('d') || !tags.has('k') || !tags.has('s') || !tags.has('fa') || !tags.has('pm') || !tags.has('premium') || !tags.has('f')) {
+  extractOrderFromEvent(ev: NDKEvent): Order {
+    let id: string | undefined
+    let kind: OrderType | null = null
+    let status: OrderStatus | null = null
+    let fiat_code: string | undefined = undefined
+    let fiat_amount = 0
+    let min_amount: number | null = null
+    let max_amount: number | null = null
+    let payment_method = ''
+    let premium: number | undefined = undefined
+    let amount = 0
+    ev.tags.forEach((tag: string[]) => {
+      switch(tag[0]) {
+        case 'd':
+          id = tag[1] as string
+          break
+        case 'k':
+          kind = tag[1] as OrderType
+          break
+        case 'f':
+          fiat_code = tag[1] as string
+          break
+        case 's':
+          status = tag[1] as OrderStatus
+          break
+        case 'amt':
+          amount = Number(tag[1])
+          break
+        case 'fa':
+          fiat_amount = Number(tag[1])
+          min_amount = tag[2] ? Number(tag[1]) : null
+          max_amount = tag[2] ? Number(tag[2]) : null
+          break
+        case 'pm':
+          payment_method = tag[1] as string
+          break
+        case 'premium':
+          premium = Number(tag[1])
+          break
+      }
+    })
+
+    if (!id || !kind || !status || !payment_method || premium === undefined || !fiat_code) {
       console.error('Missing required tags in event to extract order. ev.tags: ', ev.tags)
       throw Error('Missing required tags in event to extract order')
     }
+    if (fiat_amount === 0 && !min_amount && !max_amount) {
+      console.error('Malformed order, either "fiat_amount" or "min_amount" & "max_amount" must be set. ev.tags: ', ev.tags)
+      throw Error('Missing required tags in event to extract order')
+    }
 
-    // Extract values from the tags map
-    const id = tags.get('d') as string
-    const kind = tags.get('k') as OrderType
-    const status = tags.get('s') as OrderStatus
-    const fiat_code = tags.get('f') as string
-    const fiat_amount = Number(tags.get('fa'))
-    const amount = Number(tags.get('amt'))
-    const payment_method = tags.get('pm') as string
-    const premium = Number(tags.get('premium'))
     const created_at = ev.created_at || 0
     const mostro_id = ev.author.pubkey
 
-    return new Order(id, kind, status, fiat_code, fiat_amount, payment_method, premium, created_at, amount, mostro_id)
+    return new Order(
+      id,
+      kind,
+      status,
+      fiat_code,
+      min_amount,
+      max_amount,
+      fiat_amount,
+      payment_method,
+      premium,
+      created_at,
+      amount,
+      mostro_id
+    )
   }
 
   extractInfoFromEvent(ev: NDKEvent): MostroInfo {
@@ -131,11 +180,12 @@ export class Mostro {
   async handlePublicEvent(ev: NDKEvent) {
     const nEvent = await ev.toNostrEvent()
     // Create a map from the tags array for easy access
-    const tags = new Map<string, string>(ev.tags as [string, string][])
+    const tags = new Map<string, string | number[]>(ev.tags as [string, string | number[]][])
+
     const z = tags.get('z')
     if (z === 'order') {
       // Order
-      const order = this.extractOrderFromEvent(tags, ev)
+      const order = this.extractOrderFromEvent(ev)
       console.info('< [🧌 -> 📢]', JSON.stringify(order), ', ev: ', nEvent)
       if (this.orderMap.has(order.id)) {
         // Updates existing order
