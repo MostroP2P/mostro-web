@@ -89,7 +89,12 @@ const getFlag = (fiatCode: string) => {
 
 const tradeIn = (order: Order) => {
   if (order.kind === OrderType.SELL) {
-    return `${order.fiat_amount} ${order.fiat_code.toUpperCase()}`
+    const isRangedOrder = order.min_amount !== null && order.max_amount !== null
+    if (isRangedOrder) {
+      return `${order.min_amount}-${order.max_amount} ${order.fiat_code.toUpperCase()}`
+    } else {
+      return `${order.fiat_amount} ${order.fiat_code.toUpperCase()}`
+    }
   } else {
     return `${order.amount} sats`
   }
@@ -99,7 +104,12 @@ const tradeOut = (order: Order) => {
   if (order.kind === OrderType.SELL) {
     return `${order.amount} sats`
   } else {
-    return `${order.fiat_amount} ${order.fiat_code.toUpperCase()}`
+    const isRangedOrder = order.min_amount !== null && order.max_amount !== null
+    if (isRangedOrder) {
+      return `[${order.min_amount}-${order.max_amount} ${order.fiat_code.toUpperCase()}`
+    } else {
+      return `${order.fiat_amount} ${order.fiat_code.toUpperCase()}`
+    }
   }
 
 }
