@@ -229,7 +229,7 @@ export interface NewOrder {
   payment_method: string,
   premium: number,
   created_at: number,
-  buyer_invoice: string | null
+  buyer_invoice?: string | null
 }
 
 export enum OrderPricingMode {
