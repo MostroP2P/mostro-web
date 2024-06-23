@@ -7,7 +7,7 @@
       <v-list-item-title class="d-flex justify-space-between align-center">
         <div class="d-flex">
           <div class="mr-4">
-            <span class="font-weight-bold">{{ order.fiat_amount }} {{ order.fiat_code.toUpperCase() }}</span> {{ getFlag(order.fiat_code) }}
+            <span class="font-weight-bold">{{ orderAmount }} {{ order.fiat_code.toUpperCase() }}</span> {{ getFlag(order.fiat_code) }}
           </div>
           <PriceDeltaBadge v-if="order.amount === 0" class="mt-1" :order="order"/>
         </div>
@@ -82,6 +82,15 @@ const expiresIn = computed(() => {
   return format(expiresAt)
 })
 
+const orderAmount = computed(() => {
+  const order = props.order
+  if (order.min_amount !== null && order.max_amount !== null) {
+    return `${order.min_amount} - ${order.max_amount}`
+  } else {
+    return `${order.fiat_amount}`
+  }
+})
+
 // Define methods
 const getFlag = (fiatCode: string) => {
   return fiatMap[fiatCode?.toUpperCase()]?.emoji ?? ''
@@ -106,7 +115,7 @@ const tradeOut = (order: Order) => {
   } else {
     const isRangedOrder = order.min_amount !== null && order.max_amount !== null
     if (isRangedOrder) {
-      return `[${order.min_amount}-${order.max_amount} ${order.fiat_code.toUpperCase()}`
+      return `${order.min_amount}-${order.max_amount} ${order.fiat_code.toUpperCase()}`
     } else {
       return `${order.fiat_amount} ${order.fiat_code.toUpperCase()}`
     }
