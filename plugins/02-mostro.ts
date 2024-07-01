@@ -343,19 +343,16 @@ export class Mostro {
       await this.nostr.publishEvent(event)
     }
   }
-  async takeSell(order: Order, invoice: string) {
+  async takeSell(order: Order, amount?: number) {
     const payload = {
       order: {
         version: 1,
         pubkey: this.getLocalKeys().hex,
         id: order.id,
         action: Action.TakeSell,
-        content: invoice === null ? null : {
-          payment_request: [
-            null,
-            invoice
-          ]
-        }
+        content: amount ? {
+            amount: amount
+          } : null
       }
     }
     const event = await this.createEvent(payload)
