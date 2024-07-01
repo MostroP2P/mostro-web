@@ -23,7 +23,7 @@
         <v-btn variant="text" color="warning" @click="() => showDialog = false">
           Cancel
         </v-btn>
-        <v-btn variant="text" color="success" @click="onConfirm" :disabled="!isFormValid">
+        <v-btn variant="text" color="success" @click="onConfirm" :disabled="!isFormValid && isRangeOrder">
           Confirm
         </v-btn>
       </v-card-actions>
