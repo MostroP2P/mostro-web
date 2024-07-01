@@ -67,6 +67,8 @@ export const useOrders = defineStore('orders', {
             existingOrder.status = order.status
           }
         }
+        // Updating amount for range orders
+        existingOrder.fiat_amount = order.fiat_amount
         // Adds or updates the 'update_at' field
         existingOrder.updated_at = !existingOrder.updated_at ?  order.created_at : Math.max(existingOrder.updated_at, event.created_at as number)
       } else {
