@@ -25,8 +25,8 @@
     <v-text-field
       v-model="fiatAmount"
       label="Fiat amount"
-      type="number"
-      hint="Enter a specific value. Ex: 10, 100, etc. Ranges not supported yet"
+      type="string"
+      hint="Enter a specific value. Ex: 10, 100, etc. Or a range of values. Ex: 10-100, 100-200, etc."
       outlined
       required
       :rules="fiatAmountRules"
@@ -148,7 +148,7 @@ export default defineComponent({
   data() {
     return {
       valid: false,
-      fiatAmount: 0,
+      fiatAmount: '0',
       selectedFiat: null as FiatData | null,
       amount: 0,
       premium: 0,
@@ -162,8 +162,11 @@ export default defineComponent({
         }
       }),
       fiatAmountRules: [
-        (v: string) => !!v || 'Fiat amount is required',
-        (v: string) => /\d+(?:-\d+)?$/.test(v) || 'Invalid value or range'
+        (v: string) => {
+          const isValidSingle = /^\d+$/.test(v);
+          const isValidRange = /^\d+-\d+$/.test(v);
+          return isValidSingle || isValidRange || 'Must be a single number or a complete range (e.g. 10-100)';
+        }
       ],
       amountRules: [
         (v: string) => Number(v) > 0 || 'Sats amount is required'
@@ -222,7 +225,7 @@ export default defineComponent({
     // keep filling the form every time
     const config = useRuntimeConfig()
     if (config.public.nodeEnv === 'development') {
-      this.fiatAmount = 5
+      this.fiatAmount = '5'
       this.selectedFiat = this.fiatCurrencies.find((f: FiatData) => f.code === 'USD') || null
       this.paymentMethod = 'Cash'
     }
@@ -232,20 +235,40 @@ export default defineComponent({
       // @ts-ignore
       this.$refs.form.validate()
     },
+    parseFiatAmount() {
+      if (/^\d+$/.test(this.fiatAmount)) {
+        return {
+          fiatAmount: parseFloat(this.fiatAmount),
+          minAmount: null,
+          maxAmount: null
+        }
+      }
+      if (/^\d+-\d+$/.test(this.fiatAmount)) {
+        // Extract min and max values
+        const [min, max] = this.fiatAmount.split('-').map(Number)
+        return {
+          fiatAmount: 0,
+          minAmount: min,
+          maxAmount: max
+        }
+      }
+      throw Error('Invalid fiat amount')
+    },
     async onSubmit() {
       if (!this.selectedfiatCode) return
       this.onProcessingUpdate(true)
-      const fiatAmount = typeof this.fiatAmount === 'number' ?
-        this.fiatAmount : parseFloat(this.fiatAmount)
+      const { fiatAmount, minAmount, maxAmount } = this.parseFiatAmount()
       let satsAmount = typeof this.amount === 'number' ?
         this.amount : parseInt(this.amount)
-      // @ts-ignore
+
       const order: NewOrder = {
         kind: this.orderType === OrderType.SELL ? OrderType.SELL : OrderType.BUY,
         status: OrderStatus.PENDING,
         amount: 0,
         fiat_code: this.selectedfiatCode,
         fiat_amount: fiatAmount,
+        min_amount: minAmount,
+        max_amount: maxAmount,
         created_at: Math.ceil(Date.now() / 1E3),
         premium: this.premium,
         payment_method: this.paymentMethod

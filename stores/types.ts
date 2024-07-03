@@ -139,6 +139,8 @@ export class Order {
   status: OrderStatus
   amount?: number
   fiat_code: string
+  min_amount: number | null
+  max_amount: number | null
   fiat_amount: number
   payment_method: string
   premium: number
@@ -161,6 +163,8 @@ export class Order {
     kind: OrderType,
     status: OrderStatus,
     fiat_code: string,
+    min_amount: number | null,
+    max_amount: number | null,
     fiat_amount: number,
     payment_method: string,
     premium: number,
@@ -172,6 +176,8 @@ export class Order {
     this.kind = kind;
     this.status = status;
     this.fiat_code = fiat_code;
+    this.min_amount = min_amount;
+    this.max_amount = max_amount;
     this.fiat_amount = fiat_amount;
     this.payment_method = payment_method;
     this.premium = premium;
@@ -193,6 +199,12 @@ export class Order {
     if (order1?.fiat_amount !== order2?.fiat_amount) {
       return false
     }
+    if (order1?.min_amount !== order2?.min_amount) {
+      return false
+    }
+    if (order1?.max_amount !== order2?.max_amount) {
+      return false
+    }
     if (order1?.payment_method !== order2?.payment_method) {
       return false
     }
@@ -212,10 +224,12 @@ export interface NewOrder {
   amount?: number,
   fiat_code: string,
   fiat_amount: number,
+  min_amount: number | null
+  max_amount: number | null
   payment_method: string,
   premium: number,
   created_at: number,
-  buyer_invoice: string | null
+  buyer_invoice?: string | null
 }
 
 export enum OrderPricingMode {
