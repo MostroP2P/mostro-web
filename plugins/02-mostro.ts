@@ -343,7 +343,7 @@ export class Mostro {
       await this.nostr.publishEvent(event)
     }
   }
-  async takeSell(order: Order, amount?: number) {
+  async takeSell(order: Order, amount?: number | undefined) {
     const payload = {
       order: {
         version: 1,
@@ -361,18 +361,16 @@ export class Mostro {
       await this.nostr.publishEvent(event)
     }
   }
-  async takeBuy(order: Order) {
+  async takeBuy(order: Order, amount?: number | undefined) {
     const payload = {
       order: {
         version: 1,
         pubkey: this.getLocalKeys().hex,
         id: order.id,
         action: Action.TakeBuy,
-        content: {
-          peer: {
-            pubkey: this.getLocalKeys().hex
-          }
-        }
+        content: amount ? {
+          amount: amount
+        } : null
       }
     }
     const event = await this.createEvent(payload)
