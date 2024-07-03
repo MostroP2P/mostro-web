@@ -33,6 +33,7 @@
     "@pinia/nuxt": "^0.4.11",
     "@vueuse/core": "^10.2.1",
     "@vueuse/nuxt": "^10.2.1",
+    "bip21": "^2.0.3",
     "buffer": "^6.0.3",
     "crypto-js": "^4.1.1",
     "light-bolt11-decoder": "github:bilthon/light-bolt11-decoder",

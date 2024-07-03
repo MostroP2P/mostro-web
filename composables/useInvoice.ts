@@ -1,5 +1,6 @@
 import { ref, computed } from 'vue'
 import * as bolt11 from 'light-bolt11-decoder'
+import * as bip21 from 'bip21'
 
 const DEFAULT_MIN_EXPIRY = 300
 
@@ -44,6 +45,15 @@ export function useBolt11Parser() {
       error.value = undefined
       return
     }
+    // Attempt to decode a BIP21 URI
+    try {
+      const decodedBip21 = bip21.decode(invoice)
+      if (decodedBip21 && decodedBip21.options && decodedBip21.options.lightning) {
+        invoice = decodedBip21.options.lightning
+      }
+      // Don't do anything in case of error, most of the times the
+      // 'invoice' variable won't contain a BIP21 URI
+    } catch(err: unknown) {}
     try {
       const decodedInvoice: LightDecodedInvoice = bolt11.decode(invoice)
       amount.value = decodedInvoice.sections?.find((section) => section.name === 'amount')?.value as string
