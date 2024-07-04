@@ -17,8 +17,8 @@ export function useProfile() {
       try {
         const userProfileResp = await $nostr.fetchProfile({ npub })
         if (userProfileResp) {
-          const { image, username } = userProfileResp
-          const profile: Profile = { image, username}
+          const { image, displayName } = userProfileResp
+          const profile: Profile = { image, username: displayName }
           profileMap.set(npub, profile)  
         }
       } catch(err) {
