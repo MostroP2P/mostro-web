@@ -164,8 +164,11 @@ export default defineComponent({
       fiatAmountRules: [
         (v: string) => {
           const isValidSingle = /^\d+$/.test(v);
-          const isValidRange = /^\d+-\d+$/.test(v);
-          return isValidSingle || isValidRange || 'Must be a single number or a complete range (e.g. 10-100)';
+          const isValidRange = /^\d+-\d+$/.test(v) && (() => {
+            const [min, max] = v.split('-').map(Number)
+            return min < max || 'Invalid range, minimum value must be less than maximum'
+          })()
+          return isValidSingle || isValidRange || 'Must be a single number or a complete valid range (e.g. 10-100)';
         }
       ],
       amountRules: [
