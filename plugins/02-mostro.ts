@@ -53,6 +53,7 @@ export class Mostro {
     this.nostr.setOrderCallback(this.handlePublicEvent.bind(this))
     this.nostr.setDMCallback(this.handlePrivateEvent.bind(this))
     this.nostr.subscribeOrders()
+    this.nostr.addUser(new NDKUser({ npub: this.mostro }))
   }
 
   public set signer(signer: NDKSigner | undefined) {
