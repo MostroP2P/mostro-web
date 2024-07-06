@@ -1,4 +1,4 @@
-import NDK, { NDKKind, NDKSubscription, NDKEvent, NDKRelay, type NDKUserProfile } from '@nostr-dev-kit/ndk'
+import NDK, { NDKKind, NDKSubscription, NDKEvent, NDKRelay, type NDKUserProfile, NDKUser, NDKRelayList } from '@nostr-dev-kit/ndk'
 import NDKCacheAdapterDexie from '@nostr-dev-kit/ndk-cache-dexie'
 import { nip19 } from 'nostr-tools'
 import { useRelays } from '~/stores/relays'
@@ -23,21 +23,52 @@ export type DMCallback = (event: NDKEvent) => void
 
 export class Nostr {
   private static ndkInstance: NDK
+  private users = new Map<string, NDKUser>()
   private orderSubscription: NDKSubscription | undefined
   private dmSubscription: NDKSubscription | undefined
   private orderCallback: OrderCallback | undefined
   private dmCallback: DMCallback | undefined
+  public mustKeepRelays: Set<string> = new Set()
   constructor() {
+    const config = useRuntimeConfig()
+    const { public: { relays } } = config
+
+    // Instantiating the dexie adapter
     const dexieAdapter = new NDKCacheAdapterDexie({ dbName: 'mostro-events' })
-    Nostr.ndkInstance = new NDK({ cacheAdapter: dexieAdapter })
+    Nostr.ndkInstance = new NDK({
+      enableOutboxModel: true,
+      cacheAdapter: dexieAdapter,
+      autoConnectUserRelays: true,
+    })
+    for (const relay of relays.split(',')) {
+      Nostr.ndkInstance.pool.addRelay(new NDKRelay(relay), true)
+    }
+    this.ndk.connect(2000)
   }
   
   get ndk(): NDK {
     return Nostr.ndkInstance
   }
 
-  connect() {
-    this.ndk.connect()
+  addUser(user: NDKUser) {
+    if (!this.users.has(user.pubkey)) {
+      this.users.set(user.pubkey, user)
+      NDKRelayList.forUser(user.pubkey, this.ndk).then((relayList: NDKRelayList | undefined) => {
+        if (relayList) {
+          console.log(`🌐 Relay list for [${user.pubkey}]: `, relayList.tags.map(r => r[1]), `, from event: ${relayList.id} - [${relayList.created_at}]`)
+          for (const relayUrl of relayList.relays) {
+            this.mustKeepRelays.add(relayUrl)
+            const ndkRelay = new NDKRelay(relayUrl)
+            this.ndk.pool.addRelay(ndkRelay, true)
+            this.ndk.outboxPool?.addRelay(ndkRelay, true)
+          }
+        }
+      })
+    }
+  }
+
+  getUser(pubkey: string): NDKUser | undefined {
+    return this.users.get(pubkey)
   }
 
   setOrderCallback(callback: OrderCallback) {
@@ -58,11 +89,11 @@ export class Nostr {
 
   private handleDupPublicEvent(
     event: NDKEvent,
-    relay: NDKRelay,
-    timeSinceFirstSeen: number,
-    subscription: NDKSubscription
+    _relay: NDKRelay,
+    _timeSinceFirstSeen: number,
+    _subscription: NDKSubscription
   ) {
-    console.debug('🧑‍🤝‍🧑 duplicate public event. time: ', timeSinceFirstSeen)
+    console.debug(`🧑‍🤝‍🧑 duplicate public event [${event.id}]`)
   }
 
   private _handleCloseOrderSubscription(subscription: NDKSubscription) {
@@ -80,11 +111,11 @@ export class Nostr {
 
   private _handleDupPrivateEvent(
     event: NDKEvent,
-    relay: NDKRelay,
-    timeSinceFirstSeen: number,
-    subscription: NDKSubscription
+    _relay: NDKRelay,
+    _timeSinceFirstSeen: number,
+    _subscription: NDKSubscription
   ) {
-    console.debug('🧑‍🤝‍🧑 duplicate private event. time: ', timeSinceFirstSeen)
+    console.debug(`🧑‍🤝‍🧑 duplicate private event [${event.id}]`)
   }
 
   private _handleClosePrivateEvent(subscription: NDKSubscription) {
@@ -153,25 +184,40 @@ export class Nostr {
   }
 }
 
+const printRelayStats = (ndk: NDK) => {
+  const poolStats = ndk.pool.stats()
+  const outboxPoolStats = ndk.outboxPool?.stats()
+  console.log(
+    `📊 stats | pool: [connected: ${poolStats.connected}, disconnected: ${poolStats.disconnected}, connecting: ${poolStats.connecting}]` +
+    ` outboxPool: [connected: ${outboxPoolStats?.connected}, disconnected: ${outboxPoolStats?.disconnected}, connecting: ${outboxPoolStats?.connecting}]`
+  )
+}
+
 export default defineNuxtPlugin((nuxtApp) => {
-  const config = useRuntimeConfig()
-  const { public: { relays } } = config
   const nostr = new Nostr()
-  for (const relay of relays.split(',')) {
-    nostr.ndk.addExplicitRelay(relay)
-  }
   const relaysStatus = useRelays()
   nostr.ndk.pool.on('relay:connect', (r: NDKRelay) => {
-    console.log('>> relay:connect, ', r.url)
+    // console.log('>> relay:connect, ', r.url)
     relaysStatus.updateRelayStatus(r.url, 'yellow')
   })
   nostr.ndk.pool.on('relay:ready', (r: NDKRelay) => {
-    console.info('>> relay:ready, ', r.url)
+    // console.info('>> relay:ready, ', r.url)
     relaysStatus.updateRelayStatus(r.url, 'green')
   })
   nostr.ndk.pool.on('relay:disconnect', (r: NDKRelay) => {
-    console.warn('>> relay:disconnect, ', r.url)
+    console.warn('>> relay:disconnect, ', r.url, ', relay: ', r)
     relaysStatus.updateRelayStatus(r.url, 'red')
+    if (!nostr.mustKeepRelays.has(r.url)) {
+      console.log('🗑️ removing relay: ', r.url)
+      nostr.ndk.pool.removeRelay(r.url)
+      nostr.ndk.outboxPool?.removeRelay(r.url)
+      relaysStatus.removeRelay(r.url)
+    } else {
+      console.log('🔌 reconnecting relay: ', r.url)
+      nostr.ndk.pool.addRelay(r, true)
+      nostr.ndk.outboxPool?.addRelay(r, true)
+      printRelayStats(nostr.ndk)
+    }
   })
   nostr.ndk.pool.on('flapping', (r: NDKRelay) => {
     console.warn('>> relay:flapping, ', r.url)
