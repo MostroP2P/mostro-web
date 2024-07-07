@@ -4,10 +4,10 @@
       three-line
       link
     >
-      <v-list-item-title class="d-flex justify-space-between">
+      <v-list-item-title class="d-flex justify-space-between align-center">
         <div class="d-flex">
           <div class="mr-4">
-            {{ order.fiat_amount }} {{ order.fiat_code.toUpperCase() }} {{ getFlag(order.fiat_code) }}
+            <span class="font-weight-bold">{{ orderAmount }} {{ order.fiat_code.toUpperCase() }}</span> {{ getFlag(order.fiat_code) }}
           </div>
           <PriceDeltaBadge v-if="order.amount === 0" class="mt-1" :order="order"/>
         </div>
@@ -29,7 +29,7 @@
       </v-list-item-subtitle>
       <v-list-item-subtitle class="my-1">
         <div class="d-flex justify-space-between">
-          Payment via: {{ order.payment_method }} - id: {{ order.id }}
+          <div>Payment via: <span class="font-weight-bold">{{ order.payment_method }}</span></div>
           <take-sell-order-dialog v-if="showTakeSell(order) && !order.is_mine" :order="order"/>
           <take-buy-order-dialog v-if="showTakeBuy(order) && !order.is_mine" :order="order"/>
         </div>
@@ -82,6 +82,15 @@ const expiresIn = computed(() => {
   return format(expiresAt)
 })
 
+const orderAmount = computed(() => {
+  const order = props.order
+  if (order.min_amount !== null && order.max_amount !== null) {
+    return `${order.min_amount} - ${order.max_amount}`
+  } else {
+    return `${order.fiat_amount}`
+  }
+})
+
 // Define methods
 const getFlag = (fiatCode: string) => {
   return fiatMap[fiatCode?.toUpperCase()]?.emoji ?? ''
@@ -89,7 +98,12 @@ const getFlag = (fiatCode: string) => {
 
 const tradeIn = (order: Order) => {
   if (order.kind === OrderType.SELL) {
-    return `${order.fiat_amount} ${order.fiat_code.toUpperCase()}`
+    const isRangedOrder = order.min_amount !== null && order.max_amount !== null
+    if (isRangedOrder) {
+      return `${order.min_amount}-${order.max_amount} ${order.fiat_code.toUpperCase()}`
+    } else {
+      return `${order.fiat_amount} ${order.fiat_code.toUpperCase()}`
+    }
   } else {
     return `${order.amount} sats`
   }
@@ -99,7 +113,12 @@ const tradeOut = (order: Order) => {
   if (order.kind === OrderType.SELL) {
     return `${order.amount} sats`
   } else {
-    return `${order.fiat_amount} ${order.fiat_code.toUpperCase()}`
+    const isRangedOrder = order.min_amount !== null && order.max_amount !== null
+    if (isRangedOrder) {
+      return `${order.min_amount}-${order.max_amount} ${order.fiat_code.toUpperCase()}`
+    } else {
+      return `${order.fiat_amount} ${order.fiat_code.toUpperCase()}`
+    }
   }
 
 }

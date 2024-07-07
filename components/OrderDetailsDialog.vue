@@ -110,7 +110,7 @@ const cancelOrder = () => {
 }
 
 const getOrderVerb = () => {
-  return props.order.kind ===  OrderType.BUY ? 'buying' : 'selling'
+  return props.order.kind ===  OrderType.BUY ? 'buying sats for' : 'selling sats for '
 }
 
 const getOrderSubject = () => {

@@ -1,5 +1,6 @@
 import { ref, computed } from 'vue'
 import * as bolt11 from 'light-bolt11-decoder'
+import bip21 from 'bip21'
 
 const DEFAULT_MIN_EXPIRY = 300
 
@@ -20,8 +21,8 @@ export interface InvoiceParams {
   expectedMsats?: bigint
 }
 
-
 export function useBolt11Parser() {
+  const invoice = ref<string | undefined>(undefined)
   const amount = ref<string | undefined>(undefined)
   const timestamp = ref<number | undefined>(undefined)
   const expiry = ref<number | undefined>(undefined)
@@ -39,16 +40,33 @@ export function useBolt11Parser() {
     return BigInt(amount.value)
   })
 
-  const parseInvoice = (invoice: string, params?: InvoiceParams) => {
-    if (!invoice) {
+  // Extending the Options type to include the lightning property
+  type DecodedBip21 = {
+    options?: {
+      lightning?: string
+    }
+  }
+
+  const parseInvoice = (candidate: string, params?: InvoiceParams) => {
+    if (!candidate) {
       error.value = undefined
       return
     }
+    // Attempt to decode a BIP21 URI
     try {
-      const decodedInvoice: LightDecodedInvoice = bolt11.decode(invoice)
+      const decodedBip21 = bip21.decode(candidate) as DecodedBip21
+      if (decodedBip21 && decodedBip21.options && decodedBip21.options.lightning) {
+        candidate = decodedBip21.options.lightning
+      }
+      // Don't do anything in case of error, most of the times the
+      // 'invoice' variable won't contain a BIP21 URI
+    } catch(err: unknown) {}
+    try {
+      const decodedInvoice: LightDecodedInvoice = bolt11.decode(candidate)
       amount.value = decodedInvoice.sections?.find((section) => section.name === 'amount')?.value as string
       timestamp.value = decodedInvoice.sections?.find((section) => section.name === 'timestamp')?.value as number
       expiry.value = decodedInvoice.sections?.find((section) => section.name === 'expiry')?.value as number
+      invoice.value = candidate
       if (params) {
         if (params.minExpiry && expiry.value && expiry.value < params.minExpiry) {
           error.value = `Expiration time for invoice is too short, min ${params.minExpiry} secs, provided is ${expiry.value} secs`
@@ -91,6 +109,7 @@ export function useBolt11Parser() {
     timestamp,
     expiry,
     error,
+    invoice,
     parseInvoice,
     validateAmount,
     isExpired,

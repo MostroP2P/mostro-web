@@ -1,14 +1,6 @@
 <template>
   <div class="d-flex justify-center align-center flex-column mt-0 pt-2 mb-3">
-    <v-avatar color="primary" size="x-large" style="border: 1.2px solid rgba(38, 82, 49, 0.3);" variant="elevated">
-      <v-img :src="profilePic" v-if="profilePic !== undefined"/>
-      <v-icon dark large v-else>
-        mdi-account-circle
-      </v-icon>
-    </v-avatar>
-    <div class="font-weight-light text-disabled text-subtitle-1" style="min-height: 28px">
-      {{ userName ? userName : '' }}
-    </div>
+    <ProfileDetailsDialog :userName="userName" :profilePic="profilePic"/>
     <client-only>
       <div v-if="!isLoggedIn">
         <registration-dialog v-if="!hasEncryptedKey"/>
@@ -26,7 +18,7 @@ import { computed, watch } from 'vue'
 import { useAuth } from '@/stores/auth'
 import type { Nostr } from '~/plugins/01-nostr'
 import { useProfile } from '~/composables/useProfile'
-import { useNip19 } from '~/composables/useNip19'
+import useNip19 from '~/composables/useNip19'
 
 const { hexToNpub } = useNip19()
 const { getProfile } = useProfile()

@@ -16,7 +16,7 @@
         Please give us an invoice for <strong>{{ satsAmount }}</strong> sats.
       </v-card-text>
       <v-textarea
-        v-model="invoice"
+        v-model="input"
         rows="7"
         outlined
         class="mx-5"
@@ -57,13 +57,13 @@ export default defineComponent({
   },
   setup(props) {
     const showDialog = ref(false)
-    const invoice = ref('')
+    const input = ref('')
     const isProcessing = ref(false)
     const nuxtApp = useNuxtApp()
     const mostro = nuxtApp.$mostro as Mostro
     const orderStore = useOrders()
     const mostroStore = useMostroStore()
-    const { error, parseInvoice } = useBolt11Parser()
+    const { error, parseInvoice, invoice } = useBolt11Parser()
     const order = computed(() => {
       return orderStore.getOrderById(props.message.order.content.order?.id ?? '')
     })
@@ -82,23 +82,27 @@ export default defineComponent({
         console.error('No order found for invoice')
         return
       }
+      if (!invoice.value) {
+        console.error('No invoice found for buy order')
+        return
+      }
       try {
         await mostro.addInvoice(order.value, invoice.value)
       } catch(err) {
         console.error('Error while giving invoice for buy order: ', err)
       } finally {
         isProcessing.value = false
-        invoice.value = ''
+        input.value = ''
         showDialog.value = false
       }
     }
 
     const close = () => {
-      invoice.value = ''
+      input.value = ''
       showDialog.value = false
     }
 
-    watch(invoice, (newValue) => {
+    watch(input, (newValue) => {
       try {
         const params = {
           minExpiry: mostroInfo?.invoice_expiration_window ?? DEFAULT_MIN_INVOICE_EXPIRATION_WINDOW,
@@ -106,12 +110,12 @@ export default defineComponent({
         }
         parseInvoice(newValue, params)
       } catch(err) {
-        console.error('Error while decoding invoice: ', err)
+        console.error('Error while decoding input: ', err)
       }
     })
 
     const invoiceHint = computed(() => {
-      return invoice.value === '' ? 'Enter a valid BOLT11 invoice' : ''
+      return input.value === '' ? 'Enter a valid BOLT11 invoice' : ''
     })
 
     const satsAmount = computed(() => {
@@ -119,12 +123,12 @@ export default defineComponent({
     })
 
     const submitDisabled = computed(() => {
-      return error.value !== undefined || !invoice.value
+      return error.value !== undefined || !input.value
     })
 
     return {
       showDialog,
-      invoice,
+      input,
       invoiceError,
       isProcessing,
       submitInvoice,

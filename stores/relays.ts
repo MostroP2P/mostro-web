@@ -12,6 +12,12 @@ export const useRelays = defineStore('relays', {
       } else {
         this.relays.push({ url: relayUrl, status })
       }
+    },
+    removeRelay(relayUrl: string) {
+      const relayIndex = this.relays.findIndex(r => r.url === relayUrl)
+      if (relayIndex !== -1) {
+        this.relays.splice(relayIndex, 1)
+      }
     }
   }
 })
