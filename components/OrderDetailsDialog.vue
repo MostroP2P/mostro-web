@@ -15,7 +15,7 @@
           {{ getOrderSubject() }} {{ getOrderVerb() }} <strong class="highlight">{{ formattedSatsAmount }} <i class="fak fa-bold"></i></strong> for <strong class="highlight">{{ order.fiat_amount }} {{ order.fiat_code }} {{ fiatFlag }}</strong>
         </div>
         <div v-if="!isFixedPrice">
-          {{ getOrderSubject() }} {{ getOrderVerb() }} <strong class="highlight">{{ order.fiat_amount }} {{ order.fiat_code }} {{ fiatFlag }}</strong>
+          {{ getOrderSubject() }} {{ getOrderVerb() }} <strong class="highlight">{{ formattedFiatAmount }} {{ order.fiat_code }} {{ fiatFlag }}</strong>
           at market price
           <span v-if="hasPremiumOrDiscount">with a <strong class="highlight">{{ order.premium > 0 ? '+' : '-' }}{{order.premium}}%</strong> {{ delta }}</span>
           <span v-else>with no premium or discount.</span>
@@ -125,6 +125,18 @@ const formattedSatsAmount = computed(() => {
   const amount = Number(props.order.amount) || 0
   const numberFormat = new Intl.NumberFormat((nuxtApp.$i18n as any).locale, { style: 'decimal' })
   return numberFormat.format(amount)
+})
+
+const formattedFiatAmount = computed(() => {
+  const amount = Number(props.order.fiat_amount) || 0
+  const numberFormat = new Intl.NumberFormat((nuxtApp.$i18n as any).locale, { style: 'decimal' })
+  if (amount !== 0) {
+    return numberFormat.format(amount)
+  } else {
+    const min = Number(props.order.min_amount) || 0
+    const max = Number(props.order.max_amount) || 0
+    return `${numberFormat.format(min)}-${numberFormat.format(max)}`
+  }
 })
 
 const delta = computed(() => {
