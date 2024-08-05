@@ -1,6 +1,6 @@
 import { ref, computed } from 'vue'
 import * as bolt11 from 'light-bolt11-decoder'
-import bip21 from 'bip21'
+import * as bip21 from 'bip21'
 
 const DEFAULT_MIN_EXPIRY = 300
 

@@ -1,4 +1,4 @@
-import NDK, { NDKKind, NDKSubscription, NDKEvent, NDKRelay, type NDKUserProfile, NDKUser, NDKRelayList } from '@nostr-dev-kit/ndk'
+import NDK, { NDKKind, NDKSubscription, NDKEvent, NDKRelay, type NDKUserProfile, NDKUser, NDKRelayList, getRelayListForUser } from '@nostr-dev-kit/ndk'
 import NDKCacheAdapterDexie from '@nostr-dev-kit/ndk-cache-dexie'
 import { nip19 } from 'nostr-tools'
 import { useRelays } from '~/stores/relays'
@@ -53,7 +53,7 @@ export class Nostr {
   addUser(user: NDKUser) {
     if (!this.users.has(user.pubkey)) {
       this.users.set(user.pubkey, user)
-      NDKRelayList.forUser(user.pubkey, this.ndk).then((relayList: NDKRelayList | undefined) => {
+      getRelayListForUser(user.pubkey, this.ndk).then((relayList: NDKRelayList | undefined) => {
         if (relayList) {
           console.log(`🌐 Relay list for [${user.pubkey}]: `, relayList.tags.map(r => r[1]), `, from event: ${relayList.id} - [${relayList.created_at}]`)
           for (const relayUrl of relayList.relays) {
@@ -79,7 +79,7 @@ export class Nostr {
     this.dmCallback = callback
   }
 
-  private _handlePublicEvent(event: NDKEvent, relay: NDKRelay, subscription: NDKSubscription) {
+  private _handlePublicEvent(event: NDKEvent, relay: NDKRelay | undefined, subscription: NDKSubscription) {
     if (this.orderCallback) {
       this.orderCallback(event)
     } else {
@@ -88,12 +88,12 @@ export class Nostr {
   }
 
   private handleDupPublicEvent(
-    event: NDKEvent,
-    _relay: NDKRelay,
+    eventId: string,
+    _relay: NDKRelay | undefined,
     _timeSinceFirstSeen: number,
     _subscription: NDKSubscription
   ) {
-    console.debug(`🧑‍🤝‍🧑 duplicate public event [${event.id}]`)
+    console.debug(`🧑‍🤝‍🧑 duplicate public event [${eventId}]`)
   }
 
   private _handleCloseOrderSubscription(subscription: NDKSubscription) {
@@ -110,12 +110,12 @@ export class Nostr {
   }
 
   private _handleDupPrivateEvent(
-    event: NDKEvent,
-    _relay: NDKRelay,
+    eventId: string,
+    _relay: NDKRelay | undefined,
     _timeSinceFirstSeen: number,
     _subscription: NDKSubscription
   ) {
-    console.debug(`🧑‍🤝‍🧑 duplicate private event [${event.id}]`)
+    console.debug(`🧑‍🤝‍🧑 duplicate private event [${eventId}]`)
   }
 
   private _handleClosePrivateEvent(subscription: NDKSubscription) {
@@ -229,4 +229,3 @@ export default defineNuxtPlugin((nuxtApp) => {
   })
   nuxtApp.provide('nostr', nostr)
 })
-
