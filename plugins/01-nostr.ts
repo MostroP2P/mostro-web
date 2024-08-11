@@ -34,7 +34,7 @@ export class Nostr {
     const { public: { relays } } = config
 
     // Instantiating the dexie adapter
-    const dexieAdapter = new NDKCacheAdapterDexie({ dbName: 'mostro-events' })
+    const dexieAdapter = new NDKCacheAdapterDexie({ dbName: 'mostro-events-db' })
     Nostr.ndkInstance = new NDK({
       enableOutboxModel: true,
       cacheAdapter: dexieAdapter,
@@ -62,6 +62,9 @@ export class Nostr {
             this.ndk.pool.addRelay(ndkRelay, true)
             this.ndk.outboxPool?.addRelay(ndkRelay, true)
           }
+          console.log(`Must keep relays: `, this.mustKeepRelays)
+        } else {
+          console.warn(`🚨 No relay list for user [${user.pubkey}]`)
         }
       })
     }
