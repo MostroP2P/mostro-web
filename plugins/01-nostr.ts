@@ -1,4 +1,4 @@
-import NDK, { NDKKind, NDKSubscription, NDKEvent, NDKRelay, type NDKUserProfile, NDKUser, NDKRelayList, getRelayListForUser } from '@nostr-dev-kit/ndk'
+import NDK, { NDKKind, NDKSubscription, NDKEvent, NDKRelay, type NDKUserProfile, NDKUser, NDKRelayList, getRelayListForUser, NDKRelayAuthPolicies } from '@nostr-dev-kit/ndk'
 import NDKCacheAdapterDexie from '@nostr-dev-kit/ndk-cache-dexie'
 import { nip19 } from 'nostr-tools'
 import { useRelays } from '~/stores/relays'
@@ -41,7 +41,7 @@ export class Nostr {
       autoConnectUserRelays: true,
     })
     for (const relay of relays.split(',')) {
-      Nostr.ndkInstance.pool.addRelay(new NDKRelay(relay), true)
+      Nostr.ndkInstance.pool.addRelay(new NDKRelay(relay, undefined, Nostr.ndkInstance), true)
     }
     this.ndk.connect(2000)
   }
@@ -58,7 +58,7 @@ export class Nostr {
           console.log(`🌐 Relay list for [${user.pubkey}]: `, relayList.tags.map(r => r[1]), `, from event: ${relayList.id} - [${relayList.created_at}]`)
           for (const relayUrl of relayList.relays) {
             this.mustKeepRelays.add(relayUrl)
-            const ndkRelay = new NDKRelay(relayUrl)
+            const ndkRelay = new NDKRelay(relayUrl, undefined, Nostr.ndkInstance)
             this.ndk.pool.addRelay(ndkRelay, true)
             this.ndk.outboxPool?.addRelay(ndkRelay, true)
           }
@@ -136,7 +136,7 @@ export class Nostr {
       authors: [mostroDecoded.data as string]
     }
     if (!this.orderSubscription) {
-      this.orderSubscription = this.ndk.subscribe(filters)
+      this.orderSubscription = this.ndk.subscribe(filters, { closeOnEose: false })
       this.orderSubscription.on('event', this._handlePublicEvent.bind(this))
       this.orderSubscription.on('event:dup', this.handleDupPublicEvent.bind(this))
       this.orderSubscription.on('close', this._handleCloseOrderSubscription.bind(this))
@@ -153,7 +153,7 @@ export class Nostr {
       since: Math.floor(Date.now() / 1e3) - EVENT_INTEREST_WINDOW,
     }
     if (!this.dmSubscription) {
-      this.dmSubscription = this.ndk.subscribe(filters)
+      this.dmSubscription = this.ndk.subscribe(filters, { closeOnEose: false })
       this.dmSubscription.on('event', this._handlePrivateEvent.bind(this))
       this.dmSubscription.on('event:dup', this._handleDupPrivateEvent.bind(this))
       this.dmSubscription.on('close', this._handleClosePrivateEvent.bind(this))
