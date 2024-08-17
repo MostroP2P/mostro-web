@@ -5,7 +5,7 @@
       class="flex-grow-1"
       id="messages-container"
     >
-      <div id="scrollingContent" style="height: calc(100vh - 350px)">
+      <div id="scrollingContent" style="height: calc(100vh - 450px)">
         <v-card-text v-if="peerMessages && peerMessages.length > 0">
           <v-row v-for="(message, index) in peerMessages" :key="message.id" :id="`message-${index}`" class="message-row">
             <v-col cols="12" :class="['d-flex', message.sender === 'me' ? 'justify-end' : '']">

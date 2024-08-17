@@ -102,6 +102,10 @@ onMounted(() => {
     router.replace('/')
     return
   }
+  if (order.disputed) {
+    tabs.value.push(TAB_DISPUTE)
+    tab.value = 1
+  }
   if (order.status === OrderStatus.WAITING_BUYER_INVOICE || order.status === OrderStatus.WAITING_PAYMENT) {
     // If the order is in the WAITING_BUYER_INVOICE or WAITING_PAYMENT state, show the countdown
     showCountdown.value = true

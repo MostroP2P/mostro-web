@@ -92,6 +92,8 @@ export enum Action {
   AdminCanceled = 'admin-canceled',
   AdminSettled = 'admin-settled',
   Dispute = 'dispute',
+  DisputeInitiatedByYou = 'dispute-initiated-by-you',
+  DisputeInitiatedByPeer = 'dispute-initiated-by-peer',
   CantDo = 'cant-do'
 }
 
@@ -156,6 +158,7 @@ export class Order {
     value: number | undefined,
     confirmed: boolean | undefined
   }
+  disputed: boolean = false
   mostro_id: string
 
   constructor(

@@ -52,6 +52,15 @@ export const useMessages = defineStore('messages', {
           if (order && rating) {
             orderStore.updateOrderRating({ order, rating, confirmed: true })
           }
+        } else if (
+          orderMessage?.action === Action.DisputeInitiatedByYou ||
+          orderMessage?.action === Action.DisputeInitiatedByPeer
+        ) {
+          const order: Order = orderStore.getOrderById(orderMessage.id) as Order
+          if (order) {
+            console.warn(`Dispute detected. Action ${orderMessage.action}, message: `, message)
+            orderStore.markDisputed(order, message, event)
+          }
         }
         orderStore.updateOrderStatus(message.order.id, orderMessage.action, event)
         this.messages.mostro.push(message)

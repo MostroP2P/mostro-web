@@ -201,6 +201,10 @@ export class Mostro {
       const info = this.extractInfoFromEvent(ev)
       this.mostroStore.addMostroInfo(info)
       console.info('< [🧌 -> 📢]', JSON.stringify(info), ', ev: ', nEvent)
+    } else if (z === 'dispute') {
+      console.info('< [🧌 -> 📢]', 'dispute', ', ev: ', nEvent)
+      // const dispute = this.extractDisputeFromEvent(ev)
+      // this.orderStore.addDispute({ dispute: dispute, event: ev as MostroEvent })
     } else {
       // TODO: Extract other kinds of events data: Disputes & Ratings
     }

@@ -10,16 +10,19 @@
           <div class="text-caption text--disabled">{{ orderId }}</div>
         </div>
       </v-list-item-title>
-      <v-list-item-subtitle class="text--secondary">
+      <v-list-item-subtitle class="text--secondary d-flex justify-space-between">
         {{ message }}
+        <v-chip v-if="threadSummary.order.disputed" variant="elevated" color="red" rounded size="x-small">
+          Disputed
+        </v-chip>
       </v-list-item-subtitle>
       <v-list-item-subtitle class="text--secondary">
         <div class="d-flex justify-space-between">
           <div class="d-flex align-top">
             <div class="mr-1 mb-0 pb-0">
               {{ messageCount }}
+              <icon-message class="pt-1" />
             </div>
-            <icon-message/>
           </div>
           <div class="text-caption">{{ creationDate }}</div>
         </div>
