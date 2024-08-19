@@ -29,6 +29,11 @@ export class Nostr {
   private orderCallback: OrderCallback | undefined
   private dmCallback: DMCallback | undefined
   public mustKeepRelays: Set<string> = new Set()
+
+  // Queue for DMs in order to process past events in the chronological order
+  private dmQueue: NDKEvent[] = []
+  private dmEoseReceived: boolean = false
+
   constructor() {
     const config = useRuntimeConfig()
     const { public: { relays } } = config
@@ -125,6 +130,27 @@ export class Nostr {
     console.warn('🔚 DM subscription closed: ', subscription)
   }
 
+  private _queuePrivateEvent(event: NDKEvent) {
+    this.dmQueue.push(event)
+    if (this.dmEoseReceived) {
+      this._processQueuedEvents()
+    }
+  }
+
+  private _handleDMEose() {
+    console.warn('🔚 DM subscription eose')
+    this.dmEoseReceived = true
+    this._processQueuedEvents()
+  }
+
+  private _processQueuedEvents() {
+    this.dmQueue.sort((a, b) => (a.created_at || 0) - (b.created_at || 0))
+    for (const event of this.dmQueue) {
+      this._handlePrivateEvent(event)
+    }
+    this.dmQueue = []
+  }
+
   subscribeOrders() {
     console.log('📣 subscribing to orders')
     const config = useRuntimeConfig()
@@ -154,8 +180,9 @@ export class Nostr {
     }
     if (!this.dmSubscription) {
       this.dmSubscription = this.ndk.subscribe(filters, { closeOnEose: false })
-      this.dmSubscription.on('event', this._handlePrivateEvent.bind(this))
+      this.dmSubscription.on('event', this._queuePrivateEvent.bind(this))
       this.dmSubscription.on('event:dup', this._handleDupPrivateEvent.bind(this))
+      this.dmSubscription.on('eose', this._handleDMEose.bind(this))
       this.dmSubscription.on('close', this._handleClosePrivateEvent.bind(this))
     } else {
       console.error('❌ Attempting to subcribe to DMs when already subscribed')
@@ -168,6 +195,8 @@ export class Nostr {
       this.dmSubscription.stop()
       this.dmSubscription = undefined
     }
+    this.dmQueue = []
+    this.dmEoseReceived = false
   }
 
   async publishEvent(event: NDKEvent) {
