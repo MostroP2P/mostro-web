@@ -8,9 +8,9 @@ import { md3 } from 'vuetify/blueprints'
 const MostroDarkTheme: ThemeDefinition = {
   dark: true,
   colors: {
-    background: '#303544',
+    background: '#14161c',
     surface: '#1D212C',
-    primary: '#304F00',
+    primary: '#3e6601',
     'primary-darken-1': '#004940',
     secondary: '#304F00',
     'secondary-darken-1': '#1D212C',
