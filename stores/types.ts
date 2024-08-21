@@ -97,6 +97,7 @@ export enum Action {
   DisputeInitiatedByPeer = 'dispute-initiated-by-peer',
   NotAllowedByStatus = 'not-allowed-by-status',
   PaymentFailed = 'payment-failed',
+  OutOfRangeSatsAmount = 'out-of-range-sats-amount',
   CantDo = 'cant-do'
 }
 
