@@ -29,10 +29,15 @@ export const useMostroStore = defineStore('mostro', () => {
     delete mostroMap.value[pubkey]
   }
 
+  function listMostroKeys() {
+    return Object.keys(mostroMap.value)
+  }
+
   return {
     mostroMap,
     getMostroInfo,
     addMostroInfo,
     removeMostroInfo,
+    listMostroKeys
   }
 })

@@ -129,7 +129,7 @@ const items = ref([
     icon: 'mdi-cog',
     title: 'Settings',
     to: '/settings',
-    disabled: () => !authStore.isAuthenticated || authStore.privKey === null
+    disabled: () => !authStore.isAuthenticated
   },
   {
     icon: 'mdi-information',
