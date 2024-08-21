@@ -1,6 +1,23 @@
 <template>
   <v-card>
     <v-list>
+      <v-list-item class="mb-4">
+        <template v-slot:prepend>
+          <v-icon icon="mdi-information-outline"></v-icon>
+        </template>
+        <v-list-item-title>
+          Mostro Info
+        </v-list-item-title>
+        <v-list-item-subtitle>
+          Public key of this mostro operator
+        </v-list-item-subtitle>
+        <v-row>
+          <v-col cols="12" class="font-weight-bold">
+            {{ mostroInfo }}
+          </v-col>
+        </v-row>
+      </v-list-item>
+      <v-divider />
       <v-list-item v-if="hasSecret">
         <template v-slot:prepend>
           <v-icon icon="mdi-key"></v-icon>
@@ -67,17 +84,28 @@ import { ref, computed } from 'vue'
 import { useAuth } from '../stores/auth'
 import useMobileDetector from '../composables/useMobileDetector'
 import useNip19 from '../composables/useNip19'
-
+import { useMostroStore } from '../stores/mostro'
 const authStore = useAuth()
 const { isMobile } = useMobileDetector()
-const { hexToNsec } = useNip19()
+const { hexToNsec, hexToNpub } = useNip19()
 
 const isShown = ref<boolean>(false)
 
 const toggleButtonText = computed(() => isShown.value ? 'Hide' : 'Show')
 
+const mostroStore = useMostroStore()
+
+const mostroInfo = computed(() => {
+  const keys = mostroStore.listMostroKeys()
+  // for now we only have a single mostro instance, so we return the first one
+  return hexToNpub(keys[0])
+})
+
 const secret = computed(() => {
-  return hexToNsec(authStore.privKey)
+  if (authStore?.privKey) {
+    return hexToNsec(authStore.privKey)
+  }
+  return ''
 })
 
 const hasSecret = computed(() => {

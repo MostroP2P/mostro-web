@@ -1,7 +1,7 @@
 {
   "name": "mostro-web",
   "private": true,
-  "version": "0.0.26",
+  "version": "0.0.27",
   "description": "Mostro web client",
   "type": "module",
   "scripts": {
@@ -12,39 +12,42 @@
     "dev": "npm run type-check && nuxt dev --host",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
-    "postinstall": "nuxt prepare",
+    "postinstall": "nuxt prepare && npm run prebuild",
     "test": "NODE_ENV=test vitest",
     "version": "auto-changelog -p && git add CHANGELOG.md"
   },
   "devDependencies": {
     "@nuxt/devtools": "latest",
-    "@nuxt/test-utils": "^3.13.1",
-    "@nuxtjs/i18n": "^8.3.0",
+    "@nuxt/test-utils": "^3.14.0",
+    "@nuxtjs/i18n": "^8.3.3",
     "@types/bip21": "^2.0.3",
-    "@types/node": "^18",
+    "@types/node": "^22.0.2",
     "@vue/test-utils": "^2.4.6",
     "auto-changelog": "^2.4.0",
-    "jsdom": "^24.1.0",
-    "nuxt": "^3.5.2",
-    "vitest": "^1.6.0"
+    "jsdom": "^24.1.1",
+    "nuxt": "^3.12.4",
+    "typescript": "^5.5.4",
+    "vitest": "^2.0.5",
+    "vue-tsc": "^2.0.29"
   },
   "dependencies": {
     "@mdi/font": "^7.4.47",
-    "@nostr-dev-kit/ndk": "^2.8.2",
-    "@nostr-dev-kit/ndk-cache-dexie": "^2.4.2",
-    "@pinia/nuxt": "^0.4.11",
-    "@vueuse/core": "^10.2.1",
-    "@vueuse/nuxt": "^10.2.1",
-    "bip21": "^2.0.3",
+    "@nostr-dev-kit/ndk": "^2.10.0",
+    "@nostr-dev-kit/ndk-cache-dexie": "^2.5.1",
+    "@pinia/nuxt": "^0.5.2",
+    "@vueuse/core": "^10.11.0",
+    "@vueuse/nuxt": "^10.11.0",
+    "bip21": "^3.0.0",
     "buffer": "^6.0.3",
-    "crypto-js": "^4.1.1",
+    "crypto-js": "^4.2.0",
     "light-bolt11-decoder": "github:bilthon/light-bolt11-decoder",
     "nostr-tools": "^1.12.0",
-    "pinia": "^2.1.4",
-    "qrcode.vue": "^3.4.0",
-    "sass": "^1.63.6",
+    "pinia": "^2.2.0",
+    "qrcode.vue": "^3.4.1",
+    "sass": "^1.77.8",
     "timeago.js": "^4.0.2",
-    "vue": "^3.3.4",
-    "vuetify": "^3.3.5"
-  }
+    "vue": "^3.4.35",
+    "vuetify": "^3.6.14"
+  },
+  "packageManager": "yarn@4.3.1+sha512.af78262d7d125afbfeed740602ace8c5e4405cd7f4735c08feb327286b2fdb2390fbca01589bfd1f50b1240548b74806767f5a063c94b67e431aabd0d86f7774"
 }

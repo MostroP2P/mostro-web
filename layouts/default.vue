@@ -71,7 +71,16 @@
       <template v-slot:prepend>
         <v-app-bar-nav-icon v-if="mobile" @click.stop="drawer = !drawer" color="white"/>
       </template>
-      <v-app-bar-title>Mostro</v-app-bar-title>
+      <v-app-bar-title>
+        Mostro
+        <v-chip
+          color="warning"
+          size="x-small"
+          class="ml-2"
+        >
+          Beta
+        </v-chip>
+      </v-app-bar-title>
       <v-spacer />
       <client-only>
         <notifications/>
@@ -129,7 +138,7 @@ const items = ref([
     icon: 'mdi-cog',
     title: 'Settings',
     to: '/settings',
-    disabled: () => !authStore.isAuthenticated || authStore.privKey === null
+    disabled: () => !authStore.isAuthenticated
   },
   {
     icon: 'mdi-information',

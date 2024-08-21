@@ -1,4 +1,4 @@
-import NDK, { NDKKind, NDKSubscription, NDKEvent, NDKRelay, type NDKUserProfile, NDKUser, NDKRelayList } from '@nostr-dev-kit/ndk'
+import NDK, { NDKKind, NDKSubscription, NDKEvent, NDKRelay, type NDKUserProfile, NDKUser, NDKRelayList, getRelayListForUser, NDKRelayAuthPolicies } from '@nostr-dev-kit/ndk'
 import NDKCacheAdapterDexie from '@nostr-dev-kit/ndk-cache-dexie'
 import { nip19 } from 'nostr-tools'
 import { useRelays } from '~/stores/relays'
@@ -29,19 +29,24 @@ export class Nostr {
   private orderCallback: OrderCallback | undefined
   private dmCallback: DMCallback | undefined
   public mustKeepRelays: Set<string> = new Set()
+
+  // Queue for DMs in order to process past events in the chronological order
+  private dmQueue: NDKEvent[] = []
+  private dmEoseReceived: boolean = false
+
   constructor() {
     const config = useRuntimeConfig()
     const { public: { relays } } = config
 
     // Instantiating the dexie adapter
-    const dexieAdapter = new NDKCacheAdapterDexie({ dbName: 'mostro-events' })
+    const dexieAdapter = new NDKCacheAdapterDexie({ dbName: 'mostro-events-db' })
     Nostr.ndkInstance = new NDK({
       enableOutboxModel: true,
       cacheAdapter: dexieAdapter,
       autoConnectUserRelays: true,
     })
     for (const relay of relays.split(',')) {
-      Nostr.ndkInstance.pool.addRelay(new NDKRelay(relay), true)
+      Nostr.ndkInstance.pool.addRelay(new NDKRelay(relay, undefined, Nostr.ndkInstance), true)
     }
     this.ndk.connect(2000)
   }
@@ -53,15 +58,18 @@ export class Nostr {
   addUser(user: NDKUser) {
     if (!this.users.has(user.pubkey)) {
       this.users.set(user.pubkey, user)
-      NDKRelayList.forUser(user.pubkey, this.ndk).then((relayList: NDKRelayList | undefined) => {
+      getRelayListForUser(user.pubkey, this.ndk).then((relayList: NDKRelayList | undefined) => {
         if (relayList) {
           console.log(`🌐 Relay list for [${user.pubkey}]: `, relayList.tags.map(r => r[1]), `, from event: ${relayList.id} - [${relayList.created_at}]`)
           for (const relayUrl of relayList.relays) {
             this.mustKeepRelays.add(relayUrl)
-            const ndkRelay = new NDKRelay(relayUrl)
+            const ndkRelay = new NDKRelay(relayUrl, undefined, Nostr.ndkInstance)
             this.ndk.pool.addRelay(ndkRelay, true)
             this.ndk.outboxPool?.addRelay(ndkRelay, true)
           }
+          console.log(`Must keep relays: `, this.mustKeepRelays)
+        } else {
+          console.warn(`🚨 No relay list for user [${user.pubkey}]`)
         }
       })
     }
@@ -79,7 +87,7 @@ export class Nostr {
     this.dmCallback = callback
   }
 
-  private _handlePublicEvent(event: NDKEvent, relay: NDKRelay, subscription: NDKSubscription) {
+  private _handlePublicEvent(event: NDKEvent, relay: NDKRelay | undefined, subscription: NDKSubscription) {
     if (this.orderCallback) {
       this.orderCallback(event)
     } else {
@@ -88,12 +96,12 @@ export class Nostr {
   }
 
   private handleDupPublicEvent(
-    event: NDKEvent,
-    _relay: NDKRelay,
+    eventId: string,
+    _relay: NDKRelay | undefined,
     _timeSinceFirstSeen: number,
     _subscription: NDKSubscription
   ) {
-    console.debug(`🧑‍🤝‍🧑 duplicate public event [${event.id}]`)
+    // console.debug(`🧑‍🤝‍🧑 duplicate public event [${eventId}]`)
   }
 
   private _handleCloseOrderSubscription(subscription: NDKSubscription) {
@@ -110,16 +118,37 @@ export class Nostr {
   }
 
   private _handleDupPrivateEvent(
-    event: NDKEvent,
-    _relay: NDKRelay,
+    eventId: string,
+    _relay: NDKRelay | undefined,
     _timeSinceFirstSeen: number,
     _subscription: NDKSubscription
   ) {
-    console.debug(`🧑‍🤝‍🧑 duplicate private event [${event.id}]`)
+    // console.debug(`🧑‍🤝‍🧑 duplicate private event [${eventId}]`)
   }
 
   private _handleClosePrivateEvent(subscription: NDKSubscription) {
     console.warn('🔚 DM subscription closed: ', subscription)
+  }
+
+  private _queuePrivateEvent(event: NDKEvent) {
+    this.dmQueue.push(event)
+    if (this.dmEoseReceived) {
+      this._processQueuedEvents()
+    }
+  }
+
+  private _handleDMEose() {
+    console.warn('🔚 DM subscription eose')
+    this.dmEoseReceived = true
+    this._processQueuedEvents()
+  }
+
+  private _processQueuedEvents() {
+    this.dmQueue.sort((a, b) => (a.created_at || 0) - (b.created_at || 0))
+    for (const event of this.dmQueue) {
+      this._handlePrivateEvent(event)
+    }
+    this.dmQueue = []
   }
 
   subscribeOrders() {
@@ -133,7 +162,7 @@ export class Nostr {
       authors: [mostroDecoded.data as string]
     }
     if (!this.orderSubscription) {
-      this.orderSubscription = this.ndk.subscribe(filters)
+      this.orderSubscription = this.ndk.subscribe(filters, { closeOnEose: false })
       this.orderSubscription.on('event', this._handlePublicEvent.bind(this))
       this.orderSubscription.on('event:dup', this.handleDupPublicEvent.bind(this))
       this.orderSubscription.on('close', this._handleCloseOrderSubscription.bind(this))
@@ -150,9 +179,10 @@ export class Nostr {
       since: Math.floor(Date.now() / 1e3) - EVENT_INTEREST_WINDOW,
     }
     if (!this.dmSubscription) {
-      this.dmSubscription = this.ndk.subscribe(filters)
-      this.dmSubscription.on('event', this._handlePrivateEvent.bind(this))
+      this.dmSubscription = this.ndk.subscribe(filters, { closeOnEose: false })
+      this.dmSubscription.on('event', this._queuePrivateEvent.bind(this))
       this.dmSubscription.on('event:dup', this._handleDupPrivateEvent.bind(this))
+      this.dmSubscription.on('eose', this._handleDMEose.bind(this))
       this.dmSubscription.on('close', this._handleClosePrivateEvent.bind(this))
     } else {
       console.error('❌ Attempting to subcribe to DMs when already subscribed')
@@ -165,6 +195,8 @@ export class Nostr {
       this.dmSubscription.stop()
       this.dmSubscription = undefined
     }
+    this.dmQueue = []
+    this.dmEoseReceived = false
   }
 
   async publishEvent(event: NDKEvent) {
@@ -229,4 +261,3 @@ export default defineNuxtPlugin((nuxtApp) => {
   })
   nuxtApp.provide('nostr', nostr)
 })
-

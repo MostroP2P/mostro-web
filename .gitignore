@@ -95,3 +95,6 @@ sw.*
 
 # Version
 constants/version.js
+
+# Service worker
+sw.*

@@ -2,6 +2,7 @@
 export default defineNuxtConfig({
   ssr: false,
   devtools: { enabled: true },
+
   runtimeConfig: {
     public: {
       relays: process.env.RELAYS,
@@ -9,6 +10,7 @@ export default defineNuxtConfig({
       nodeEnv: process.env.NODE_ENV
     }
   },
+
   app: {
     head: {
       titleTemplate: '%s',
@@ -31,27 +33,29 @@ export default defineNuxtConfig({
       ]
     }
   },
+
   css: [
     '~/assets/global.css',
     'vuetify/lib/styles/main.sass',
     '@mdi/font/css/materialdesignicons.min.css',
   ],
+
   build: {
     transpile: ['vuetify'],
   },
+
   modules: [
     '@pinia/nuxt',
     '@vueuse/nuxt',
     '@nuxtjs/i18n'
   ],
+
   i18n: {
     vueI18n: './i18n.config.ts'
   },
+
   pinia: {
-    autoImports: [
-      // automatically imports `defineStore`
-      'defineStore', // import { defineStore } from 'pinia'
-      ['defineStore', 'definePiniaStore'], // import { defineStore as definePiniaStore } from 'pinia'
-    ],
   },
+
+  compatibilityDate: '2024-08-03',
 })

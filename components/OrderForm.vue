@@ -1,5 +1,6 @@
 <template>
   <div class="form-container">
+  <div class="text-caption mb-2 amount-warning">Make sure your order is below 20K sats</div>
   <v-form v-model="valid" ref="form">
     <v-autocomplete
       v-model="selectedFiat"
@@ -365,5 +366,8 @@ export default defineComponent({
 .form-container {
   max-height: 50vh;
   overflow-y: auto;
+}
+.amount-warning {
+  color: #5f9ea0;
 }
 </style>

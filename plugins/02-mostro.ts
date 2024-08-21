@@ -128,10 +128,6 @@ export class Mostro {
       console.error('Missing required tags in event to extract order. ev.tags: ', ev.tags)
       throw Error('Missing required tags in event to extract order')
     }
-    if (fiat_amount === 0 && !min_amount && !max_amount) {
-      console.error('Malformed order, either "fiat_amount" or "min_amount" & "max_amount" must be set. ev.tags: ', ev.tags)
-      throw Error('Missing required tags in event to extract order')
-    }
 
     const created_at = ev.created_at || 0
     const mostro_id = ev.author.pubkey
@@ -201,6 +197,10 @@ export class Mostro {
       const info = this.extractInfoFromEvent(ev)
       this.mostroStore.addMostroInfo(info)
       console.info('< [🧌 -> 📢]', JSON.stringify(info), ', ev: ', nEvent)
+    } else if (z === 'dispute') {
+      console.info('< [🧌 -> 📢]', 'dispute', ', ev: ', nEvent)
+      // const dispute = this.extractDisputeFromEvent(ev)
+      // this.orderStore.addDispute({ dispute: dispute, event: ev as MostroEvent })
     } else {
       // TODO: Extract other kinds of events data: Disputes & Ratings
     }
@@ -232,11 +232,21 @@ export class Mostro {
     }
   }
 
+  isJsonObject(str: string): boolean {
+    try {
+      const parsed = JSON.parse(str);
+      return typeof parsed === 'object' && parsed !== null;
+    } catch {
+      return false;
+    }
+  }
+
   async handlePrivateEvent(ev: NDKEvent) {
     if (!this.signer) {
       console.error('❗ No signer found, cannot decrypt DM')
       return
     }
+    // console.log(`>>>> handlePrivateEvent, created at: ${new Date(ev.created_at as number * 1E3)}, ev: ${ev.id}`)
     const myPubKey = this.pubkeyCache.hex
     const nEvent = await ev.toNostrEvent()
     const mostroPubKey = nip19.decode(this.mostro).data
@@ -271,7 +281,10 @@ export class Mostro {
           hexpubkey: ev.pubkey
         })
         const plaintext = await this.signer.decrypt(sender, ev.content)
-        if (ev.pubkey === mostroPubKey) {
+        if (ev.pubkey === mostroPubKey && this.isJsonObject(plaintext)) {
+          if (plaintext.includes('dispute')) {
+            // console.info(`<<<< [🧌 -> me] created at: ${new Date(ev.created_at as number * 1E3)},[${ev.id}] msg: ${plaintext}`)
+          }
           console.info('< [🧌 -> me]: ', plaintext, ', ev: ', nEvent)
           const msg = { ...JSON.parse(plaintext), created_at: ev.created_at }
           this.messageStore.addMostroMessage({ message: msg, event: ev as MostroEvent})

@@ -30,6 +30,7 @@ import { mapState } from 'pinia'
 import { useRoute } from 'vue-router'
 import { useMessages } from '@/stores/messages'
 import { useOrders } from '@/stores/orders'
+import { useDisputes } from '@/stores/disputes'
 import { OrderStatus, OrderType, Action } from '~/stores/types'
 import { type MostroMessage, Order } from '~/stores/types'
 import { Mostro } from '~/plugins/02-mostro'
@@ -48,7 +49,6 @@ export default {
       const { $mostro } = useNuxtApp()
       // @ts-ignore
       $mostro.dispute(this.order)
-      this.$emit('dispute')
     },
     handleCancel() {
       console.log('handleCancel')
@@ -62,6 +62,7 @@ export default {
   computed: {
     ...mapState(useOrders, ['getOrderStatus', 'getOrderById']),
     ...mapState(useMessages, ['getMostroMessagesByOrderId']),
+    ...mapState(useDisputes, ['byOrderId']),
     payInvoiceMessage() {
       const orderId = this.$route.params.id as string
       const messages = this.getMostroMessagesByOrderId(orderId)
@@ -107,7 +108,14 @@ export default {
     showCancel() {
       return this.currentOrderStatus === OrderStatus.WAITING_BUYER_INVOICE && this.isLocalBuyer
     },
+    isDisputed() {
+      return this.byOrderId[this.orderId] !== undefined
+    },
     showDispute() {
+      if (this.isDisputed) {
+        // Dispute already exists
+        return false
+      }
       if (this.isLocalBuyer) {
         // Rule for local buyer
         return this.currentOrderStatus === OrderStatus.FIAT_SENT
@@ -117,6 +125,9 @@ export default {
       }
     },
     showFiatSent() {
+      if (this.isDisputed) {
+        return false
+      }
       return this.currentOrderStatus === OrderStatus.ACTIVE && this.isLocalBuyer
     },
     showPayInvoice() {

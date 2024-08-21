@@ -31,8 +31,8 @@
       <v-window v-model="tab" class="flex-grow-1" style="height: 10%;">
         <v-window-item :key="TAB_NORMAL">
           <div>
-            <message-list :order-id="($route.params.id as string)" />
-            <trade-actions @dispute="() => openDispute()"></trade-actions>
+            <message-list :order-id="(route.params.id as string)" />
+            <trade-actions></trade-actions>
           </div>
         </v-window-item>
         <v-window-item :key="TAB_DISPUTE">
@@ -48,6 +48,7 @@ import { useRouter } from 'vue-router'
 import { useOrders } from '~/stores/orders'
 import { OrderStatus } from '~/stores/types'
 import { useAuth } from '~/stores/auth'
+import { useDisputes } from '~/stores/disputes'
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import type { WatchStopHandle } from 'vue'
 const route = useRoute()
@@ -64,6 +65,19 @@ definePageMeta({
   layout: false,
 })
 
+const disputeStore = useDisputes()
+const hasDispute = computed(() => {
+  const dispute = disputeStore.getDisputeByOrderId(route.params.id as string)
+  return dispute !== undefined
+})
+
+watch(hasDispute, () => {
+  if (hasDispute.value && tabs.value.length === 1) {
+    tabs.value.push(TAB_DISPUTE)
+    tab.value = 1
+  }
+})
+
 const isCancelled = computed(() => {
   const orderId = route.params.id as string
   return orderStore.getOrderStatus(orderId) === OrderStatus.CANCELED
@@ -74,13 +88,6 @@ const isSuccess = computed(() => {
   return orderStore.getOrderStatus(orderId) === OrderStatus.SUCCESS
 })
 
-const openDispute = () => {
-  if (tabs.value.length === 1) {
-    // Opens the dispute tab only once
-    tabs.value.push(TAB_DISPUTE)
-    tab.value = 1
-  }
-}
 const auth = useAuth()
 watch(() => auth.isAuthenticated, () => {
   if (!auth.isAuthenticated) {
@@ -101,6 +108,10 @@ onMounted(() => {
     console.warn(`Order with id ${route.params.id} not found`)
     router.replace('/')
     return
+  }
+  if (order.disputed) {
+    tabs.value.push(TAB_DISPUTE)
+    tab.value = 1
   }
   if (order.status === OrderStatus.WAITING_BUYER_INVOICE || order.status === OrderStatus.WAITING_PAYMENT) {
     // If the order is in the WAITING_BUYER_INVOICE or WAITING_PAYMENT state, show the countdown
