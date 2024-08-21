@@ -49,7 +49,6 @@ export default {
       const { $mostro } = useNuxtApp()
       // @ts-ignore
       $mostro.dispute(this.order)
-      this.$emit('dispute')
     },
     handleCancel() {
       console.log('handleCancel')
