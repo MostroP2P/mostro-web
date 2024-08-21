@@ -45,16 +45,16 @@ const dispute = computed(() => {
 
 const message = computed(() => {
   if (!dispute || !dispute.value) return ''
-  if (dispute.value.status === 'initiated') {
+  if (dispute.value.status === DisputeStatus.INITIATED) {
     return 'A dispute has been started on this order. An admin user will reach ' +
           'out and ask questions about the order. Be prepared to provide evidence ' +
           'to back up your claim.'
-  } else if (dispute.value.status === 'in-progress') {
+  } else if (dispute.value.status === DisputeStatus.IN_PROGRESS) {
     return 'A dispute is currently in progress. ' +
           'Please reply to the admin and provide evidence to back up your claim.'
-  } else if (dispute.value.status === 'settled-by-admin') {
+  } else if (dispute.value.status === DisputeStatus.SETTLED) {
     return 'The admin/solver has settled the dispute. The buyer has won the dispute.'
-  } else if (dispute.value.status === 'canceled-by-buyer') {
+  } else if (dispute.value.status === DisputeStatus.CANCELED) {
     return 'The admin/solver has canceled the dispute. The seller has won the dispute.'
   }
 })
