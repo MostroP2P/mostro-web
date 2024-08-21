@@ -128,10 +128,6 @@ export class Mostro {
       console.error('Missing required tags in event to extract order. ev.tags: ', ev.tags)
       throw Error('Missing required tags in event to extract order')
     }
-    if (fiat_amount === 0 && !min_amount && !max_amount) {
-      console.error('Malformed order, either "fiat_amount" or "min_amount" & "max_amount" must be set. ev.tags: ', ev.tags)
-      throw Error('Missing required tags in event to extract order')
-    }
 
     const created_at = ev.created_at || 0
     const mostro_id = ev.author.pubkey
