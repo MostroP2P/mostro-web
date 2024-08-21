@@ -10,6 +10,10 @@ const profileMap = new Map<string, Profile>()
 
 export function useProfile() {
   const getProfile = async (npub: string) => {
+    if (!npub) {
+      console.warn('No npub provided')
+      return null
+    }
     if (profileMap.has(npub)) return profileMap.get(npub)
     const nuxt = useNuxtApp()
     const $nostr: Nostr = nuxt.$nostr as Nostr
