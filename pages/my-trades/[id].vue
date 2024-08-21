@@ -31,7 +31,7 @@
       <v-window v-model="tab" class="flex-grow-1" style="height: 10%;">
         <v-window-item :key="TAB_NORMAL">
           <div>
-            <message-list :order-id="($route.params.id as string)" />
+            <message-list :order-id="(route.params.id as string)" />
             <trade-actions @dispute="() => openDispute()"></trade-actions>
           </div>
         </v-window-item>

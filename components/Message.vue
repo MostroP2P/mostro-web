@@ -1,5 +1,5 @@
 <template>
-  <v-list-item three-line :disabled="disabled">
+  <v-list-item three-line :disabled="disabled" :style="{ backgroundColor: color }" rounded="lg">
     <pay-invoice-message
       v-if="message.order.action === action.PayInvoice"
       :message="message"
@@ -56,6 +56,28 @@
       v-if="message.order.action === action.Rate || message.order.action === action.RateUser"
       :message="message"
     />
+    <not-allowed-by-status
+      v-if="message.order.action === action.NotAllowedByStatus"
+      :message="message"
+    />
+    <dispute-message
+      v-if="
+        message.order.action === action.DisputeInitiatedByYou ||
+        message.order.action === action.DisputeInitiatedByPeer"
+      :message="message"
+    />
+    <admin-took-dispute
+      v-if="message.order.action === action.AdminTookDispute"
+      :message="message"
+    />
+    <admin-settled
+      v-if="message.order.action === action.AdminSettled"
+      :message="message"
+    />
+    <payment-failed
+      v-if="message.order.action === action.PaymentFailed"
+      :message="message"
+    />
   </v-list-item>
 </template>
 <script lang="ts">
@@ -84,6 +106,17 @@ export default {
     ...mapState(useOrders, ['getOrderById']),
     order(): Order | undefined {
       return this.getOrderById(this.$route.params.id as string)
+    },
+    color(){
+      if(
+        this.message.order.action === Action.DisputeInitiatedByYou ||
+        this.message.order.action === Action.DisputeInitiatedByPeer ||
+        this.message.order.action === Action.AdminTookDispute ||
+        this.message.order.action === Action.AdminSettled
+      ) {
+        return '#BF360C'
+      }
+      return ''
     },
     isLocalBuyer() {
       // @ts-ignore

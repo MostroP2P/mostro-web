@@ -35,6 +35,7 @@ export const useMessages = defineStore('messages', {
       if (message.order) {
         const orderMessage = message.order
         const orderStore = useOrders()
+        const disputeStore = useDisputes()
         if (orderMessage?.action === Action.NewOrder) {
           const order: Order = orderMessage.content.order as Order
           orderStore.addUserOrder({ order, event })
@@ -56,11 +57,28 @@ export const useMessages = defineStore('messages', {
           orderMessage?.action === Action.DisputeInitiatedByYou ||
           orderMessage?.action === Action.DisputeInitiatedByPeer
         ) {
+          console.log('>>> Dispute initiated for order: ', message.order.id)
           const order: Order = orderStore.getOrderById(orderMessage.id) as Order
           if (order) {
-            console.warn(`Dispute detected. Action ${orderMessage.action}, message: `, message)
-            orderStore.markDisputed(order, message, event)
+            if (!message?.order?.content?.dispute) {
+              console.warn('>>> addMostroMessage: message has no dispute property. message: ', message)
+              return
+            }
+            orderStore.markDisputed(order, event)
+            const dispute: Dispute = {
+              id: message.order.content.dispute as string,
+              orderId: order.id,
+              createdAt: message.created_at,
+              status: DisputeStatus.INITIATED
+            }
+            disputeStore.addDispute(dispute)
           }
+        } else if (orderMessage?.action === Action.AdminTookDispute) {
+          disputeStore.updateDisputeStatus(orderMessage.id as string, DisputeStatus.IN_PROGRESS)
+        } else if (orderMessage?.action === Action.AdminSettled) {
+          disputeStore.updateDisputeStatus(orderMessage.id as string, DisputeStatus.SETTLED)
+        } else if (orderMessage?.action === Action.AdminCanceled) {
+          disputeStore.updateDisputeStatus(orderMessage.id as string, DisputeStatus.CANCELED)
         }
         orderStore.updateOrderStatus(message.order.id, orderMessage.action, event)
         this.messages.mostro.push(message)
@@ -168,12 +186,16 @@ export const useMessages = defineStore('messages', {
     },
     getPeerMessagesByNpub(state: MessagesState) : (npub: string) => PeerMessage[] {
       return (npub: string) => {
-        if (state.messages.peer[npub]) {
+        if (!npub) return []
+        if (state?.messages?.peer[npub]) {
           const messages = [...state.messages.peer[npub]]
+          console.log(`Found ${messages.length} messages for npub ${npub}`, messages)
           return messages
             .sort((a: PeerMessage, b: PeerMessage) => a.created_at - b.created_at)
+        } else {
+          console.warn(`No messages found for npub ${npub}`)
+          return []
         }
-        return []
       }
     }
   }

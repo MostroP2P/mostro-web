@@ -34,7 +34,7 @@
   </div>
 </template>
 <script lang="ts" setup>
-import { computed, ref, watch } from 'vue'
+import { computed, ref } from 'vue'
 import type { PropType } from 'vue'
 import type { MostroMessage } from '~/stores/types'
 import CreatedAt from '~/components/CreatedAt.vue'

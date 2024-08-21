@@ -98,7 +98,7 @@ export const useOrders = defineStore('orders', {
         event.created_at &&
         existingOrder.updated_at > event.created_at
       ) {
-        console.debug(`Ignoring event ${event.id} for order ${orderId} because it's older than the current state`)
+        console.debug(`Ignoring event ${event.id} for order ${orderId} because it's older than the current state, action: ${action}`)
         return
       }
       switch(action) {
@@ -152,16 +152,16 @@ export const useOrders = defineStore('orders', {
           break
       }
     },
-    markDisputed(order: Order, mostroMessage: MostroMessage, event: NDKEvent) {
+    markDisputed(order: Order, event: NDKEvent) {
       const existingOrder = this.orders[order.id]
       if (!existingOrder) {
         console.warn(`Could not find order with id ${order.id} to mark as disputed`)
         return
       }
-      if (event.created_at && existingOrder.updated_at && event.created_at < existingOrder.updated_at) {
-        console.warn(`Ignoring event ${event.id} for order ${order.id} because it's older than the current state`)
-        return
-      }
+      // if (event.created_at && existingOrder.updated_at && event.created_at < existingOrder.updated_at) {
+      //   console.warn(`Ignoring event ${event.id} for order ${order.id} because it's older than the current state`)
+      //   return
+      // }
       existingOrder.disputed = true
       existingOrder.updated_at = Math.floor(Date.now() / 1E3)
     }

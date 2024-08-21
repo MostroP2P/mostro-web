@@ -44,6 +44,7 @@ export type MostroMessage = {
       peer?: Peer,
       order?: Order,
       rating_user?: number
+      dispute?: string
     },
     created_at: number
   },
@@ -94,6 +95,8 @@ export enum Action {
   Dispute = 'dispute',
   DisputeInitiatedByYou = 'dispute-initiated-by-you',
   DisputeInitiatedByPeer = 'dispute-initiated-by-peer',
+  NotAllowedByStatus = 'not-allowed-by-status',
+  PaymentFailed = 'payment-failed',
   CantDo = 'cant-do'
 }
 
@@ -304,4 +307,23 @@ export interface FiatData {
   emoji: string;
   name_plural: string;
   price: boolean;
+}
+
+export enum DisputeStatus {
+  INITIATED = 'initiated',
+  IN_PROGRESS = 'in-progress',
+  SETTLED = 'settled-by-admin',
+  CANCELED = 'seller-refunded'
+}
+
+export interface Dispute {
+  id: string,
+  orderId: string,
+  createdAt: number,
+  status: DisputeStatus
+}
+
+export interface DisputeStore {
+  byId: { [disputeId: string]: Dispute };
+  byOrderId: { [orderId: string]: Dispute };
 }

@@ -54,14 +54,14 @@
           placeholder="Type your message here..."
           single-line
           :append-inner-icon="isSending ? 'mdi-loading mdi-spin' : ''"
-          :disabled="isSending"
+          :disabled="isSending || !isInputEnabled"
           class="flex-grow-1 mx-4"
         ></v-text-field>
         <v-btn
           class="mb-5 mr-4"
           color="primary"
           @click="sendMessage"
-          :disabled="!isAuthenticated || isSending"
+          :disabled="isSending || !isInputEnabled"
           icon="mdi-send"
         >
         </v-btn>
@@ -93,9 +93,17 @@ const $mostro: Mostro = nuxtApp.$mostro as Mostro
 const props = defineProps({
   npub: {
     type: String,
-    required: true
+    required: false,
+    default: null
+  },
+  enabled: {
+    type: Boolean,
+    required: false,
+    default: true
   }
 })
+
+const isInputEnabled = computed(() => isAuthenticated.value && !!props.npub && props.enabled)
 
 const { getProfile } = useProfile()
 getProfile(props.npub)
