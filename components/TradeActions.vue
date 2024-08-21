@@ -109,9 +109,11 @@ export default {
     showCancel() {
       return this.currentOrderStatus === OrderStatus.WAITING_BUYER_INVOICE && this.isLocalBuyer
     },
+    isDisputed() {
+      return this.byOrderId[this.orderId] !== undefined
+    },
     showDispute() {
-      const dispute = this.byOrderId[this.orderId]
-      if (dispute) {
+      if (this.isDisputed) {
         // Dispute already exists
         return false
       }
@@ -124,6 +126,9 @@ export default {
       }
     },
     showFiatSent() {
+      if (this.isDisputed) {
+        return false
+      }
       return this.currentOrderStatus === OrderStatus.ACTIVE && this.isLocalBuyer
     },
     showPayInvoice() {
