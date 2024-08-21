@@ -101,7 +101,7 @@ export class Nostr {
     _timeSinceFirstSeen: number,
     _subscription: NDKSubscription
   ) {
-    console.debug(`🧑‍🤝‍🧑 duplicate public event [${eventId}]`)
+    // console.debug(`🧑‍🤝‍🧑 duplicate public event [${eventId}]`)
   }
 
   private _handleCloseOrderSubscription(subscription: NDKSubscription) {
@@ -123,7 +123,7 @@ export class Nostr {
     _timeSinceFirstSeen: number,
     _subscription: NDKSubscription
   ) {
-    console.debug(`🧑‍🤝‍🧑 duplicate private event [${eventId}]`)
+    // console.debug(`🧑‍🤝‍🧑 duplicate private event [${eventId}]`)
   }
 
   private _handleClosePrivateEvent(subscription: NDKSubscription) {
