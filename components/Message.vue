@@ -1,5 +1,5 @@
 <template>
-  <v-list-item three-line :disabled="disabled" :style="{ backgroundColor: color }" rounded="lg">
+  <v-list-item three-line :disabled="disabled" :style="{ backgroundColor: color }" rounded="lg" style="width: 100vw;">
     <pay-invoice-message
       v-if="message.order.action === action.PayInvoice"
       :message="message"
