@@ -13,7 +13,7 @@ export default function useNip19 () {
     return nip19.decode(nsec).data as string
   }
   const hexToNsec = (hex: string) : string => {
-    return nip19.nsecEncode(hex)
+    return nip19.nsecEncode(Buffer.from(hex, 'hex'))
   }
 
   const hexToNpub = (hex: string) : string => {

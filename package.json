@@ -41,7 +41,7 @@
     "buffer": "^6.0.3",
     "crypto-js": "^4.2.0",
     "light-bolt11-decoder": "github:bilthon/light-bolt11-decoder",
-    "nostr-tools": "^1.12.0",
+    "nostr-tools": "^2.7.2",
     "pinia": "^2.2.0",
     "qrcode.vue": "^3.4.1",
     "sass": "^1.77.8",

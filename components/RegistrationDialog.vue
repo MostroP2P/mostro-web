@@ -108,7 +108,7 @@
 <script lang="ts" setup>
 import { ref, computed } from 'vue'
 import CryptoJS from 'crypto-js'
-import { generatePrivateKey } from 'nostr-tools'
+import { generateSecretKey } from 'nostr-tools'
 import { AuthMethod, useAuth } from '~/stores/auth'
 import { useCrypto } from '~/composables/useCrypto'
 import { useSecretValidator } from '~/composables/useSecretValidator'
@@ -133,8 +133,8 @@ const toggleNsecVisibility = () => {
 }
 
 const onGeneratePrivateKey = async () => {
-  const privKey = generatePrivateKey()
-  privateKey.value = privKey
+  const privKey = generateSecretKey()
+  privateKey.value = Buffer.from(privKey).toString('hex')
 }
 
 const onPrivateKeyConfirmed = async function () {
