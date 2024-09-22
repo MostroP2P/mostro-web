@@ -46,7 +46,12 @@ export class Nostr {
       autoConnectUserRelays: true,
     })
     for (const relay of relays.split(',')) {
-      Nostr.ndkInstance.pool.addRelay(new NDKRelay(relay, undefined, Nostr.ndkInstance), true)
+      console.log(`🔌 adding relay: "${relay}"`)
+      if (relay.startsWith('ws://') || relay.startsWith('wss://')) {
+        Nostr.ndkInstance.pool.addRelay(new NDKRelay(relay, undefined, Nostr.ndkInstance), true)
+      } else {
+        console.warn(`🚨 invalid relay url: "${relay}"`)
+      }
     }
     this.ndk.connect(2000)
   }
