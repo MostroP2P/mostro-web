@@ -4,72 +4,49 @@ Super early version of a web client for the [Mostro](https://github.com/MostroP2
 
 This project is a web interface that facilitates peer-to-peer bitcoin trading over the lightning network ⚡️ using nostr 🦩. The lightning network is a layer 2 scaling solution for bitcoin that enables fast and low-cost transactions.
 
-### Configuration - (Dev only 🧑‍💻)
-
-Create a `.env` file with these 3 environment variable defined:
-
-```
-RELAYS=<comma-separated-list-of-relay-urls>
-MOSTRO_PUB_KEY=<public-key-of-your-mostro-instance>
-SECRET_KEY=<the-user-secret-key>
-```
-
 ### Prerequisites
-#### Polar
-* Install [Docker](https://docs.docker.com/get-docker/)
-* Install [Polar](https://lightningpolar.com/)
-  * If you're on Mac please follow [Open a Mac app from an unidentified developer](https://support.apple.com/en-lk/guide/mac-help/mh40616/mac)
-* Create a new default network
-* Add some funds to the nodes
+
+#### Node.js and NPM
+Node.js: Recommended version: `v20.15.1`
+
+NPM: Recommended version: `20.15.1`
 
 #### Mostro
-* Clone the [Mostro App](https://github.com/MostroP2P/mostro)
+* Clone [Mostro](https://github.com/MostroP2P/mostro)
 * See detailed instructions [here](https://github.com/MostroP2P/mostro?tab=readme-ov-file#requirements)
 
-
-#### Mostro Web
-* Install [Node](https://nodejs.org/en/download/) latest LTS version
-* Create a new environment file by `cp .env-sample .env`
-* Generate som `nsec` and `npub` keys using [nostrtool](https://nostrtool.com/) or [Rana](https://github.com/grunch/rana) and paste it in a new `.env` file under `MOSTRO_PUB_KEY` and `SECRET_KEY` keys
-* Set RELAYS to `ws://localhost:7000` in the `.env` file
-* Run `yarn install`
-
-### You're now ready to go.
-With `docker` and `polar` already running then do...
-1. In `mostro` folder 
-    ```bash
-    $ ./init_db.sh
-    $ cargo run
-    $ cd relay
-    $ docker compose up -d
-    ```
-2. In `mostro-web` folder
-    ```bash
-    $ yarn dev
-    ```
-That's it! 🎉
-
-### Build Setup
-
+### Installation
+#### 1- Clone the repository
 ```bash
-# install dependencies
-$ npm install
-
-# Production build and version generation
-# There's no need to run this every time, but run this at least once 
-# before running `npm run dev`
-$ npm run build
-
-# serve with hot reload at localhost:3000
-$ npm run dev
-
-# build for production and launch server
-$ npm run build
-$ npm run start
-
-# generate static project
-$ npm run generate
+git clone git@github.com:MostroP2P/mostro-web.git
 ```
+
+#### 2- Install Node Dependencies
+```bash
+npm install
+```
+#### 3 - Set up configuration
+- Create a new environment file by `cp .env-sample .env`. Here you'll want to set 2 environment variables:
+
+- `RELAYS`: A comma separated list of relays URLs. For example:
+```bash
+RELAYS=wss://relay.mostro.network,wss://relay.nostr.net
+```
+- `MOSTRO_PUB_KEY`: This is the identity of the mostro daemon you want to interact with and should match the private key (nsec) you specified in `mostro`. For example:
+```bash
+MOSTRO_PUB_KEY=npub19m9laul6k463czdacwx5ta4ap43nlf3lr0p99mqugnz8mdz7wtvskkm5wg
+```
+
+Once this is set, just run `source .env` to load these environment variables.
+
+**Obs.** It is also possible, and sometimes desirable to run a private relay. There are instructions on how to do this with a docker container in the [mostro]([https://github.com/MostroP2P/mostro](https://github.com/MostroP2P/mostro?tab=readme-ov-file#option-1-run-mostro-with-a-private-dockerized-relay)) repository.
+
+### 4. Run it
+```bash
+$ npm run dev
+```
+
+That's it! 🎉
 
 For detailed explanation on how things work, check out the [documentation](https://nuxtjs.org).
 
@@ -88,9 +65,29 @@ For detailed explanation on how things work, check out the [documentation](https
 -   [x] Handling multiple relays
 -   [x] NIP-07 for key management
 -   [x] Persisting old events
--   [ ] Direct message with peers
--   [ ] Ephemeral identities
--   [ ] Disputes
+-   [x] Direct message with peers
+-   [x] Disputes
+-   [ ] NIP59 support
+
+### Generic Nuxt Scripts
+This is a Nuxt 3 project, and as such you have these scripts to build an SSR ready version and/or generate a static release.
+
+```bash
+# Production build and version generation
+# There's no need to run this every time, but run this at least once 
+# before running `npm run dev`
+$ npm run build
+
+# serve with hot reload at localhost:3000
+$ npm run dev
+
+# build for production and launch server
+$ npm run build
+$ npm run start
+
+# generate static project
+$ npm run generate
+```
 
 ### License
 
