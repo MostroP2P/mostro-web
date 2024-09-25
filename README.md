@@ -24,12 +24,7 @@ SECRET_KEY=<the-user-secret-key>
 
 #### Mostro
 * Clone the [Mostro App](https://github.com/MostroP2P/mostro)
-* Install [Rust](https://www.rust-lang.org/tools/install)
-* Install the Rust SQL toolkit `cargo install sqlx-cli`
-* Install [CMake](https://cmake.org/install/) 
-* Then run from the CMake GUI: "Tools->Install For Command Line Use"
-* Create a new environment file by `cp .env-sample .env`
-* Copy the paths for LND cert file and MACAROON file from polar. You can find them in the polar UI under the node's settings > file paths.
+* See detailed instructions [here](https://github.com/MostroP2P/mostro?tab=readme-ov-file#requirements)
 
 
 #### Mostro Web
