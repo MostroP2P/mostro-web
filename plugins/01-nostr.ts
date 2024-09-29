@@ -1,7 +1,10 @@
-import NDK, { NDKKind, NDKSubscription, NDKEvent, NDKRelay, type NDKUserProfile, NDKUser, NDKRelayList, getRelayListForUser, NDKRelayAuthPolicies } from '@nostr-dev-kit/ndk'
+import NDK, { NDKKind, NDKSubscription, NDKEvent, NDKRelay, type NDKUserProfile, NDKUser, NDKRelayList, getRelayListForUser, type NDKSigner } from '@nostr-dev-kit/ndk'
 import NDKCacheAdapterDexie from '@nostr-dev-kit/ndk-cache-dexie'
 import { nip19 } from 'nostr-tools'
 import { useRelays } from '~/stores/relays'
+import { AuthMethod, useAuth } from '@/stores/auth'
+import { NDKPrivateKeySigner, NDKNip07Signer } from '@nostr-dev-kit/ndk'
+import { watch } from 'vue'
 
 /**
  * Maximum number of seconds to be returned in the initial query
@@ -18,17 +21,20 @@ type ExtendedNDKKind = NDKKind | 38383
 export const NOSTR_REPLACEABLE_EVENT_KIND: ExtendedNDKKind = 38383
 export const NOSTR_ENCRYPTED_DM_KIND = NDKKind.EncryptedDirectMessage
 
-export type OrderCallback = (event: NDKEvent) => void
-export type DMCallback = (event: NDKEvent) => void
+export type EventCallback = (event: NDKEvent) => void
+
+interface NIP04Parties {
+  sender: NDKUser
+  recipient: NDKUser
+}
 
 export class Nostr {
   private static ndkInstance: NDK
   private users = new Map<string, NDKUser>()
-  private orderSubscription: NDKSubscription | undefined
-  private dmSubscription: NDKSubscription | undefined
-  private orderCallback: OrderCallback | undefined
-  private dmCallback: DMCallback | undefined
+  private subscriptions: Map<number, NDKSubscription> = new Map()
+  private eventCallbacks: Map<number, EventCallback> = new Map()
   public mustKeepRelays: Set<string> = new Set()
+  private _signer: NDKSigner | undefined
 
   // Queue for DMs in order to process past events in the chronological order
   private dmQueue: NDKEvent[] = []
@@ -84,55 +90,49 @@ export class Nostr {
     return this.users.get(pubkey)
   }
 
-  setOrderCallback(callback: OrderCallback) {
-    this.orderCallback = callback
+  public set signer(signer: NDKSigner | undefined) {
+    this._signer = signer
   }
 
-  setDMCallback(callback: DMCallback) {
-    this.dmCallback = callback
+  public get signer() : NDKSigner | undefined {
+    return this._signer
   }
 
-  private _handlePublicEvent(event: NDKEvent, relay: NDKRelay | undefined, subscription: NDKSubscription) {
-    if (this.orderCallback) {
-      this.orderCallback(event)
+  registerEventHandler(eventKind: number, callback: EventCallback) {
+    this.eventCallbacks.set(eventKind, callback)
+  }
+
+  private _handleEvent(event: NDKEvent, relay: NDKRelay | undefined, subscription: NDKSubscription) {
+    if (!event?.kind) {
+      console.warn(`🚨 No event kind found for event: `, event.rawEvent())
+      return
+    }
+    const callback = this.eventCallbacks.get(event.kind)
+    if (callback) {
+      callback(event)
     } else {
-      console.warn('🚨 No order callback set')
+      console.warn(`🚨 No event callback set for kind ${event.kind}`)
     }
   }
 
-  private handleDupPublicEvent(
+  private _handleDupEvent(
     eventId: string,
     _relay: NDKRelay | undefined,
     _timeSinceFirstSeen: number,
     _subscription: NDKSubscription
   ) {
-    // console.debug(`🧑‍🤝‍🧑 duplicate public event [${eventId}]`)
+    // console.debug(`🧑‍🤝‍🧑 duplicate event [${eventId}]`)
   }
 
-  private _handleCloseOrderSubscription(subscription: NDKSubscription) {
-    console.warn('🔚 order subscription closed: ', subscription)
-    this.orderSubscription = undefined
-  }
-
-  private _handlePrivateEvent(event: NDKEvent) {
-    if (this.dmCallback) {
-      this.dmCallback(event)
+  private _handleCloseSubscription(subscription: NDKSubscription) {
+    console.warn('🔚 subscription closed: ', subscription)
+    // Find the event kind associated with the closed subscription
+    const eventKind = Array.from(this.subscriptions.entries()).find(([_, sub]) => sub === subscription)?.[0]
+    if (eventKind !== undefined) {
+      this.subscriptions.delete(eventKind)
     } else {
-      console.warn('🚨 No DM callback set')
+      console.warn('🚨 Subscription not found in the subscriptions map')
     }
-  }
-
-  private _handleDupPrivateEvent(
-    eventId: string,
-    _relay: NDKRelay | undefined,
-    _timeSinceFirstSeen: number,
-    _subscription: NDKSubscription
-  ) {
-    // console.debug(`🧑‍🤝‍🧑 duplicate private event [${eventId}]`)
-  }
-
-  private _handleClosePrivateEvent(subscription: NDKSubscription) {
-    console.warn('🔚 DM subscription closed: ', subscription)
   }
 
   private _queuePrivateEvent(event: NDKEvent) {
@@ -151,7 +151,7 @@ export class Nostr {
   private _processQueuedEvents() {
     this.dmQueue.sort((a, b) => (a.created_at || 0) - (b.created_at || 0))
     for (const event of this.dmQueue) {
-      this._handlePrivateEvent(event)
+      this._handleEvent(event, undefined, this.subscriptions.get(NOSTR_ENCRYPTED_DM_KIND)!)
     }
     this.dmQueue = []
   }
@@ -166,11 +166,12 @@ export class Nostr {
       since: Math.floor(Date.now() / 1e3) - EVENT_INTEREST_WINDOW,
       authors: [mostroDecoded.data as string]
     }
-    if (!this.orderSubscription) {
-      this.orderSubscription = this.ndk.subscribe(filters, { closeOnEose: false })
-      this.orderSubscription.on('event', this._handlePublicEvent.bind(this))
-      this.orderSubscription.on('event:dup', this.handleDupPublicEvent.bind(this))
-      this.orderSubscription.on('close', this._handleCloseOrderSubscription.bind(this))
+    if (!this.subscriptions.has(NOSTR_REPLACEABLE_EVENT_KIND)) {
+      const subscription = this.ndk.subscribe(filters, { closeOnEose: false })
+      subscription.on('event', this._handleEvent.bind(this))
+      subscription.on('event:dup', this._handleDupEvent.bind(this))
+      subscription.on('close', this._handleCloseSubscription.bind(this))
+      this.subscriptions.set(NOSTR_REPLACEABLE_EVENT_KIND, subscription)
     } else {
       console.error('❌ Attempting to subcribe to orders when already subscribed')
     }
@@ -183,12 +184,13 @@ export class Nostr {
       '#p': [myPubkey],
       since: Math.floor(Date.now() / 1e3) - EVENT_INTEREST_WINDOW,
     }
-    if (!this.dmSubscription) {
-      this.dmSubscription = this.ndk.subscribe(filters, { closeOnEose: false })
-      this.dmSubscription.on('event', this._queuePrivateEvent.bind(this))
-      this.dmSubscription.on('event:dup', this._handleDupPrivateEvent.bind(this))
-      this.dmSubscription.on('eose', this._handleDMEose.bind(this))
-      this.dmSubscription.on('close', this._handleClosePrivateEvent.bind(this))
+    if (!this.subscriptions.has(NOSTR_ENCRYPTED_DM_KIND)) {
+      const subscription = this.ndk.subscribe(filters, { closeOnEose: false })
+      subscription.on('event', this._queuePrivateEvent.bind(this))
+      subscription.on('event:dup', this._handleDupEvent.bind(this))
+      subscription.on('eose', this._handleDMEose.bind(this))
+      subscription.on('close', this._handleCloseSubscription.bind(this))
+      this.subscriptions.set(NOSTR_ENCRYPTED_DM_KIND, subscription)
     } else {
       console.error('❌ Attempting to subcribe to DMs when already subscribed')
     }
@@ -196,9 +198,10 @@ export class Nostr {
 
   unsubscribeDMs() {
     console.log('🚫 unsubscribing to DMs')
-    if (this.dmSubscription) {
-      this.dmSubscription.stop()
-      this.dmSubscription = undefined
+    const subscription = this.subscriptions.get(NOSTR_ENCRYPTED_DM_KIND)
+    if (subscription) {
+      subscription.stop()
+      this.subscriptions.delete(NOSTR_ENCRYPTED_DM_KIND)
     }
     this.dmQueue = []
     this.dmEoseReceived = false
@@ -218,6 +221,139 @@ export class Nostr {
     const user = this.ndk.getUser(params)
     if (!user) return null
     return await user.fetchProfile()
+  }
+
+  async signEvent(event: NDKEvent): Promise<void> {
+    if (this._signer) {
+      await event.sign(this._signer)
+    } else {
+      throw new Error('No signer available to sign the event')
+    }
+  }
+
+  async decryptMessage(ev: NDKEvent): Promise<string> {
+    if (!this._signer) {
+      throw new Error('No signer available to decrypt the message')
+    }
+    const { sender } = this.obtainParties(ev)
+    return await this._signer.decrypt(sender, ev.content)
+  }
+
+  /**
+   * Function used to extract the two participating parties in this communication.
+   *
+   * @param ev - The event from which to extract the parties
+   * @returns The two parties
+   */
+  obtainParties(ev: NDKEvent) : NIP04Parties {
+    if (ev.kind !== 4) {
+      throw Error('Trying to obtain parties of a non NIP-04 message')
+    }
+    const parties = ev.tags
+      .filter(([k, _v]) => k === 'p')
+    const _recipient = parties.find(([k, v]) => k === 'p' && v !== ev.author.pubkey)
+    if (!_recipient) {
+      console.error(`No recipient found in event: `, ev.rawEvent())
+      throw new Error(`No recipient found in event with id: ${ev.rawEvent().id}`)
+    }
+    const recipient = new NDKUser({
+      hexpubkey: _recipient[1]
+    })
+    return {
+      sender: ev.author,
+      recipient
+    }
+  }
+
+  setupSignerWatchers() {
+    const authStore = useAuth()
+
+    // Registering a watcher for the private key
+    watch(() => authStore.privKey, (newPrivKey: string | null) => {
+      if (newPrivKey) {
+        try {
+          this.signer = new NDKPrivateKeySigner(newPrivKey)
+        } catch (err) {
+          console.error('Error while trying to decode nsec: ', err)
+        }
+      }
+    })
+
+    // Registering a watcher for public key
+    watch(() => authStore.pubKey, (newPubKey: string | null | undefined) => {
+      if (authStore.authMethod === AuthMethod.NIP07) {
+        if (newPubKey) {
+          this.signer = new NDKNip07Signer()
+        }
+      }
+      if (newPubKey) {
+        this.subscribeDMs(newPubKey)
+      } else {
+        this.unsubscribeDMs()
+      }
+    })
+  }
+
+  async submitDirectMessage(message: string, destination: string, replyTo?: string): Promise<void> {
+    if (!this._signer) {
+      console.error('❗ No signer found')
+      return
+    }
+    const myPubkey = await this._signer.user().then(user => user.pubkey)
+    if (!myPubkey) {
+      console.error('❗ No pubkey found')
+      return
+    }
+    const destinationPubKey = nip19.decode(destination).data as string
+    const recipient = new NDKUser({ hexpubkey: destinationPubKey })
+    const ciphertext = await this._signer.encrypt(recipient, message)
+    const event = new NDKEvent(this.ndk)
+    event.kind = NOSTR_ENCRYPTED_DM_KIND
+    event.created_at = Math.floor(Date.now() / 1000)
+    event.content = ciphertext
+    event.pubkey = myPubkey
+    event.tags = [
+      ['p', destinationPubKey],
+      ['p', myPubkey]
+    ]
+    if (replyTo) {
+      event.tags.push(['e', replyTo, '', 'reply'])
+    }
+    await event.sign(this._signer)
+    await this.publishEvent(event)
+  }
+
+  async signAndPublishEvent(event: NDKEvent): Promise<void> {
+    if (this._signer) {
+      await event.sign(this._signer)
+      await this.publishEvent(event)
+    } else {
+      throw new Error('No signer available to sign the event')
+    }
+  }
+
+  async createAndPublishMostroEvent(payload: object, mostroPubKey: string): Promise<void> {
+    const mostro = new NDKUser({ hexpubkey: mostroPubKey })
+    const cleartext = JSON.stringify(payload)
+    const ciphertext = await this._signer?.encrypt(mostro, cleartext)
+    if (!ciphertext) {
+      console.error('❗ No signer found or encryption failed')
+      return
+    }
+    const myPubKey = await this._signer?.user().then(user => user.pubkey)
+    if (!myPubKey) {
+      console.error(`No pubkey found`)
+      return
+    }
+    const event = new NDKEvent(this.ndk)
+    event.kind = NOSTR_ENCRYPTED_DM_KIND
+    event.created_at = Math.floor(Date.now() / 1000)
+    event.content = ciphertext
+    event.pubkey = myPubKey
+    event.tags = [['p', mostroPubKey]]
+    const nEvent = await event.toNostrEvent()
+    console.info('> [me -> 🧌]: ', cleartext, ', ev: ', nEvent)
+    await this.signAndPublishEvent(event)
   }
 }
 
@@ -264,5 +400,6 @@ export default defineNuxtPlugin((nuxtApp) => {
     console.info('>> notice, ', r.url)
     relaysStatus.updateRelayStatus(r.url, 'blue')
   })
+  nostr.setupSignerWatchers()
   nuxtApp.provide('nostr', nostr)
 })
