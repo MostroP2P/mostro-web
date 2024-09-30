@@ -237,18 +237,10 @@ export class Mostro {
     }
   }
 
-  getLocalKeys() {
-    return {
-      npub: this.pubkeyCache.npub,
-      hex: this.pubkeyCache.hex
-    }
-  }
-
   async submitOrder(order: Order) {
     const payload = {
       order: {
         version: 1,
-        pubkey: this.getLocalKeys().hex,
         action: Action.NewOrder,
         content: {
           order: order
@@ -262,7 +254,6 @@ export class Mostro {
     const payload = {
       order: {
         version: 1,
-        pubkey: this.getLocalKeys().hex,
         id: order.id,
         action: Action.TakeSell,
         content: amount ? {
@@ -277,7 +268,6 @@ export class Mostro {
     const payload = {
       order: {
         version: 1,
-        pubkey: this.getLocalKeys().hex,
         id: order.id,
         action: Action.TakeBuy,
         content: amount ? {
@@ -292,7 +282,6 @@ export class Mostro {
     const payload = {
       order: {
         version: 1,
-        pubkey: this.getLocalKeys().hex,
         id: order.id,
         action: Action.AddInvoice,
         content: {
@@ -311,8 +300,6 @@ export class Mostro {
     const payload = {
       order: {
         version: 1,
-        pubkey: this.getLocalKeys().hex,
-        action: Action.Release,
         id: order.id,
         content: null,
       }
@@ -324,7 +311,6 @@ export class Mostro {
     const payload = {
       order: {
         version: 1,
-        pubkey: this.getLocalKeys().hex,
         action: Action.FiatSent,
         id: order.id
       }
@@ -337,7 +323,6 @@ export class Mostro {
       order: {
         version: 1,
         id: order.id,
-        pubkey: null,
         action: Action.RateUser,
         content: {
           rating_user: rating
@@ -351,7 +336,6 @@ export class Mostro {
     const payload = {
       order: {
         version: 1,
-        pubkey: this.getLocalKeys().hex,
         action: Action.Dispute,
         id: order.id,
         content: null,
@@ -364,7 +348,6 @@ export class Mostro {
     const payload = {
       order: {
         version: 1,
-        pubkey: this.getLocalKeys().hex,
         action: Action.Cancel,
         id: order.id,
         content: null,
@@ -375,11 +358,6 @@ export class Mostro {
 
   async submitDirectMessage(message: string, npub: string, replyTo: string | undefined): Promise<void> {
     await this.nostr.submitDirectMessage(message, npub, replyTo)
-
-  }
-
-  getUserPublicKey() {
-    return this.pubkeyCache
   }
 
   getMostroPublicKey(type?: PublicKeyType): string {
