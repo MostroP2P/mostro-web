@@ -28,6 +28,9 @@
         Created <span class="font-weight-bold">{{ createdAt }}</span> | Expires <span class="font-weight-bold">{{ expiresIn }}</span> ⏳
       </v-list-item-subtitle>
       <v-list-item-subtitle class="my-1">
+        By {{ authStore.pubKey }}
+      </v-list-item-subtitle>
+      <v-list-item-subtitle class="my-1">
         <div class="d-flex justify-space-between">
           <div>Payment via: <span class="font-weight-bold">{{ order.payment_method }}</span></div>
           <take-sell-order-dialog v-if="showTakeSell(order) && !order.is_mine" :order="order"/>
