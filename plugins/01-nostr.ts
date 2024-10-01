@@ -1,6 +1,6 @@
 import NDK, { NDKKind, NDKSubscription, NDKEvent, NDKRelay, type NDKUserProfile, NDKUser, NDKRelayList, getRelayListForUser, type NDKSigner } from '@nostr-dev-kit/ndk'
 import NDKCacheAdapterDexie from '@nostr-dev-kit/ndk-cache-dexie'
-import { nip19 } from 'nostr-tools'
+import { generateSecretKey, getPublicKey, nip44, nip19, finalizeEvent, getEventHash, type UnsignedEvent, type EventTemplate, type Event as NostrEvent } from 'nostr-tools'
 import { useRelays } from '~/stores/relays'
 import { AuthMethod, useAuth } from '@/stores/auth'
 import { NDKPrivateKeySigner, NDKNip07Signer } from '@nostr-dev-kit/ndk'
@@ -11,6 +11,11 @@ import { watch } from 'vue'
  */
 const EVENT_INTEREST_WINDOW = 60 * 60 * 24 * 14 // 14 days
 
+/**
+ * The amount of time that the gift wrap timestamp will randomly shifted every time
+ */
+const GIFT_WRAP_TIME_WINDOW = 2 * 24 * 60 * 60
+
 interface GetUserParams {
   npub?: string
   pubkey?: string
@@ -20,6 +25,8 @@ interface GetUserParams {
 type ExtendedNDKKind = NDKKind | 38383
 export const NOSTR_REPLACEABLE_EVENT_KIND: ExtendedNDKKind = 38383
 export const NOSTR_ENCRYPTED_DM_KIND = NDKKind.EncryptedDirectMessage
+export const NOSTR_SEAL_KIND = 13
+export const NOSTR_GIFT_WRAP_KIND = 1059
 
 export type EventCallback = (event: NDKEvent) => void
 
@@ -27,6 +34,8 @@ interface NIP04Parties {
   sender: NDKUser
   recipient: NDKUser
 }
+
+type Rumor = UnsignedEvent & {id: string}
 
 export class Nostr {
   private static ndkInstance: NDK
@@ -265,6 +274,64 @@ export class Nostr {
     }
   }
 
+  nip44ConversationKey(privateKey: Uint8Array, publicKey: string) {
+    return nip44.v2.utils.getConversationKey(Buffer.from(privateKey), publicKey)
+  }
+
+  nip44Encrypt(data: EventTemplate, privateKey: Uint8Array, publicKey: string) {
+    return nip44.v2.encrypt(JSON.stringify(data), this.nip44ConversationKey(privateKey, publicKey))
+  }
+
+  nip44Decrypt(data: NostrEvent, privateKey: Uint8Array) {
+    return JSON.parse(nip44.v2.decrypt(data.content, this.nip44ConversationKey(privateKey, data.pubkey)))
+  }
+
+  now() {
+    return Math.round(Date.now() / 1000);
+  }
+
+  randomNow() {
+    return Math.round(this.now() - (Math.random() * GIFT_WRAP_TIME_WINDOW));
+  }
+
+  createRumor(event: Partial<UnsignedEvent>, privateKey: Uint8Array) : Rumor {
+    const rumor = {
+      created_at: this.now(),
+      content: "",
+      tags: [],
+      ...event,
+      pubkey: getPublicKey(privateKey),
+    } as any
+
+    rumor.id = getEventHash(rumor)
+    return rumor as Rumor
+  }
+
+  createSeal(rumor: Rumor, privateKey: Uint8Array, recipientPublicKey: string) : NostrEvent {
+    return finalizeEvent(
+      {
+        kind: NOSTR_SEAL_KIND,
+        content: this.nip44Encrypt(rumor, privateKey, recipientPublicKey),
+        created_at: this.randomNow(),
+        tags: [],
+      },
+      privateKey
+    ) as NostrEvent
+  }
+
+  createWrap(event: NostrEvent, recipientPublicKey: string) : NostrEvent {
+    const randomKey = generateSecretKey()
+    return finalizeEvent(
+      {
+        kind: NOSTR_GIFT_WRAP_KIND,
+        content: this.nip44Encrypt(event, randomKey, recipientPublicKey),
+        created_at: this.randomNow(),
+        tags: [["p", recipientPublicKey]],
+      },
+      randomKey
+    ) as NostrEvent
+  }
+
   setupSignerWatchers() {
     const authStore = useAuth()
 
@@ -281,11 +348,6 @@ export class Nostr {
 
     // Registering a watcher for public key
     watch(() => authStore.pubKey, (newPubKey: string | null | undefined) => {
-      if (authStore.authMethod === AuthMethod.NIP07) {
-        if (newPubKey) {
-          this.signer = new NDKNip07Signer()
-        }
-      }
       if (newPubKey) {
         this.subscribeDMs(newPubKey)
       } else {
@@ -324,22 +386,28 @@ export class Nostr {
   }
 
   async signAndPublishEvent(event: NDKEvent): Promise<void> {
-    if (this._signer) {
-      await event.sign(this._signer)
-      await this.publishEvent(event)
+    if (this._signer instanceof NDKPrivateKeySigner) {
+      const config = useRuntimeConfig()
+      const mostroNpub = config.public.mostroPubKey
+      const mostroDecoded = nip19.decode(mostroNpub)
+      const mostroPubKey = mostroDecoded.data as string
+
+      if (!this._signer.privateKey) {
+        console.error('❗ No private key found')
+        return
+      }
+      const privateKeyBuffer = Buffer.from(this._signer.privateKey, 'hex')
+      const rumor = this.createRumor(event.rawEvent(), privateKeyBuffer)
+      const seal = this.createSeal(rumor, privateKeyBuffer, mostroPubKey)
+      const giftWrappedEvent = this.createWrap(seal, mostroPubKey)
+      await this.publishEvent(new NDKEvent(this.ndk, giftWrappedEvent))
     } else {
-      throw new Error('No signer available to sign the event')
+      throw new Error('NDKNip07Signer is no longer supported. Please use NDKPrivateKeySigner.')
     }
   }
 
   async createAndPublishMostroEvent(payload: object, mostroPubKey: string): Promise<void> {
-    const mostro = new NDKUser({ hexpubkey: mostroPubKey })
     const cleartext = JSON.stringify(payload)
-    const ciphertext = await this._signer?.encrypt(mostro, cleartext)
-    if (!ciphertext) {
-      console.error('❗ No signer found or encryption failed')
-      return
-    }
     const myPubKey = await this._signer?.user().then(user => user.pubkey)
     if (!myPubKey) {
       console.error(`No pubkey found`)
@@ -348,7 +416,7 @@ export class Nostr {
     const event = new NDKEvent(this.ndk)
     event.kind = NOSTR_ENCRYPTED_DM_KIND
     event.created_at = Math.floor(Date.now() / 1000)
-    event.content = ciphertext
+    event.content = cleartext
     event.pubkey = myPubKey
     event.tags = [['p', mostroPubKey]]
     const nEvent = await event.toNostrEvent()
