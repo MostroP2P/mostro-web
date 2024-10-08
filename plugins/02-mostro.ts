@@ -42,6 +42,7 @@ export class Mostro {
     // Register Mostro-specific event handlers
     this.nostr.registerEventHandler(NOSTR_REPLACEABLE_EVENT_KIND, this.handlePublicEvent.bind(this));
     this.nostr.registerEventHandler(NOSTR_ENCRYPTED_DM_KIND, this.handlePrivateEvent.bind(this));
+    this.nostr.registerToMostroMessage(this.handleMostroMessage.bind(this));
     this.nostr.subscribeOrders()
     this.nostr.addUser(new NDKUser({ npub: this.mostro }))
   }
@@ -139,8 +140,6 @@ export class Mostro {
   }
 
   async handlePublicEvent(ev: NDKEvent) {
-    // Handle Mostro-specific public events
-    const order = this.extractOrderFromEvent(ev);
     const nEvent = await ev.toNostrEvent()
     // Create a map from the tags array for easy access
     const tags = new Map<string, string | number[]>(ev.tags as [string, string | number[]][])
@@ -148,6 +147,7 @@ export class Mostro {
     const z = tags.get('z')
     if (z === 'order') {
       // Order
+      const order = this.extractOrderFromEvent(ev);
       console.info('< [🧌 -> 📢]', JSON.stringify(order), ', ev: ', nEvent)
       if (this.orderMap.has(order.id)) {
         // Updates existing order
@@ -235,6 +235,17 @@ export class Mostro {
     } else {
       console.warn(`<< Ignoring DM for key: ${recipient.pubkey}, my pubkey is ${myPubKey}`)
     }
+  }
+
+  /**
+   * Handle messages from Mostro
+   * @param message - The message content
+   */
+  async handleMostroMessage(message: string, ev: MostroEvent) {
+    const mostroMessage = JSON.parse(message)
+    const date = new Date(ev.created_at as number * 1E3)
+    console.info(`[🎁][🧌 -> me] [${date}]: `, mostroMessage, ', ev: ', ev)
+    this.messageStore.addMostroMessage({ message: mostroMessage, event: ev })
   }
 
   async submitOrder(order: Order) {
