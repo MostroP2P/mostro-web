@@ -312,6 +312,7 @@ export class Mostro {
       order: {
         version: 1,
         id: order.id,
+        action: Action.Release,
         content: null,
       }
     }
