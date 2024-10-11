@@ -63,7 +63,12 @@ export class Nostr {
     const { public: { relays } } = config
 
     // Instantiating the dexie adapter
-    const dexieAdapter = new NDKCacheAdapterDexie({ dbName: 'mostro-events-db' })
+    const dexieAdapter = new NDKCacheAdapterDexie({
+      dbName: 'mostro-events-db',
+      eventCacheSize: 10000,
+      eventTagsCacheSize: 5000,
+    })
+    dexieAdapter.locking = true
     Nostr.ndkInstance = new NDK({
       enableOutboxModel: true,
       cacheAdapter: dexieAdapter,
@@ -272,7 +277,6 @@ export class Nostr {
       nostrEvent as NostrEvent,
       Buffer.from((this.signer as NDKPrivateKeySigner).privateKey?.toString() || '', 'hex')
     )
-    console.log('<> unwrapped seal: ', unwrappedSeal)
     const rumor = this.nip44Decrypt(
       unwrappedSeal,
       Buffer.from((this.signer as NDKPrivateKeySigner).privateKey?.toString() || '', 'hex')
