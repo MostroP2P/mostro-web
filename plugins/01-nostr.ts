@@ -332,11 +332,19 @@ export class Nostr {
   }
 
   async decryptMessage(ev: NDKEvent): Promise<string> {
+    const authStore = useAuth()
     if (!this._signer) {
       throw new Error('No signer available to decrypt the message')
     }
-    const { sender } = this.obtainParties(ev)
-    return await this._signer.decrypt(sender, ev.content)
+    const { sender, recipient } = this.obtainParties(ev)
+
+    if (sender.pubkey === authStore.pubKey) {
+      // I was the sender
+      return await this._signer.decrypt(recipient, ev.content)
+    } else {
+      // I was the recipient
+      return await this._signer.decrypt(sender, ev.content)
+    }
   }
 
   /**
