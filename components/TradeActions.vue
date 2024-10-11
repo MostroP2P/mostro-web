@@ -38,9 +38,11 @@ import { Mostro, PublicKeyType } from '~/plugins/02-mostro'
 export default {
   emits: ['dispute'],
   data() {
+    const authStore = useAuth()
     const route = useRoute()
     return {
-      orderId: route.params.id as string
+      orderId: route.params.id as string,
+      pubkey: authStore.pubKey
     }
   },
   methods: {
@@ -95,12 +97,10 @@ export default {
       return this.order?.kind === OrderType.SELL
     },
     isLocalSeller() {
-      const userPubKey = (this.$mostro as Mostro).getMostroPublicKey(PublicKeyType.HEX)
-      return userPubKey.hex === this.order?.master_seller_pubkey
+      return this.pubkey === this.order?.master_seller_pubkey
     },
     isLocalBuyer() {
-      const userPubKey = (this.$mostro as Mostro).getMostroPublicKey(PublicKeyType.HEX)
-      return userPubKey.hex === this.order?.master_buyer_pubkey
+      return this.pubkey === this.order?.master_buyer_pubkey
     },
     showRelease() {
       return this.isLocalSeller && this.currentOrderStatus === OrderStatus.FIAT_SENT
