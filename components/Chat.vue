@@ -78,6 +78,9 @@ import { useTimeago } from '@/composables/timeago'
 import type { PeerMessage } from '~/stores/types'
 import type { Mostro } from '~/plugins/02-mostro'
 import { useProfile } from '@/composables/useProfile'
+import useNip19 from '@/composables/useNip19'
+
+const { hexToNpub } = useNip19()
 
 const myProfilePictureUrl = ref<string | null>(null)
 const peerProfilePictureUrl = ref<string | null>(null)
@@ -109,8 +112,10 @@ const { getProfile } = useProfile()
 getProfile(props.npub)
   .then(profile => peerProfilePictureUrl.value = profile?.image ?? null)
 
-getProfile($mostro.getLocalKeys().npub as string)
-  .then(profile => myProfilePictureUrl.value = profile?.image ?? null)
+if (authStore.pubKey) {
+  getProfile(hexToNpub(authStore.pubKey))
+    .then(profile => myProfilePictureUrl.value = profile?.image ?? null)
+}
 
 const scrollToBottom = async (id: string) => {
   const msgElement = document.getElementById(id)

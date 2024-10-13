@@ -1,15 +1,21 @@
 import NDK, { NDKKind, NDKSubscription, NDKEvent, NDKRelay, type NDKUserProfile, NDKUser, NDKRelayList, getRelayListForUser, type NDKSigner } from '@nostr-dev-kit/ndk'
 import NDKCacheAdapterDexie from '@nostr-dev-kit/ndk-cache-dexie'
-import { nip19 } from 'nostr-tools'
+import { generateSecretKey, getPublicKey, nip44, nip19, finalizeEvent, getEventHash, type UnsignedEvent, type EventTemplate, type Event as NostrEvent } from 'nostr-tools'
 import { useRelays } from '~/stores/relays'
 import { AuthMethod, useAuth } from '@/stores/auth'
 import { NDKPrivateKeySigner, NDKNip07Signer } from '@nostr-dev-kit/ndk'
 import { watch } from 'vue'
+import type { MostroEvent } from './02-mostro'
 
 /**
  * Maximum number of seconds to be returned in the initial query
  */
 const EVENT_INTEREST_WINDOW = 60 * 60 * 24 * 14 // 14 days
+
+/**
+ * The amount of time that the gift wrap timestamp will randomly shifted every time
+ */
+const GIFT_WRAP_TIME_WINDOW = 2 * 24 * 60 * 60
 
 interface GetUserParams {
   npub?: string
@@ -20,19 +26,27 @@ interface GetUserParams {
 type ExtendedNDKKind = NDKKind | 38383
 export const NOSTR_REPLACEABLE_EVENT_KIND: ExtendedNDKKind = 38383
 export const NOSTR_ENCRYPTED_DM_KIND = NDKKind.EncryptedDirectMessage
+export const NOSTR_SEAL_KIND = 13
+export const NOSTR_GIFT_WRAP_KIND = 1059
 
-export type EventCallback = (event: NDKEvent) => void
 
 interface NIP04Parties {
   sender: NDKUser
   recipient: NDKUser
 }
 
+type Rumor = UnsignedEvent & {id: string}
+type Seal = NostrEvent
+
+export type EventCallback = (event: NDKEvent) => Promise<void>
+export type GiftWrapCallback = (rumor: Rumor, seal: NostrEvent) => Promise<void>
+
 export class Nostr {
   private static ndkInstance: NDK
   private users = new Map<string, NDKUser>()
   private subscriptions: Map<number, NDKSubscription> = new Map()
-  private eventCallbacks: Map<number, EventCallback> = new Map()
+  private eventCallbacks: Map<number, EventCallback | GiftWrapCallback> = new Map()
+  private mostroMessageCallback: (message: string, ev: MostroEvent) => void = () => {}
   public mustKeepRelays: Set<string> = new Set()
   private _signer: NDKSigner | undefined
 
@@ -40,12 +54,21 @@ export class Nostr {
   private dmQueue: NDKEvent[] = []
   private dmEoseReceived: boolean = false
 
+  // Queue for gift wraps in order to process past events in the chronological order
+  private giftWrapQueue: NDKEvent[] = []
+  private giftWrapEoseReceived: boolean = false
+
   constructor() {
     const config = useRuntimeConfig()
     const { public: { relays } } = config
 
     // Instantiating the dexie adapter
-    const dexieAdapter = new NDKCacheAdapterDexie({ dbName: 'mostro-events-db' })
+    const dexieAdapter = new NDKCacheAdapterDexie({
+      dbName: 'mostro-events-db',
+      eventCacheSize: 10000,
+      eventTagsCacheSize: 5000,
+    })
+    dexieAdapter.locking = true
     Nostr.ndkInstance = new NDK({
       enableOutboxModel: true,
       cacheAdapter: dexieAdapter,
@@ -98,18 +121,22 @@ export class Nostr {
     return this._signer
   }
 
-  registerEventHandler(eventKind: number, callback: EventCallback) {
+  registerEventHandler(eventKind: number, callback: EventCallback | GiftWrapCallback) {
     this.eventCallbacks.set(eventKind, callback)
   }
 
-  private _handleEvent(event: NDKEvent, relay: NDKRelay | undefined, subscription: NDKSubscription) {
+  registerToMostroMessage(callback: (message: string, ev: MostroEvent) => void) {
+    this.mostroMessageCallback = callback
+  }
+
+  private async _handleEvent(event: NDKEvent, relay: NDKRelay | undefined, subscription: NDKSubscription) {
     if (!event?.kind) {
       console.warn(`🚨 No event kind found for event: `, event.rawEvent())
       return
     }
     const callback = this.eventCallbacks.get(event.kind)
     if (callback) {
-      callback(event)
+      (callback as EventCallback)(event)
     } else {
       console.warn(`🚨 No event callback set for kind ${event.kind}`)
     }
@@ -142,10 +169,24 @@ export class Nostr {
     }
   }
 
+  private async _queueGiftWrapEvent(event: NDKEvent) {
+    console.log('🎁 queueing gift wrap event')
+    this.giftWrapQueue.push(event)
+    if (this.giftWrapEoseReceived) {
+      await this._processQueuedGiftWraps()
+    }
+  }
+
   private _handleDMEose() {
     console.warn('🔚 DM subscription eose')
     this.dmEoseReceived = true
     this._processQueuedEvents()
+  }
+
+  private async _handleGiftWrapEose() {
+    console.warn('🔚 gift wrap subscription eose')
+    this.giftWrapEoseReceived = true
+    await this._processQueuedGiftWraps()
   }
 
   private _processQueuedEvents() {
@@ -154,6 +195,20 @@ export class Nostr {
       this._handleEvent(event, undefined, this.subscriptions.get(NOSTR_ENCRYPTED_DM_KIND)!)
     }
     this.dmQueue = []
+  }
+
+  private async _processQueuedGiftWraps() {
+    const rumorQueue: Rumor[] = []
+    for (const event of this.giftWrapQueue) {
+      const { rumor } = await this.unwrapEvent(event)
+      rumorQueue.push(rumor)
+    }
+    // Sorting rumors by 'created_at' fields. We can only do this after unwrapping
+    rumorQueue.sort((a, b) => (a.created_at as number) - (b.created_at as number))
+    for (const rumor of rumorQueue) {
+      await this.handleGiftWrapEvent(rumor)
+    }
+    this.giftWrapQueue = []
   }
 
   subscribeOrders() {
@@ -196,6 +251,51 @@ export class Nostr {
     }
   }
 
+  subscribeGiftWraps(myPubkey: string) {
+    console.log('📣 subscribing to gift wraps')
+    const filters = {
+      kinds: [NOSTR_GIFT_WRAP_KIND],
+      '#p': [myPubkey],
+      since: Math.floor(Date.now() / 1e3) - EVENT_INTEREST_WINDOW,
+    }
+    if (!this.subscriptions.has(NOSTR_GIFT_WRAP_KIND)) {
+      const subscription = this.ndk.subscribe(filters, { closeOnEose: false })
+      subscription.on('event', this._queueGiftWrapEvent.bind(this))
+      subscription.on('event:dup', this._handleDupEvent.bind(this))
+      subscription.on('eose', this._handleGiftWrapEose.bind(this))
+      subscription.on('close', this._handleCloseSubscription.bind(this))
+      this.subscriptions.set(NOSTR_GIFT_WRAP_KIND, subscription)
+      // this.registerEventHandler(NOSTR_GIFT_WRAP_KIND, this.handleGiftWrapEvent.bind(this));
+    } else {
+      console.error('❌ Attempting to subcribe to gift wraps when already subscribed')
+    }
+  }
+
+  async unwrapEvent(event: NDKEvent): Promise<{rumor: Rumor, seal: Seal}> {
+    const nostrEvent = await event.toNostrEvent()
+    const unwrappedSeal: Seal = this.nip44Decrypt(
+      nostrEvent as NostrEvent,
+      Buffer.from((this.signer as NDKPrivateKeySigner).privateKey?.toString() || '', 'hex')
+    )
+    const rumor = this.nip44Decrypt(
+      unwrappedSeal,
+      Buffer.from((this.signer as NDKPrivateKeySigner).privateKey?.toString() || '', 'hex')
+    )
+    return { rumor, seal: unwrappedSeal }
+  }
+
+  async handleGiftWrapEvent(rumor: Rumor) : Promise<void> {
+    const config = useRuntimeConfig()
+    const mostroNpub = config.public.mostroPubKey
+    const mostroHex = nip19.decode(mostroNpub).data as string
+    if (rumor.pubkey === mostroHex) {
+      this.mostroMessageCallback(rumor.content, rumor as MostroEvent)
+    } else {
+      // TODO: handle this
+      console.warn('🚨 received gift wrap from unknown pubkey: ', rumor.pubkey)
+    }
+  }
+
   unsubscribeDMs() {
     console.log('🚫 unsubscribing to DMs')
     const subscription = this.subscriptions.get(NOSTR_ENCRYPTED_DM_KIND)
@@ -232,11 +332,19 @@ export class Nostr {
   }
 
   async decryptMessage(ev: NDKEvent): Promise<string> {
+    const authStore = useAuth()
     if (!this._signer) {
       throw new Error('No signer available to decrypt the message')
     }
-    const { sender } = this.obtainParties(ev)
-    return await this._signer.decrypt(sender, ev.content)
+    const { sender, recipient } = this.obtainParties(ev)
+
+    if (sender.pubkey === authStore.pubKey) {
+      // I was the sender
+      return await this._signer.decrypt(recipient, ev.content)
+    } else {
+      // I was the recipient
+      return await this._signer.decrypt(sender, ev.content)
+    }
   }
 
   /**
@@ -265,6 +373,64 @@ export class Nostr {
     }
   }
 
+  nip44ConversationKey(privateKey: Uint8Array, publicKey: string) {
+    return nip44.v2.utils.getConversationKey(Buffer.from(privateKey), publicKey)
+  }
+
+  nip44Encrypt(data: EventTemplate, privateKey: Uint8Array, publicKey: string) {
+    return nip44.v2.encrypt(JSON.stringify(data), this.nip44ConversationKey(privateKey, publicKey))
+  }
+
+  nip44Decrypt(data: NostrEvent, privateKey: Uint8Array) {
+    return JSON.parse(nip44.v2.decrypt(data.content, this.nip44ConversationKey(privateKey, data.pubkey)))
+  }
+
+  now() {
+    return Math.round(Date.now() / 1000);
+  }
+
+  randomNow() {
+    return Math.round(this.now() - (Math.random() * GIFT_WRAP_TIME_WINDOW));
+  }
+
+  createRumor(event: Partial<UnsignedEvent>, privateKey: Uint8Array) : Rumor {
+    const rumor = {
+      created_at: this.now(),
+      content: "",
+      tags: [],
+      ...event,
+      pubkey: getPublicKey(privateKey),
+    } as any
+
+    rumor.id = getEventHash(rumor)
+    return rumor as Rumor
+  }
+
+  createSeal(rumor: Rumor, privateKey: Uint8Array, recipientPublicKey: string) : NostrEvent {
+    return finalizeEvent(
+      {
+        kind: NOSTR_SEAL_KIND,
+        content: this.nip44Encrypt(rumor, privateKey, recipientPublicKey),
+        created_at: this.randomNow(),
+        tags: [],
+      },
+      privateKey
+    ) as NostrEvent
+  }
+
+  createWrap(event: NostrEvent, recipientPublicKey: string) : NostrEvent {
+    const randomKey = generateSecretKey()
+    return finalizeEvent(
+      {
+        kind: NOSTR_GIFT_WRAP_KIND,
+        content: this.nip44Encrypt(event, randomKey, recipientPublicKey),
+        created_at: this.randomNow(),
+        tags: [["p", recipientPublicKey]],
+      },
+      randomKey
+    ) as NostrEvent
+  }
+
   setupSignerWatchers() {
     const authStore = useAuth()
 
@@ -281,13 +447,9 @@ export class Nostr {
 
     // Registering a watcher for public key
     watch(() => authStore.pubKey, (newPubKey: string | null | undefined) => {
-      if (authStore.authMethod === AuthMethod.NIP07) {
-        if (newPubKey) {
-          this.signer = new NDKNip07Signer()
-        }
-      }
       if (newPubKey) {
         this.subscribeDMs(newPubKey)
+        this.subscribeGiftWraps(newPubKey)
       } else {
         this.unsubscribeDMs()
       }
@@ -324,22 +486,28 @@ export class Nostr {
   }
 
   async signAndPublishEvent(event: NDKEvent): Promise<void> {
-    if (this._signer) {
-      await event.sign(this._signer)
-      await this.publishEvent(event)
+    if (this._signer instanceof NDKPrivateKeySigner) {
+      const config = useRuntimeConfig()
+      const mostroNpub = config.public.mostroPubKey
+      const mostroDecoded = nip19.decode(mostroNpub)
+      const mostroPubKey = mostroDecoded.data as string
+
+      if (!this._signer.privateKey) {
+        console.error('❗ No private key found')
+        return
+      }
+      const privateKeyBuffer = Buffer.from(this._signer.privateKey, 'hex')
+      const rumor = this.createRumor(event.rawEvent(), privateKeyBuffer)
+      const seal = this.createSeal(rumor, privateKeyBuffer, mostroPubKey)
+      const giftWrappedEvent = this.createWrap(seal, mostroPubKey)
+      await this.publishEvent(new NDKEvent(this.ndk, giftWrappedEvent))
     } else {
-      throw new Error('No signer available to sign the event')
+      throw new Error('NDKNip07Signer is no longer supported. Please use NDKPrivateKeySigner.')
     }
   }
 
   async createAndPublishMostroEvent(payload: object, mostroPubKey: string): Promise<void> {
-    const mostro = new NDKUser({ hexpubkey: mostroPubKey })
     const cleartext = JSON.stringify(payload)
-    const ciphertext = await this._signer?.encrypt(mostro, cleartext)
-    if (!ciphertext) {
-      console.error('❗ No signer found or encryption failed')
-      return
-    }
     const myPubKey = await this._signer?.user().then(user => user.pubkey)
     if (!myPubKey) {
       console.error(`No pubkey found`)
@@ -348,11 +516,11 @@ export class Nostr {
     const event = new NDKEvent(this.ndk)
     event.kind = NOSTR_ENCRYPTED_DM_KIND
     event.created_at = Math.floor(Date.now() / 1000)
-    event.content = ciphertext
+    event.content = cleartext
     event.pubkey = myPubKey
     event.tags = [['p', mostroPubKey]]
     const nEvent = await event.toNostrEvent()
-    console.info('> [me -> 🧌]: ', cleartext, ', ev: ', nEvent)
+    console.info('> [🎁][me -> 🧌]: ', cleartext, ', ev: ', nEvent)
     await this.signAndPublishEvent(event)
   }
 }

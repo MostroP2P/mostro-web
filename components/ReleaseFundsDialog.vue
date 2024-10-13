@@ -54,7 +54,6 @@ export default {
     async release() {
       const order: Order = this.orders[this.orderId]
       if (order) {
-        // @ts-ignore
         await this.$mostro.release(order)
       } else {
         console.warn('Order not found: ', this.orderId)

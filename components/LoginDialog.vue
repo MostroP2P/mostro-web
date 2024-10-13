@@ -8,65 +8,65 @@
       </v-btn>
     </template>
     <v-card>
-      <v-card-title>Login method</v-card-title>
-      <v-tabs v-model="tab">
-        <v-tab prepend-icon="mdi-key">Nsec</v-tab>
-        <v-tab prepend-icon="mdi-puzzle">Extension</v-tab>
-      </v-tabs>
-      <v-window v-model="tab">
-        <v-window-item style="min-height: 5em">
-          <v-row class="mx-4 my-5">
-            <v-text-field
-              v-model="password"
-              outlined
-              label="Password"
-              type="password"
-              :disabled="isProcessing"
-              @input="errorMessage = ''"
-              :rules="[
-                v => !!v || 'You need a password',
-                v => validPassword || `Your password cannot be shorter than ${MIN_PASSWORD_LENGTH}`
-              ]"
-              :error-messages="errorMessage"
-            >
-            </v-text-field>
-          </v-row>
-          <v-row class="mx-4 mb-5">
-            <v-btn
-              color="error"
-              prepend-icon="mdi-delete"
-              :disabled="isProcessing"
-              @click="onDelete"
-            >
-              Delete
-            </v-btn>
-            <v-spacer/>
-            <v-btn
-              color="primary"
-              :disabled="!validPassword || isProcessing"
-              @click="onPassword"
-            >
-              Enter
-            </v-btn>
-          </v-row>
-        </v-window-item>
-        <v-window-item style="min-height: 5em">
-          <v-row class="mx-4 my-5 d-flex justify-center">
-            <div class="body-2">
-              If you have a browser extension that supports the NIP-07 standard, you can use it to login.
-            </div>
-          </v-row>
-          <v-row class="mx-4 my-5 d-flex justify-center">
-            <v-btn
-              color="primary"
-              :disabled="!hasNIP07"
-              @click="onNip07"
-            >
-              Authorize
-            </v-btn>
-          </v-row>
-        </v-window-item>
-      </v-window>
+      <v-card-title>{{ isDeleteConfirmation ? 'Confirm Delete' : 'Login' }}</v-card-title>
+      <v-card-text v-if="!isDeleteConfirmation">
+        Enter your password to login.
+      </v-card-text>
+      <v-card-text v-else>
+        Are you sure you want to delete your login information?
+      </v-card-text>
+      <v-row v-if="!isDeleteConfirmation" class="mx-4 my-5">
+        <v-text-field
+          v-model="password"
+          outlined
+          label="Password"
+          type="password"
+          :disabled="isProcessing"
+          @input="errorMessage = ''"
+          :rules="[
+            v => !!v || 'You need a password',
+            v => validPassword || `Your password cannot be shorter than ${MIN_PASSWORD_LENGTH}`
+          ]"
+          :error-messages="errorMessage"
+        >
+        </v-text-field>
+      </v-row>
+      <v-row class="mx-4 mb-5">
+        <v-btn
+          v-if="!isDeleteConfirmation"
+          color="error"
+          prepend-icon="mdi-delete"
+          :disabled="isProcessing"
+          @click="isDeleteConfirmation = true"
+        >
+          Delete
+        </v-btn>
+        <v-btn
+          v-else
+          color="error"
+          prepend-icon="mdi-delete"
+          :disabled="isProcessing"
+          @click="onDelete"
+        >
+          Confirm
+        </v-btn>
+        <v-spacer/>
+        <v-btn
+          v-if="!isDeleteConfirmation"
+          color="primary"
+          :disabled="!validPassword || isProcessing"
+          @click="onPassword"
+        >
+          Enter
+        </v-btn>
+        <v-btn
+          v-else
+          color="primary"
+          @click="isDeleteConfirmation = false"
+        >
+          Cancel
+        </v-btn>
+      </v-row>
     </v-card>
   </v-dialog>
 </template>
@@ -87,6 +87,7 @@ const tab = ref<number | null>(null)
 const password = ref<string>('')
 const isProcessing = ref<boolean>(false)
 const errorMessage = ref<string>()
+const isDeleteConfirmation = ref<boolean>(false)
 
 const onPassword = async () => {
   isProcessing.value = true
@@ -122,25 +123,10 @@ const onPassword = async () => {
   }
 }
 
-const onNip07 = async () => {
-  const { getPublicKey } = useNip07()
-  const publicKey = await getPublicKey()
-  if (!publicKey) {
-    console.error('Found no public key')
-    return
-  }
-  authStore.login({ authMethod: AuthMethod.NIP07, publicKey })
-  showDialog.value = false
-}
-
 const onDelete = () => {
   authStore.delete()
   showDialog.value = false
 }
-
-const hasNIP07 = computed(() => {
-  return window && window.nostr
-})
 
 const validPassword = computed(() => {
   return password.value !== '' && password.value.length >= MIN_PASSWORD_LENGTH
