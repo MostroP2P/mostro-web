@@ -25,6 +25,7 @@ interface GetUserParams {
 // Message kinds
 type ExtendedNDKKind = NDKKind | 38383
 export const NOSTR_REPLACEABLE_EVENT_KIND: ExtendedNDKKind = 38383
+export const NOSTR_TEXT_KIND: NDKKind = NDKKind.Text
 export const NOSTR_ENCRYPTED_DM_KIND = NDKKind.EncryptedDirectMessage
 export const NOSTR_SEAL_KIND = 13
 export const NOSTR_GIFT_WRAP_KIND = 1059
@@ -47,6 +48,7 @@ export class Nostr {
   private subscriptions: Map<number, NDKSubscription> = new Map()
   private eventCallbacks: Map<number, EventCallback | GiftWrapCallback> = new Map()
   private mostroMessageCallback: (message: string, ev: MostroEvent) => void = () => {}
+  private peerMessageCallback: (message: string, ev: MostroEvent) => void = () => {}
   public mustKeepRelays: Set<string> = new Set()
   private _signer: NDKSigner | undefined
 
@@ -127,6 +129,10 @@ export class Nostr {
 
   registerToMostroMessage(callback: (message: string, ev: MostroEvent) => void) {
     this.mostroMessageCallback = callback
+  }
+
+  registerToPeerMessage(callback: (message: string, ev: MostroEvent) => void) {
+    this.peerMessageCallback = callback
   }
 
   private async _handleEvent(event: NDKEvent, relay: NDKRelay | undefined, subscription: NDKSubscription) {
@@ -289,10 +295,12 @@ export class Nostr {
     const mostroNpub = config.public.mostroPubKey
     const mostroHex = nip19.decode(mostroNpub).data as string
     if (rumor.pubkey === mostroHex) {
+      // Message from mostro
       this.mostroMessageCallback(rumor.content, rumor as MostroEvent)
     } else {
-      // TODO: handle this
-      console.warn('🚨 received gift wrap from unknown pubkey: ', rumor.pubkey)
+      // Message from a peer
+      console.log('rumor: ', rumor)
+      this.peerMessageCallback(rumor.content, rumor as MostroEvent)
     }
   }
 
@@ -456,50 +464,36 @@ export class Nostr {
     })
   }
 
-  async submitDirectMessage(message: string, destination: string, replyTo?: string): Promise<void> {
+  async submitDirectMessage(message: string, destinationNpub: string): Promise<void> {
     if (!this._signer) {
       console.error('❗ No signer found')
       return
     }
-    const myPubkey = await this._signer.user().then(user => user.pubkey)
+    const authStore = useAuth()
+    const myPubkey = authStore.pubKey
     if (!myPubkey) {
       console.error('❗ No pubkey found')
       return
     }
-    const destinationPubKey = nip19.decode(destination).data as string
-    const recipient = new NDKUser({ hexpubkey: destinationPubKey })
-    const ciphertext = await this._signer.encrypt(recipient, message)
+    const destinationHex = nip19.decode(destinationNpub).data as string
     const event = new NDKEvent(this.ndk)
-    event.kind = NOSTR_ENCRYPTED_DM_KIND
+    event.kind = NOSTR_TEXT_KIND
     event.created_at = Math.floor(Date.now() / 1000)
-    event.content = ciphertext
+    event.content = message
     event.pubkey = myPubkey
-    event.tags = [
-      ['p', destinationPubKey],
-      ['p', myPubkey]
-    ]
-    if (replyTo) {
-      event.tags.push(['e', replyTo, '', 'reply'])
-    }
-    await event.sign(this._signer)
-    await this.publishEvent(event)
+    await this.signAndPublishEvent(event, destinationHex)
   }
 
-  async signAndPublishEvent(event: NDKEvent): Promise<void> {
+  async signAndPublishEvent(event: NDKEvent, destination: string): Promise<void> {
     if (this._signer instanceof NDKPrivateKeySigner) {
-      const config = useRuntimeConfig()
-      const mostroNpub = config.public.mostroPubKey
-      const mostroDecoded = nip19.decode(mostroNpub)
-      const mostroPubKey = mostroDecoded.data as string
-
       if (!this._signer.privateKey) {
         console.error('❗ No private key found')
         return
       }
       const privateKeyBuffer = Buffer.from(this._signer.privateKey, 'hex')
       const rumor = this.createRumor(event.rawEvent(), privateKeyBuffer)
-      const seal = this.createSeal(rumor, privateKeyBuffer, mostroPubKey)
-      const giftWrappedEvent = this.createWrap(seal, mostroPubKey)
+      const seal = this.createSeal(rumor, privateKeyBuffer, destination)
+      const giftWrappedEvent = this.createWrap(seal, destination)
       await this.publishEvent(new NDKEvent(this.ndk, giftWrappedEvent))
     } else {
       throw new Error('NDKNip07Signer is no longer supported. Please use NDKPrivateKeySigner.')
@@ -508,7 +502,8 @@ export class Nostr {
 
   async createAndPublishMostroEvent(payload: object, mostroPubKey: string): Promise<void> {
     const cleartext = JSON.stringify(payload)
-    const myPubKey = await this._signer?.user().then(user => user.pubkey)
+    const authStore = useAuth()
+    const myPubKey = authStore.pubKey
     if (!myPubKey) {
       console.error(`No pubkey found`)
       return
@@ -521,7 +516,7 @@ export class Nostr {
     event.tags = [['p', mostroPubKey]]
     const nEvent = await event.toNostrEvent()
     console.info('> [🎁][me -> 🧌]: ', cleartext, ', ev: ', nEvent)
-    await this.signAndPublishEvent(event)
+    await this.signAndPublishEvent(event, mostroPubKey)
   }
 }
 

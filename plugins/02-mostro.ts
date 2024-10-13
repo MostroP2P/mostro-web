@@ -43,6 +43,7 @@ export class Mostro {
     this.nostr.registerEventHandler(NOSTR_REPLACEABLE_EVENT_KIND, this.handlePublicEvent.bind(this));
     this.nostr.registerEventHandler(NOSTR_ENCRYPTED_DM_KIND, this.handlePrivateEvent.bind(this));
     this.nostr.registerToMostroMessage(this.handleMostroMessage.bind(this));
+    this.nostr.registerToPeerMessage(this.handlePeerMessage.bind(this));
     this.nostr.subscribeOrders()
     this.nostr.addUser(new NDKUser({ npub: this.mostro }))
   }
@@ -237,6 +238,17 @@ export class Mostro {
     }
   }
 
+  handlePeerMessage(message: string, ev: MostroEvent) {
+    console.info('< [🍐 -> me]: ', message, ', ev: ', ev)
+    this.messageStore.addPeerMessage({
+      id: ev.id,
+      text: message,
+      peerNpub: nip19.npubEncode(ev.pubkey),
+      sender: 'other',
+      created_at: ev.created_at || 0
+    })
+  }
+
   /**
    * Handle messages from Mostro
    * @param message - The message content
@@ -368,8 +380,8 @@ export class Mostro {
     await this.nostr.createAndPublishMostroEvent(payload, this.getMostroPublicKey(PublicKeyType.HEX))
   }
 
-  async submitDirectMessage(message: string, npub: string, replyTo: string | undefined): Promise<void> {
-    await this.nostr.submitDirectMessage(message, npub, replyTo)
+  async submitDirectMessage(message: string, destinationNpub: string): Promise<void> {
+    await this.nostr.submitDirectMessage(message, destinationNpub)
   }
 
   getMostroPublicKey(type?: PublicKeyType): string {

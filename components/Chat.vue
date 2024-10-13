@@ -5,7 +5,7 @@
       class="flex-grow-1"
       id="messages-container"
     >
-      <div id="scrollingContent" style="height: calc(100vh - 450px)">
+      <div id="scrollingContent" style="height: calc(100vh - 310px)">
         <v-card-text v-if="peerMessages && peerMessages.length > 0">
           <v-row v-for="(message, index) in peerMessages" :key="message.id" :id="`message-${index}`" class="message-row">
             <v-col cols="12" :class="['d-flex', message.sender === 'me' ? 'justify-end' : '']">
@@ -112,8 +112,10 @@ const { getProfile } = useProfile()
 getProfile(props.npub)
   .then(profile => peerProfilePictureUrl.value = profile?.image ?? null)
 
-getProfile(hexToNpub(authStore.pubKey))
-  .then(profile => myProfilePictureUrl.value = profile?.image ?? null)
+if (authStore.pubKey) {
+  getProfile(hexToNpub(authStore.pubKey))
+    .then(profile => myProfilePictureUrl.value = profile?.image ?? null)
+}
 
 const scrollToBottom = async (id: string) => {
   const msgElement = document.getElementById(id)
@@ -125,7 +127,7 @@ const sendMessage = async () => {
   if (!text) return
   isSending.value = true
   try {
-    await $mostro.submitDirectMessage(text, props.npub, undefined)
+    await $mostro.submitDirectMessage(text, props.npub)
     inputMessage.value = ''
   } catch (err) {
     console.error('Error at sending message: ', err)
