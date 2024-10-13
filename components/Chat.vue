@@ -112,8 +112,10 @@ const { getProfile } = useProfile()
 getProfile(props.npub)
   .then(profile => peerProfilePictureUrl.value = profile?.image ?? null)
 
-getProfile(hexToNpub(authStore.pubKey))
-  .then(profile => myProfilePictureUrl.value = profile?.image ?? null)
+if (authStore.pubKey) {
+  getProfile(hexToNpub(authStore.pubKey))
+    .then(profile => myProfilePictureUrl.value = profile?.image ?? null)
+}
 
 const scrollToBottom = async (id: string) => {
   const msgElement = document.getElementById(id)
