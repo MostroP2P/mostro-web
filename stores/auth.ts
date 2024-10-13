@@ -54,7 +54,7 @@ export const useAuth = defineStore('auth', {
       if (decryptedPrivKey.value) {
         try {
           this.privKey = decryptedPrivKey.value
-          this.pubKey = getPublicKey(this.privKey)
+          this.pubKey = getPublicKey(Buffer.from(this.privKey, 'hex'))
           this.authMethod = AuthMethod.LOCAL
         } catch(err) {
           console.warn('Error setting local key from local storage: ', err)
@@ -79,7 +79,7 @@ export const useAuth = defineStore('auth', {
         } else {
           this.privKey = privateKey
         }
-        this.pubKey = getPublicKey(this.privKey)
+        this.pubKey = getPublicKey(Buffer.from(this.privKey, 'hex'))
       } else if (this.authMethod === AuthMethod.NIP07) {
         const extensionLoginPayload = loginPayload as ExtensionLoginPayload
         this.pubKey = extensionLoginPayload.publicKey

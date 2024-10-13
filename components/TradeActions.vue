@@ -33,14 +33,16 @@ import { useOrders } from '@/stores/orders'
 import { useDisputes } from '@/stores/disputes'
 import { OrderStatus, OrderType, Action } from '~/stores/types'
 import { type MostroMessage, Order } from '~/stores/types'
-import { Mostro } from '~/plugins/02-mostro'
+import { Mostro, PublicKeyType } from '~/plugins/02-mostro'
 
 export default {
   emits: ['dispute'],
   data() {
+    const authStore = useAuth()
     const route = useRoute()
     return {
-      orderId: route.params.id as string
+      orderId: route.params.id as string,
+      pubkey: authStore.pubKey
     }
   },
   methods: {
@@ -95,12 +97,10 @@ export default {
       return this.order?.kind === OrderType.SELL
     },
     isLocalSeller() {
-      const userPubKey = (this.$mostro as Mostro).getUserPublicKey()
-      return userPubKey.hex === this.order?.master_seller_pubkey
+      return this.pubkey === this.order?.master_seller_pubkey
     },
     isLocalBuyer() {
-      const userPubKey = (this.$mostro as Mostro).getUserPublicKey()
-      return userPubKey.hex === this.order?.master_buyer_pubkey
+      return this.pubkey === this.order?.master_buyer_pubkey
     },
     showRelease() {
       return this.isLocalSeller && this.currentOrderStatus === OrderStatus.FIAT_SENT

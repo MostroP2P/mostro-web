@@ -34,7 +34,8 @@ import NPub from '~/components/NPub.vue'
 import CreatedAt from '~/components/CreatedAt.vue'
 export default {
   data() {
-    return { timeago }
+    const authStore = useAuth()
+    return { timeago, pubkey: authStore.pubKey }
   },
   components: {
     npub: NPub
@@ -67,9 +68,7 @@ export default {
       try {
         const masterBuyerPubKey = this.order?.master_buyer_pubkey
         if (!masterBuyerPubKey) return false
-        const buyerNpub = nip19.npubEncode(masterBuyerPubKey)
-        // @ts-ignore
-        return this?.$mostro?.getNpub() === buyerNpub
+        return this.pubkey === masterBuyerPubKey
       } catch (err) {
         console.error('Error checking if local buyer: ', err)
       }
@@ -79,9 +78,7 @@ export default {
       try {
         const masterSellerPubKey = this.order?.master_seller_pubkey
         if (!masterSellerPubKey) return false
-        const sellerNpub = nip19.npubEncode(masterSellerPubKey)
-        // @ts-ignore
-        return this?.$mostro?.getNpub() === sellerNpub
+        return this.pubkey === masterSellerPubKey
       } catch (err) {
         console.error('Error checking if local seller: ', err)
       }

@@ -1,7 +1,7 @@
 {
   "name": "mostro-web",
   "private": true,
-  "version": "0.0.27",
+  "version": "0.1.0",
   "description": "Mostro web client",
   "type": "module",
   "scripts": {
@@ -33,7 +33,7 @@
   "dependencies": {
     "@mdi/font": "^7.4.47",
     "@nostr-dev-kit/ndk": "^2.10.0",
-    "@nostr-dev-kit/ndk-cache-dexie": "^2.5.1",
+    "@nostr-dev-kit/ndk-cache-dexie": "^2.5.2",
     "@pinia/nuxt": "^0.5.2",
     "@vueuse/core": "^10.11.0",
     "@vueuse/nuxt": "^10.11.0",
@@ -41,7 +41,7 @@
     "buffer": "^6.0.3",
     "crypto-js": "^4.2.0",
     "light-bolt11-decoder": "github:bilthon/light-bolt11-decoder",
-    "nostr-tools": "^1.12.0",
+    "nostr-tools": "^2.7.2",
     "pinia": "^2.2.0",
     "qrcode.vue": "^3.4.1",
     "sass": "^1.77.8",
