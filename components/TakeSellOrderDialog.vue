@@ -8,7 +8,7 @@
     <v-card>
       <v-card-title>Take Sell Order</v-card-title>
       <v-card-text>
-        Confirm that you want buy sats. Mostro will contact you via DM and ask you to provide an invoice.
+        Confirm that you want buy sats. Mostro will ask you to provide an invoice.
       </v-card-text>
       <v-card-text v-if="isRangeOrder">
         This is a range order. Before confirming you also need to specify an amount between {{ order.min_amount }} and {{ order.max_amount }} {{ order.fiat_code.toUpperCase() }}.
