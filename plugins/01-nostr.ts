@@ -45,7 +45,7 @@ export type GiftWrapCallback = (rumor: Rumor, seal: NostrEvent) => Promise<void>
 export class Nostr {
   private static ndkInstance: NDK
   private users = new Map<string, NDKUser>()
-  private subscriptions: Map<number, NDKSubscription> = new Map()
+  private subscriptions: Map<number | string, NDKSubscription> = new Map()
   private eventCallbacks: Map<number, EventCallback | GiftWrapCallback> = new Map()
   private mostroMessageCallback: (message: string, ev: MostroEvent) => void = () => {}
   private peerMessageCallback: (message: string, ev: MostroEvent) => void = () => {}
@@ -204,15 +204,16 @@ export class Nostr {
   }
 
   private async _processQueuedGiftWraps() {
-    const rumorQueue: Rumor[] = []
+    type RumorAndSeal = { rumor: Rumor, seal: Seal }
+    const rumorQueue: RumorAndSeal[] = []
     for (const event of this.giftWrapQueue) {
-      const { rumor } = await this.unwrapEvent(event)
-      rumorQueue.push(rumor)
+      const { rumor, seal } = await this.unwrapEvent(event)
+      rumorQueue.push({ rumor, seal })
     }
     // Sorting rumors by 'created_at' fields. We can only do this after unwrapping
-    rumorQueue.sort((a, b) => (a.created_at as number) - (b.created_at as number))
-    for (const rumor of rumorQueue) {
-      await this.handleGiftWrapEvent(rumor)
+    rumorQueue.sort((a, b) => (a.rumor.created_at as number) - (b.rumor.created_at as number))
+    for (const { rumor, seal } of rumorQueue) {
+      await this.handleGiftWrapEvent(rumor, seal)
     }
     this.giftWrapQueue = []
   }
@@ -258,7 +259,6 @@ export class Nostr {
   }
 
   subscribeGiftWraps(myPubkey: string) {
-    console.log('📣 subscribing to gift wraps')
     const filters = {
       kinds: [NOSTR_GIFT_WRAP_KIND],
       '#p': [myPubkey],
@@ -270,7 +270,7 @@ export class Nostr {
       subscription.on('event:dup', this._handleDupEvent.bind(this))
       subscription.on('eose', this._handleGiftWrapEose.bind(this))
       subscription.on('close', this._handleCloseSubscription.bind(this))
-      this.subscriptions.set(NOSTR_GIFT_WRAP_KIND, subscription)
+      this.subscriptions.set(`${NOSTR_GIFT_WRAP_KIND}-${myPubkey}`, subscription)
       // this.registerEventHandler(NOSTR_GIFT_WRAP_KIND, this.handleGiftWrapEvent.bind(this));
     } else {
       console.error('❌ Attempting to subcribe to gift wraps when already subscribed')
@@ -279,18 +279,20 @@ export class Nostr {
 
   async unwrapEvent(event: NDKEvent): Promise<{rumor: Rumor, seal: Seal}> {
     const nostrEvent = await event.toNostrEvent()
-    const unwrappedSeal: Seal = this.nip44Decrypt(
+    const seal: Seal = this.nip44Decrypt(
       nostrEvent as NostrEvent,
-      Buffer.from((this.signer as NDKPrivateKeySigner).privateKey?.toString() || '', 'hex')
+      Buffer.from((this.signer as NDKPrivateKeySigner).privateKey?.toString() || '', 'hex'),
+      nostrEvent.pubkey
     )
     const rumor = this.nip44Decrypt(
-      unwrappedSeal,
-      Buffer.from((this.signer as NDKPrivateKeySigner).privateKey?.toString() || '', 'hex')
+      seal,
+      Buffer.from((this.signer as NDKPrivateKeySigner).privateKey?.toString() || '', 'hex'),
+      nostrEvent.pubkey
     )
-    return { rumor, seal: unwrappedSeal }
+    return { rumor, seal }
   }
 
-  async handleGiftWrapEvent(rumor: Rumor) : Promise<void> {
+  async handleGiftWrapEvent(rumor: Rumor, seal: Seal) : Promise<void> {
     const config = useRuntimeConfig()
     const mostroNpub = config.public.mostroPubKey
     const mostroHex = nip19.decode(mostroNpub).data as string
@@ -389,8 +391,8 @@ export class Nostr {
     return nip44.v2.encrypt(JSON.stringify(data), this.nip44ConversationKey(privateKey, publicKey))
   }
 
-  nip44Decrypt(data: NostrEvent, privateKey: Uint8Array) {
-    return JSON.parse(nip44.v2.decrypt(data.content, this.nip44ConversationKey(privateKey, data.pubkey)))
+  nip44Decrypt(data: NostrEvent, privateKey: Uint8Array, publicKey: string) {
+    return JSON.parse(nip44.v2.decrypt(data.content, this.nip44ConversationKey(privateKey, publicKey)))
   }
 
   now() {

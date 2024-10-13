@@ -71,11 +71,12 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useAuth } from '@/stores/auth'
 import { useMessages } from '~/stores/messages'
 import { useTimeago } from '@/composables/timeago'
 import type { PeerMessage } from '~/stores/types'
+import type { Nostr } from '~/plugins/01-nostr'
 import type { Mostro } from '~/plugins/02-mostro'
 import { useProfile } from '@/composables/useProfile'
 import useNip19 from '@/composables/useNip19'
@@ -87,11 +88,14 @@ const peerProfilePictureUrl = ref<string | null>(null)
 const inputMessage = ref('')
 const isSending = ref<boolean>(false)
 
+const { npubToHex } = useNip19()
+
 const authStore = useAuth()
 const isAuthenticated = computed(() => authStore.isAuthenticated)
 
 const nuxtApp = useNuxtApp()
 const $mostro: Mostro = nuxtApp.$mostro as Mostro
+const $nostr: Nostr = nuxtApp.$nostr as Nostr
 
 const props = defineProps({
   npub: {
@@ -140,6 +144,11 @@ const getMessageTime = (message: PeerMessage) => format(message.created_at * 1e3
 
 const messages = useMessages()
 const peerMessages = computed(() => messages.getPeerMessagesByNpub(props.npub))
+
+onMounted(() => {
+  const pubkey = npubToHex(props.npub)
+  $nostr.subscribeGiftWraps(pubkey)
+})
 
 watch(peerMessages, () => {
   if (isSending.value) {
