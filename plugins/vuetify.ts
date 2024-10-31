@@ -15,7 +15,7 @@ const MostroDarkTheme: ThemeDefinition = {
     secondary: '#304F00',
     'secondary-darken-1': '#1D212C',
     error: '#f44336',
-    info: '#29b6f6',
+    info: '#3a5a40',
     success: '#66bb6a',
     warning: '#ffa726',
   },

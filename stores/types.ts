@@ -97,6 +97,7 @@ export enum Action {
   DisputeInitiatedByPeer = 'dispute-initiated-by-peer',
   NotAllowedByStatus = 'not-allowed-by-status',
   PaymentFailed = 'payment-failed',
+  OutOfRangeSatsAmount = 'out-of-range-sats-amount',
   CantDo = 'cant-do'
 }
 
@@ -284,12 +285,6 @@ export interface RootState {
     notifications: Notification[]
   }
   auth: AuthState
-}
-export interface ScheduledOrderUpdatePayload {
-  orderId: string,
-  event: MostroEvent,
-  seller_pubkey?: string,
-  buyer_pubkey?: string
 }
 
 export interface EncryptedPrivateKey {

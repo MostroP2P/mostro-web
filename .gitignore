@@ -98,3 +98,6 @@ constants/version.js
 
 # Service worker
 sw.*
+
+# Deployment script
+deploy.sh

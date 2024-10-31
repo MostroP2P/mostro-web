@@ -72,12 +72,15 @@
         <v-app-bar-nav-icon v-if="mobile" @click.stop="drawer = !drawer" color="white"/>
       </template>
       <v-app-bar-title>
-        <img
-          src="/word-logo.png"
-          alt="Mostro"
-          height="40"
+        Mostro
+        <v-chip
+          color="warning"
+          size="x-small"
+          class="ml-2"
         >
-    </v-app-bar-title>
+          Beta
+        </v-chip>
+      </v-app-bar-title>
       <v-spacer />
       <client-only>
         <notifications/>
