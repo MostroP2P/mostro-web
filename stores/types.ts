@@ -286,12 +286,6 @@ export interface RootState {
   }
   auth: AuthState
 }
-export interface ScheduledOrderUpdatePayload {
-  orderId: string,
-  event: MostroEvent,
-  seller_pubkey?: string,
-  buyer_pubkey?: string
-}
 
 export interface EncryptedPrivateKey {
   ciphertext: string,
