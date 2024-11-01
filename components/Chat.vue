@@ -81,14 +81,12 @@ import type { Mostro } from '~/plugins/02-mostro'
 import { useProfile } from '@/composables/useProfile'
 import useNip19 from '@/composables/useNip19'
 
-const { hexToNpub } = useNip19()
+const { hexToNpub, npubToHex } = useNip19()
 
 const myProfilePictureUrl = ref<string | null>(null)
 const peerProfilePictureUrl = ref<string | null>(null)
 const inputMessage = ref('')
 const isSending = ref<boolean>(false)
-
-const { npubToHex } = useNip19()
 
 const authStore = useAuth()
 const isAuthenticated = computed(() => authStore.isAuthenticated)
@@ -131,7 +129,10 @@ const sendMessage = async () => {
   if (!text) return
   isSending.value = true
   try {
-    await $mostro.submitDirectMessage(text, props.npub)
+    await $mostro.submitDirectMessage(text, npubToHex(props.npub))
+    if (authStore.pubKey) {
+      await $mostro.submitDirectMessage(text, authStore.pubKey)
+    }
     inputMessage.value = ''
   } catch (err) {
     console.error('Error at sending message: ', err)
@@ -157,8 +158,10 @@ watch(peerMessages, () => {
     inputMessage.value = ''
   }
   const lastMessage = peerMessages.value[peerMessages.value.length - 1]
-  const id = lastMessage.id
-  setTimeout(() => scrollToBottom(id), 100)
+  if (lastMessage) {
+    const id = lastMessage.id
+    setTimeout(() => scrollToBottom(id), 100)
+  }
 })
 
 </script>

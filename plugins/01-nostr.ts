@@ -176,6 +176,18 @@ export class Nostr {
   }
 
   private async _queueGiftWrapEvent(event: NDKEvent) {
+    const authStore = useAuth()
+    const myPubKey = authStore.pubKey
+
+    // Check if event has a 'p' tag that matches our public key
+    const isForMe = event.tags.some(([tagName, tagValue]) => 
+      tagName === 'p' && tagValue === myPubKey
+    )
+
+    if (!isForMe) {
+      console.log('🚫 Ignoring gift wrap event not intended for us')
+      return
+    }
     console.log('🎁 queueing gift wrap event')
     this.giftWrapQueue.push(event)
     if (this.giftWrapEoseReceived) {
@@ -207,8 +219,12 @@ export class Nostr {
     type RumorAndSeal = { rumor: Rumor, seal: Seal }
     const rumorQueue: RumorAndSeal[] = []
     for (const event of this.giftWrapQueue) {
-      const { rumor, seal } = await this.unwrapEvent(event)
-      rumorQueue.push({ rumor, seal })
+      try {
+        const { rumor, seal } = await this.unwrapEvent(event)
+        rumorQueue.push({ rumor, seal })
+      } catch (err) {
+        console.error('Error unwrapping gift wrap event: ', err)
+      }
     }
     // Sorting rumors by 'created_at' fields. We can only do this after unwrapping
     rumorQueue.sort((a, b) => (a.rumor.created_at as number) - (b.rumor.created_at as number))
@@ -281,13 +297,11 @@ export class Nostr {
     const nostrEvent = await event.toNostrEvent()
     const seal: Seal = this.nip44Decrypt(
       nostrEvent as NostrEvent,
-      Buffer.from((this.signer as NDKPrivateKeySigner).privateKey?.toString() || '', 'hex'),
-      nostrEvent.pubkey
+      Buffer.from((this.signer as NDKPrivateKeySigner).privateKey?.toString() || '', 'hex')
     )
     const rumor = this.nip44Decrypt(
       seal,
-      Buffer.from((this.signer as NDKPrivateKeySigner).privateKey?.toString() || '', 'hex'),
-      seal.pubkey
+      Buffer.from((this.signer as NDKPrivateKeySigner).privateKey?.toString() || '', 'hex')
     )
     return { rumor, seal }
   }
@@ -391,8 +405,8 @@ export class Nostr {
     return nip44.v2.encrypt(JSON.stringify(data), this.nip44ConversationKey(privateKey, publicKey))
   }
 
-  nip44Decrypt(data: NostrEvent, privateKey: Uint8Array, publicKey: string) {
-    return JSON.parse(nip44.v2.decrypt(data.content, this.nip44ConversationKey(privateKey, publicKey)))
+  nip44Decrypt(data: NostrEvent, privateKey: Uint8Array) {
+    return JSON.parse(nip44.v2.decrypt(data.content, this.nip44ConversationKey(privateKey, data.pubkey)))
   }
 
   now() {
@@ -466,7 +480,7 @@ export class Nostr {
     })
   }
 
-  async submitDirectMessage(message: string, destinationNpub: string): Promise<void> {
+  async submitDirectMessage(message: string, destinationPubkey: string): Promise<void> {
     if (!this._signer) {
       console.error('❗ No signer found')
       return
@@ -477,13 +491,12 @@ export class Nostr {
       console.error('❗ No pubkey found')
       return
     }
-    const destinationHex = nip19.decode(destinationNpub).data as string
     const event = new NDKEvent(this.ndk)
     event.kind = NOSTR_TEXT_KIND
     event.created_at = Math.floor(Date.now() / 1000)
     event.content = message
     event.pubkey = myPubkey
-    await this.signAndPublishEvent(event, destinationHex)
+    await this.signAndPublishEvent(event, destinationPubkey)
   }
 
   async signAndPublishEvent(event: NDKEvent, destination: string): Promise<void> {
