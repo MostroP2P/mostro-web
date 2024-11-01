@@ -287,7 +287,7 @@ export class Nostr {
     const rumor = this.nip44Decrypt(
       seal,
       Buffer.from((this.signer as NDKPrivateKeySigner).privateKey?.toString() || '', 'hex'),
-      nostrEvent.pubkey
+      seal.pubkey
     )
     return { rumor, seal }
   }
