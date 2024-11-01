@@ -33,7 +33,7 @@
   "dependencies": {
     "@mdi/font": "^7.4.47",
     "@nostr-dev-kit/ndk": "^2.10.4",
-    "@nostr-dev-kit/ndk-cache-dexie": "^2.5.2",
+    "@nostr-dev-kit/ndk-cache-dexie": "^2.5.5",
     "@pinia/nuxt": "^0.5.2",
     "@vueuse/core": "^10.11.0",
     "@vueuse/nuxt": "^10.11.0",
