@@ -380,8 +380,8 @@ export class Mostro {
     await this.nostr.createAndPublishMostroEvent(payload, this.getMostroPublicKey(PublicKeyType.HEX))
   }
 
-  async submitDirectMessage(message: string, destinationNpub: string): Promise<void> {
-    await this.nostr.submitDirectMessage(message, destinationNpub)
+  async submitDirectMessage(message: string, destinationPubkey: string): Promise<void> {
+    await this.nostr.submitDirectMessage(message, destinationPubkey)
   }
 
   getMostroPublicKey(type?: PublicKeyType): string {

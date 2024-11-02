@@ -529,8 +529,7 @@ export class Nostr {
     event.content = cleartext
     event.pubkey = myPubKey
     event.tags = [['p', mostroPubKey]]
-    const nEvent = await event.toNostrEvent()
-    console.info('> [🎁][me -> 🧌]: ', cleartext, ', ev: ', nEvent)
+    console.info('> [🎁][me -> 🧌]: ', cleartext)
     await this.signAndPublishEvent(event, mostroPubKey)
   }
 }
