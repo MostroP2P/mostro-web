@@ -9,7 +9,7 @@ This project is a web interface that facilitates peer-to-peer bitcoin trading ov
 #### Node.js and NPM
 Node.js: Recommended version: `v20.15.1`
 
-NPM: Recommended version: `20.15.1`
+NPM: Recommended version: `10.7.0`
 
 #### Mostro
 * Clone [Mostro](https://github.com/MostroP2P/mostro)
