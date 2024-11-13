@@ -1,7 +1,7 @@
 import { NDKEvent } from '@nostr-dev-kit/ndk'
-import type { MostroEvent } from '~/plugins/02-mostro'
 import { Action, OrderStatus, type OrderMapType, type OrderOwnershipMapType } from './types'
-import { Order } from './types'
+import type { Mostro } from '~/utils/mostro'
+import type { MostroMessage, Order } from '~/utils/mostro/types'
 
 export const ORDER_LIFETIME_IN_SECONDS = 24 * 60 * 60 // 24 hours
 
@@ -15,7 +15,23 @@ export const useOrders = defineStore('orders', {
     userOrders: {}
   }),
   actions: {
-    addOrder({ order, event }: {order: Order, event: MostroEvent }) {
+    nuxtClientInit() {
+      const mostro = useNuxtApp().$mostro as Mostro
+      mostro.on('order-update', (order: Order, ev: NDKEvent) => {
+        this.addOrder({ order, event: ev })
+      })
+      mostro.on('mostro-message', (message: MostroMessage, ev: NDKEvent) => {
+        const orderMessage = message.order
+        if (orderMessage && orderMessage.action === Action.NewOrder) {
+          // If we get a mostro message with a new-order action,
+          // this means we got an ack to our order submission. Which means
+          // this order is ours.
+          const order = orderMessage.content.order as Order
+          this.addUserOrder({ order, event: ev })
+        }
+      })
+    },
+    addOrder({ order, event }: {order: Order, event: NDKEvent }) {
       if (!this.orders[order.id]) {
         // Because of the asynchronous nature of messages, we can
         // have an order being added from the network which we already know
@@ -43,7 +59,7 @@ export const useOrders = defineStore('orders', {
     removeOrder(order: Order) {
       delete this.orders[order.id]
     },
-    updateOrder({ order, event } : {order: Order, event: MostroEvent }, updateStatus: boolean = false) {
+    updateOrder({ order, event } : {order: Order, event: NDKEvent }, updateStatus: boolean = false) {
       const existingOrder = this.orders[order.id]      
       if (existingOrder) {
         // We just update buyer & seller pubkeys if they're not set yet

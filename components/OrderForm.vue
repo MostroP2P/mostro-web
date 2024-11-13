@@ -139,6 +139,7 @@ import invoiceValidator, { type DecodedInvoice, type Section } from '~/mixins/in
 import { OrderStatus, OrderPricingMode, OrderType } from '@/stores/types'
 import type { FiatData, NewOrder } from '@/stores/types'
 import fiat from '~/assets/fiat.json'
+import type { Order } from '~/utils/mostro/types'
 
 interface Fiat {
   [key: string]: FiatData;
@@ -285,8 +286,14 @@ export default defineComponent({
         order.amount = satsAmount
       }
       try {
+        const t1 = Date.now()
         // @ts-ignore
-        await this.$mostro.submitOrder(order)
+        const response = await this.$mostro.submitOrder(order)
+        const t2 = Date.now()
+        console.log('🚀 Order submitted: ', response, 'in', t2 - t1, 'ms')
+        const orderStore = useOrders()
+        const confirmedOrder = response.order.content.order as Order
+        orderStore.addUserOrder({ order: confirmedOrder, event: response })
         this.onClose()
       } catch(err) {
         console.error('Error while submitting order: ', err)

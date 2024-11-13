@@ -1,16 +1,16 @@
 import type {
   ThreadSummary,
-  MostroMessage,
   PeerMessage,
   PeerThreadSummary,
 } from './types'
 import {
-  Order,
   Action,
   OrderStatus
 } from './types'
 import { useOrders } from './orders'
-import type { MostroEvent } from '~/plugins/02-mostro'
+// import { useAlertStore } from './alerts'
+import type { NDKEvent } from '@nostr-dev-kit/ndk'
+import type { MostroMessage, Order } from '~/utils/mostro/types'
 
 export interface MessagesState {
   messages: {
@@ -30,7 +30,7 @@ export const useMessages = defineStore('messages', {
   }),
   actions: {
     async addMostroMessage(
-      { message, event } : { message: MostroMessage, event: MostroEvent }
+      { message, event } : { message: MostroMessage, event: NDKEvent }
     ) {
       if (message.order) {
         const orderMessage = message.order
@@ -80,7 +80,7 @@ export const useMessages = defineStore('messages', {
         } else if (orderMessage?.action === Action.AdminCanceled) {
           disputeStore.updateDisputeStatus(orderMessage.id as string, DisputeStatus.CANCELED)
         }
-        orderStore.updateOrderStatus(message.order.id, orderMessage.action, event)
+        orderStore.updateOrderStatus(message.order.id, orderMessage.action as Action, event)
         this.messages.mostro.push(message)
       } else if (message.cant_do) {
         console.warn(`>>> [${message.cant_do.id}] CantDo, id: ${message.cant_do.id} message: ${message.cant_do?.content?.text_message}`)

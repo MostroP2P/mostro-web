@@ -4,12 +4,12 @@ import { useOrders } from '@/stores/orders'
 import { useSoundPlayer } from '@/composables/useSoundPlayer'
 import {
   OrderStatus,
-  Order,
   OrderType,
   NOTIFICATIONS_KEY,
 } from './types'
 import type { Notification, OrderMapType } from './types'
 import { useNotifications } from '@/composables/useNotifications'
+import type { Order } from '~/utils/mostro/types'
 
 const { sendNotification } = useNotifications()
 

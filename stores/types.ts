@@ -1,6 +1,7 @@
 import { reactive } from 'vue'
 import type { AuthState } from './auth'
-import type { MostroEvent } from '~/plugins/02-mostro'
+import type { Order } from '~/utils/mostro/types'
+import type { NDKEvent } from '@nostr-dev-kit/ndk'
 
 export type ThreadSummary = {
   orderId: string,
@@ -33,32 +34,32 @@ type Peer = {
 /**
  * Message sent by mostro
  */
-export type MostroMessage = {
-  order: {
-    version: number,
-    id: string,
-    action: Action,
-    content: {
-      payment_request?: PaymentRequest,
-      small_order?: SmallOrder,
-      peer?: Peer,
-      order?: Order,
-      rating_user?: number
-      dispute?: string
-    },
-    created_at: number
-  },
-  cant_do: {
-    version: number,
-    id: string,
-    pubkey: string | null,
-    action: Action.CantDo,
-    content: {
-      text_message: string,
-    }
-  }
-  created_at: number
-}
+// export type MostroMessage = {
+//   order: {
+//     version: number,
+//     id: string,
+//     action: Action,
+//     content: {
+//       payment_request?: PaymentRequest,
+//       small_order?: SmallOrder,
+//       peer?: Peer,
+//       order?: Order,
+//       rating_user?: number
+//       dispute?: string
+//     },
+//     created_at: number
+//   },
+//   cant_do: {
+//     version: number,
+//     id: string,
+//     pubkey: string | null,
+//     action: Action.CantDo,
+//     content: {
+//       text_message: string,
+//     }
+//   }
+//   created_at: number
+// }
 
 /**
  * Text message sent by mostro
@@ -135,91 +136,91 @@ export enum OrderStatus {
   WAITING_PAYMENT = 'waiting-payment'
 }
 
-/**
- * An order coming from the server
- */
-export class Order {
-  id: string
-  kind: OrderType
-  status: OrderStatus
-  amount?: number
-  fiat_code: string
-  min_amount: number | null
-  max_amount: number | null
-  fiat_amount: number
-  payment_method: string
-  premium: number
-  created_at: number
-  buyer_pubkey?: string
-  seller_pubkey?: string
-  buyer_invoice?: string
-  master_seller_pubkey?: string
-  master_buyer_pubkey?: string
-  is_mine?: boolean = false
-  updated_at?: number
-  rating?: {
-    value: number | undefined,
-    confirmed: boolean | undefined
-  }
-  disputed: boolean = false
-  mostro_id: string
+// /**
+//  * An order coming from the server
+//  */
+// export class Order {
+//   id: string
+//   kind: OrderType
+//   status: OrderStatus
+//   amount?: number
+//   fiat_code: string
+//   min_amount: number | null
+//   max_amount: number | null
+//   fiat_amount: number
+//   payment_method: string
+//   premium: number
+//   created_at: number
+//   buyer_pubkey?: string
+//   seller_pubkey?: string
+//   buyer_invoice?: string
+//   master_seller_pubkey?: string
+//   master_buyer_pubkey?: string
+//   is_mine?: boolean = false
+//   updated_at?: number
+//   rating?: {
+//     value: number | undefined,
+//     confirmed: boolean | undefined
+//   }
+//   disputed: boolean = false
+//   mostro_id: string
 
-  constructor(
-    id: string,
-    kind: OrderType,
-    status: OrderStatus,
-    fiat_code: string,
-    min_amount: number | null,
-    max_amount: number | null,
-    fiat_amount: number,
-    payment_method: string,
-    premium: number,
-    created_at: number,
-    amount: number,
-    mostro_id: string
-  ) {
-    this.id = id;
-    this.kind = kind;
-    this.status = status;
-    this.fiat_code = fiat_code;
-    this.min_amount = min_amount;
-    this.max_amount = max_amount;
-    this.fiat_amount = fiat_amount;
-    this.payment_method = payment_method;
-    this.premium = premium;
-    this.created_at = created_at;
-    this.amount = amount
-    this.mostro_id = mostro_id
-  }
-  static deepEqual(order1: Order | NewOrder, order2: Order): boolean {
+//   constructor(
+//     id: string,
+//     kind: OrderType,
+//     status: OrderStatus,
+//     fiat_code: string,
+//     min_amount: number | null,
+//     max_amount: number | null,
+//     fiat_amount: number,
+//     payment_method: string,
+//     premium: number,
+//     created_at: number,
+//     amount: number,
+//     mostro_id: string
+//   ) {
+//     this.id = id;
+//     this.kind = kind;
+//     this.status = status;
+//     this.fiat_code = fiat_code;
+//     this.min_amount = min_amount;
+//     this.max_amount = max_amount;
+//     this.fiat_amount = fiat_amount;
+//     this.payment_method = payment_method;
+//     this.premium = premium;
+//     this.created_at = created_at;
+//     this.amount = amount
+//     this.mostro_id = mostro_id
+//   }
+//   static deepEqual(order1: Order | NewOrder, order2: Order): boolean {
 
-    if (order1?.kind !== order2?.kind) {
-      return false
-    }
-    if (order1?.amount !== order2?.amount) {
-      return false
-    }
-    if (order1?.fiat_code !== order2?.fiat_code) {
-      return false
-    }
-    if (order1?.fiat_amount !== order2?.fiat_amount) {
-      return false
-    }
-    if (order1?.min_amount !== order2?.min_amount) {
-      return false
-    }
-    if (order1?.max_amount !== order2?.max_amount) {
-      return false
-    }
-    if (order1?.payment_method !== order2?.payment_method) {
-      return false
-    }
-    if (order1?.premium !== order2?.premium) {
-      return false
-    }
-    return true;
-  }
-}
+//     if (order1?.kind !== order2?.kind) {
+//       return false
+//     }
+//     if (order1?.amount !== order2?.amount) {
+//       return false
+//     }
+//     if (order1?.fiat_code !== order2?.fiat_code) {
+//       return false
+//     }
+//     if (order1?.fiat_amount !== order2?.fiat_amount) {
+//       return false
+//     }
+//     if (order1?.min_amount !== order2?.min_amount) {
+//       return false
+//     }
+//     if (order1?.max_amount !== order2?.max_amount) {
+//       return false
+//     }
+//     if (order1?.payment_method !== order2?.payment_method) {
+//       return false
+//     }
+//     if (order1?.premium !== order2?.premium) {
+//       return false
+//     }
+//     return true;
+//   }
+// }
 
 /**
  * A new order being proposed by this client
@@ -287,7 +288,7 @@ export interface RootState {
 }
 export interface ScheduledOrderUpdatePayload {
   orderId: string,
-  event: MostroEvent,
+  event: NDKEvent,
   seller_pubkey?: string,
   buyer_pubkey?: string
 }

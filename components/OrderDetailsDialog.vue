@@ -68,10 +68,10 @@
 </template>
 
 <script setup lang="ts">
-import { Order, OrderType, type FiatData } from '@/stores/types'
+import { OrderType, type Order } from '~/utils/mostro/types'
 import { useAuth } from '~/stores/auth'
 import fiat from '~/assets/fiat.json'
-import type { Mostro } from '~/plugins/02-mostro'
+import type { Mostro } from '~/utils/mostro'
 
 const ORDER_LIFETIME_IN_SECONDS = 3600 * 24 // 24 hours
 

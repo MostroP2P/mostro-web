@@ -14,7 +14,8 @@
 
 <script lang="ts">
 import { defineComponent, computed, ref } from 'vue'
-import { Order, OrderType } from '@/stores/types'
+import type { Order } from '~/utils/mostro/types'
+import { OrderType } from '~/stores/types'
 import { useOrders } from '@/stores/orders'
 import { useAuth } from '@/stores/auth'
 import fiat from '~/assets/fiat.json'
