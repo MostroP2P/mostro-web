@@ -106,9 +106,9 @@ watch(showDialog, (newVal, oldVal) => {
 
 const cancelOrder = async () => {
   const orderStore = useOrders()
-  const mostro = nuxtApp.vueApp.config.globalProperties.$mostro as Mostro
+  const { $mostro } = useNuxtApp()
   try {
-    const response = await mostro.cancel(props.order)
+    const response = await $mostro.cancel(props.order)
     if (response['cant-do']) {
       console.warn('Cant do: ', response['cant-do'])
     }

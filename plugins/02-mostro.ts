@@ -421,6 +421,19 @@ import type { Nostr } from "~/utils/nostr"
 //   })
 // })
 
+// Type declarations for Nuxt
+declare module '#app' {
+  interface NuxtApp {
+    $mostro: Mostro
+  }
+}
+
+declare module '@vue/runtime-core' {
+  interface ComponentCustomProperties {
+    $mostro: Mostro
+  }
+}
+
 export default defineNuxtPlugin((nuxtApp) => {
   const config = useRuntimeConfig()
   const { public: { mostroPubKey, relays } } = config
