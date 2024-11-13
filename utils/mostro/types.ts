@@ -164,7 +164,7 @@ export type MostroMessage = {
   order: {
     version: number,
     id: string,
-    request_id: number,
+    request_id?: number,
     action: Action,
     content: {
       payment_request?: PaymentRequest,
@@ -176,9 +176,10 @@ export type MostroMessage = {
     },
     created_at: number
   },
-  cant_do: {
+  ['cant-do']: {
     version: number,
     id: string,
+    request_id?: number,
     pubkey: string | null,
     action: Action.CantDo,
     content: {

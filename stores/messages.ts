@@ -82,8 +82,8 @@ export const useMessages = defineStore('messages', {
         }
         orderStore.updateOrderStatus(message.order.id, orderMessage.action as Action, event)
         this.messages.mostro.push(message)
-      } else if (message.cant_do) {
-        console.warn(`>>> [${message.cant_do.id}] CantDo, id: ${message.cant_do.id} message: ${message.cant_do?.content?.text_message}`)
+      } else if (message['cant-do']) {
+        console.warn(`>>> [${message['cant-do'].id}] CantDo, id: ${message['cant-do'].id} message: ${message['cant-do']?.content?.text_message}`)
       } else {
         console.warn('>>> addMostroMessage: message has unknown property property. message: ', message, ', ev: ', event)
       }

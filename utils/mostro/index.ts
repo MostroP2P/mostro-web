@@ -292,7 +292,7 @@ export class Mostro extends EventEmitter<{
       this.emit('mostro-message', mostroMessage, rumor as NDKEvent)
 
       // Check if this message is a response to a pending request
-      const requestId = mostroMessage.order?.request_id
+      const requestId = mostroMessage.order?.request_id || mostroMessage['cant-do']?.request_id
       if (requestId && this.pendingRequests.has(requestId)) {
         const { resolve, timer } = this.pendingRequests.get(requestId)!
         clearTimeout(timer)
