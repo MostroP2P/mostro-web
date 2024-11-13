@@ -18,6 +18,7 @@ export const useOrders = defineStore('orders', {
     nuxtClientInit() {
       const mostro = useNuxtApp().$mostro as Mostro
       mostro.on('order-update', (order: Order, ev: NDKEvent) => {
+        // This is a public order update, so we don't know if it's ours
         this.addOrder({ order, event: ev })
       })
       mostro.on('mostro-message', (message: MostroMessage, ev: NDKEvent) => {
@@ -32,17 +33,12 @@ export const useOrders = defineStore('orders', {
       })
     },
     addOrder({ order, event }: {order: Order, event: NDKEvent }) {
-      if (!this.orders[order.id]) {
-        // Because of the asynchronous nature of messages, we can
-        // have an order being added from the network which we already know
-        // is ours from the local storage data. So here we check the
-        // `userOrders` map
-        if (this.userOrders[order.id]) {
-          order.is_mine = true
-        }
-        // Adds the 'updated_at' field, setting it to the event's creation time
-        order.updated_at = event.created_at
-        this.orders[order.id] = order
+      this.orders[order.id] = order
+      this.orders[order.id].updated_at = Math.abs(Date.now() / 1E3)
+      if (this.userOrders[order.id]) {
+        // If the order is in the `userOrders` map, it means it's ours,
+        // so we set the `is_mine` flag to `true`
+        order.is_mine = true
       }
     },
     addUserOrder({ order, event }: {order: Order, event: NDKEvent}) {
@@ -50,10 +46,9 @@ export const useOrders = defineStore('orders', {
         // If the order doesn't yet exist, we add it
         this.orders[order.id] = order
       }
-      // We mark it as ours and add it to the `userOrders` map
       this.orders[order.id].is_mine = true
-      // Adds the 'updated_at' field, setting it to the event's creation time
-      order.updated_at = event.created_at
+      this.orders[order.id].updated_at = Math.abs(Date.now() / 1E3)
+      // We also add it to the `userOrders` map
       this.userOrders[order.id] = true
     },
     removeOrder(order: Order) {
