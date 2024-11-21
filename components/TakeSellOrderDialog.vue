@@ -57,11 +57,16 @@ const onConfirm = async () => {
   isProcessing.value = true
   try {
     const { $mostro } = useNuxtApp()
-    await ($mostro as Mostro).takeSell(
+    const response = await ($mostro as Mostro).takeSell(
       props.order,
       amount.value ? Number(amount.value) : undefined
     )
-    router.push(`/my-trades/${props.order.id}`)
+    if (response?.order?.action === Action.AddInvoice) {
+      // Route to the order page
+      const orderId = response.order.id.trim()
+      const path = `/my-trades/${orderId}`
+      router.push(path)
+    }
   } catch(err) {
     console.error('Error while confirming sell order: ', err)
   } finally {
