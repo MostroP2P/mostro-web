@@ -24,7 +24,7 @@
 <script lang="ts">
 import type { PropType } from 'vue'
 import { mapState } from 'pinia'
-import type { MostroMessage } from '~/stores/types'
+import type { MostroMessage } from '~/utils/mostro/types'
 import { useOrders } from '~/stores/orders'
 import textMessage from '~/mixins/text-message'
 import NPub from '~/components/NPub.vue'

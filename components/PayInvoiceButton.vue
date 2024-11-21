@@ -48,7 +48,7 @@
 <script lang="ts">
 import type { PropType } from 'vue'
 import QrcodeVue from 'qrcode.vue'
-import type { MostroMessage } from '~/stores/types'
+import type { MostroMessage } from '~/utils/mostro/types'
 
 export default {
   components: {

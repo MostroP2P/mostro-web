@@ -32,7 +32,6 @@ import { ref, computed } from 'vue'
 import { useOrders } from '~/stores/orders'
 import { useRoute, useRouter } from 'vue-router'
 import NPub from '~/components/NPub.vue'
-import { Mostro } from '~/plugins/02-mostro'
 
 export default {
   components: {
@@ -41,9 +40,7 @@ export default {
   setup() {
     const route = useRoute()
     const router = useRouter()
-    const nuxt = useNuxtApp()
-    const vueApp = nuxt.vueApp
-    const $mostro = vueApp.config.globalProperties.$mostro as Mostro
+
     const { getOrderById } = useOrders()
     const showDialog = ref(false)
     const isLoading = ref(false)
@@ -57,6 +54,7 @@ export default {
       isLoading.value = true
       try {
         if (order.value) {
+          const { $mostro } = useNuxtApp()
           await $mostro.fiatSent(order.value)
         } else {
           console.warn(`Order with id ${route.params.id} not found`)

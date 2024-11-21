@@ -31,9 +31,7 @@ import { useRoute } from 'vue-router'
 import { useMessages } from '@/stores/messages'
 import { useOrders } from '@/stores/orders'
 import { useDisputes } from '@/stores/disputes'
-import { OrderStatus, OrderType, Action } from '~/stores/types'
-import { type MostroMessage, Order } from '~/stores/types'
-import { Mostro, PublicKeyType } from '~/plugins/02-mostro'
+import { OrderStatus, OrderType, Action, Order, type MostroMessage } from '~/utils/mostro/types'
 
 export default {
   emits: ['dispute'],

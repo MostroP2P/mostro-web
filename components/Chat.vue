@@ -76,8 +76,6 @@ import { useAuth } from '@/stores/auth'
 import { useMessages } from '~/stores/messages'
 import { useTimeago } from '@/composables/timeago'
 import type { PeerMessage } from '~/stores/types'
-import type { Nostr } from '~/plugins/01-nostr'
-import type { Mostro } from '~/plugins/02-mostro'
 import { useProfile } from '@/composables/useProfile'
 import useNip19 from '@/composables/useNip19'
 
@@ -91,9 +89,8 @@ const isSending = ref<boolean>(false)
 const authStore = useAuth()
 const isAuthenticated = computed(() => authStore.isAuthenticated)
 
-const nuxtApp = useNuxtApp()
-const $mostro: Mostro = nuxtApp.$mostro as Mostro
-const $nostr: Nostr = nuxtApp.$nostr as Nostr
+const { $mostro } = useNuxtApp()
+const $nostr = $mostro.nostr
 
 const props = defineProps({
   npub: {

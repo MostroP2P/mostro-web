@@ -11,7 +11,7 @@
 <script lang="ts">
 import { defineComponent } from 'vue'
 import type { Order } from '~/utils/mostro/types'
-import { OrderType } from '~/stores/types'
+import { OrderType } from '~/utils/mostro/types'
 
 // Color scale used to classify orders by attractiveness
 const Colors = {

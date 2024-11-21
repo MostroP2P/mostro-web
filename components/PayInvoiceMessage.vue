@@ -34,7 +34,7 @@ import type { PropType } from 'vue'
 import { mapState } from 'pinia'
 import CreatedAt from '~/components/CreatedAt.vue'
 import { useOrders } from '~/stores/orders'
-import type { MostroMessage } from '~/stores/types'
+import type { MostroMessage } from '~/utils/mostro/types'
 
 export default {
   props: {

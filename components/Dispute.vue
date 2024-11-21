@@ -9,8 +9,8 @@
 <script setup>
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { PublicKeyType } from '~/plugins/02-mostro'
 import { useDisputes } from '~/stores/disputes'
+import { PublicKeyType } from '~/utils/mostro'
 
 const disputeStore = useDisputes()
 const route = useRoute()

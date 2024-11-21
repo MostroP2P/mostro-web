@@ -32,7 +32,7 @@
 </template>
 <script lang="ts">
 import type { PropType } from 'vue'
-import { OrderStatus, OrderType } from '~/stores/types'
+import { OrderStatus, OrderType } from '~/utils/mostro/types'
 import type { ThreadSummary } from '~/stores/types'
 import * as timeago from 'timeago.js'
 export default {

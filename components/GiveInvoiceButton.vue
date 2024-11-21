@@ -39,8 +39,7 @@
 </template>
 <script lang="ts">
 import type { PropType } from 'vue'
-import type { MostroMessage } from '~/stores/types'
-import type { Mostro } from '~/plugins/02-mostro'
+import type { MostroMessage } from '~/utils/mostro/types'
 import { useOrders } from '~/stores/orders'
 import { useBolt11Parser } from '~/composables/useInvoice'
 import { useMostroStore } from '~/stores/mostro'
@@ -59,8 +58,7 @@ export default defineComponent({
     const showDialog = ref(false)
     const input = ref('')
     const isProcessing = ref(false)
-    const nuxtApp = useNuxtApp()
-    const mostro = nuxtApp.$mostro as Mostro
+    const { $mostro } = useNuxtApp()
     const orderStore = useOrders()
     const mostroStore = useMostroStore()
     const { error, parseInvoice, invoice } = useBolt11Parser()
@@ -87,7 +85,7 @@ export default defineComponent({
         return
       }
       try {
-        await mostro.addInvoice(order.value, invoice.value)
+        await $mostro.addInvoice(order.value, invoice.value)
       } catch(err) {
         console.error('Error while giving invoice for buy order: ', err)
       } finally {

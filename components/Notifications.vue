@@ -49,7 +49,8 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useNotificationsStore } from '@/stores/notifications'
-import { OrderStatus, type Notification } from '~/stores/types'
+import { OrderStatus } from '~/utils/mostro/types'
+import type { Notification } from '@/stores/types'
 import { useAuth } from '~/stores/auth'
 
 const notificationStore = useNotificationsStore()

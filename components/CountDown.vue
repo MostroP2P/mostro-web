@@ -20,7 +20,7 @@
 <script setup lang="ts">
 import { useRoute } from 'vue-router'
 import { useOrders } from '~/stores/orders'
-import { OrderStatus } from '~/stores/types'
+import { OrderStatus } from '~/utils/mostro/types'
 
 const route = useRoute()
 const orderStore = useOrders()
