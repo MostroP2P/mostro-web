@@ -6,5 +6,7 @@ export default defineNuxtPlugin(() => {
     authStore.nuxtClientInit()
     const ordersStore = useOrders()
     ordersStore.nuxtClientInit()
+    const messagesStore = useMessages()
+    messagesStore.nuxtClientInit()
   }
 })

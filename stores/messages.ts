@@ -11,6 +11,7 @@ import { useOrders } from './orders'
 // import { useAlertStore } from './alerts'
 import type { NDKEvent } from '@nostr-dev-kit/ndk'
 import type { MostroMessage, Order } from '~/utils/mostro/types'
+import type { Mostro } from '~/utils/mostro'
 
 export interface MessagesState {
   messages: {
@@ -29,8 +30,13 @@ export const useMessages = defineStore('messages', {
     }
   }),
   actions: {
+    nuxtClientInit() {
+      const mostro = useNuxtApp().$mostro as Mostro
+      mostro.on('mostro-message', this.addMostroMessage)
+    },
     async addMostroMessage(
-      { message, event } : { message: MostroMessage, event: NDKEvent }
+      message: MostroMessage,
+      event: NDKEvent
     ) {
       if (message.order) {
         const orderMessage = message.order
