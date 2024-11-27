@@ -80,52 +80,50 @@
     />
   </v-list-item>
 </template>
-<script lang="ts">
-import { mapState } from 'pinia'
+<script setup lang="ts">
+import { computed } from 'vue'
+import { storeToRefs } from 'pinia'
 import { useOrders } from '@/stores/orders'
-import type { PropType } from 'vue'
 import type { MostroMessage, Order } from '~/utils/mostro/types'
 import { Action } from '~/utils/mostro/types'
-export default {
-  data() {
-    return {
-      action: Action
-    }
-  },
-  props: {
-    message: {
-      type: Object as PropType<MostroMessage>,
-      required: true
-    },
-    disabled: {
-      type: Boolean,
-      default: false
-    }
-  },
-  computed: {
-    ...mapState(useOrders, ['getOrderById']),
-    order(): Order | undefined {
-      return this.getOrderById(this.$route.params.id as string)
-    },
-    color(){
-      if(
-        this.message.order.action === Action.DisputeInitiatedByYou ||
-        this.message.order.action === Action.DisputeInitiatedByPeer ||
-        this.message.order.action === Action.AdminTookDispute ||
-        this.message.order.action === Action.AdminSettled
-      ) {
-        return '#BF360C'
-      }
-      return ''
-    },
-    isLocalBuyer() {
-      // @ts-ignore
-      return this?.$mostro?.getNpub() === this.order?.buyer_pubkey
-    },
-    isLocalMaker() {
-      if (!this.order) console.warn(`Order with id ${this.$route.params.id} not found`)
-      return this.order?.is_mine
-    }
+
+// Props definition
+const props = defineProps<{
+  message: MostroMessage
+  disabled?: boolean
+}>()
+
+// Store setup
+const ordersStore = useOrders()
+const { getOrderById } = storeToRefs(ordersStore)
+
+// Add action constant for template usage
+const action = Action
+
+// Computed properties
+const order = computed<Order | undefined>(() =>
+  getOrderById.value(useRoute().params.id as string)
+)
+
+const color = computed(() => {
+  if (
+    props.message.order.action === Action.DisputeInitiatedByYou ||
+    props.message.order.action === Action.DisputeInitiatedByPeer ||
+    props.message.order.action === Action.AdminTookDispute ||
+    props.message.order.action === Action.AdminSettled
+  ) {
+    return '#BF360C'
   }
-}
+  return ''
+})
+
+const isLocalBuyer = computed(() => {
+  // @ts-ignore
+  return useNuxtApp().$mostro?.getNpub() === order.value?.buyer_pubkey
+})
+
+const isLocalMaker = computed(() => {
+  if (!order.value) console.warn(`Order with id ${useRoute().params.id} not found`)
+  return order.value?.is_mine
+})
 </script>
