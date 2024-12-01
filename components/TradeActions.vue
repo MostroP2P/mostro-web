@@ -1,12 +1,12 @@
 <template>
   <div class="d-flex justify-center align-center mt-5">
     <pay-invoice-button
-      v-if="showPayInvoice"
-      :message="(payInvoiceMessage as MostroMessage)"
+      v-if="showPayInvoice && payInvoiceMessage"
+      :message="payInvoiceMessage"
     />
     <give-invoice-button
-      v-if="showGiveInvoice"
-      :message="(giveInvoiceMessage as MostroMessage)"
+      v-if="showGiveInvoice && giveInvoiceMessage"
+      :message="giveInvoiceMessage"
     />
     <fiat-sent-button
       v-if="showFiatSent"
@@ -21,124 +21,110 @@
     />
     <release-funds-dialog
       v-if="showRelease"
-      :order-id="$route.params.id as string"
+      :order-id="route.params.id as string"
     />
   </div>
 </template>
-<script lang="ts">
-import { mapState } from 'pinia'
-import { useRoute } from 'vue-router'
+
+<script setup lang="ts">
+import { computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useMessages } from '@/stores/messages'
 import { useOrders } from '@/stores/orders'
 import { useDisputes } from '@/stores/disputes'
-import { OrderStatus, OrderType, Action, Order, type MostroMessage } from '~/utils/mostro/types'
+import { useAuth } from '@/stores/auth'
+import { useNuxtApp } from '#app'
+import { OrderStatus, Action, type MostroMessage } from '~/utils/mostro/types'
 
-export default {
-  emits: ['dispute'],
-  data() {
-    const authStore = useAuth()
-    const route = useRoute()
-    return {
-      orderId: route.params.id as string,
-      pubkey: authStore.pubKey
-    }
-  },
-  methods: {
-    handleDispute() {
-      // Opens a dispute
-      const { $mostro } = useNuxtApp()
-      // @ts-ignore
-      $mostro.dispute(this.order)
-    },
-    handleCancel() {
-      console.log('handleCancel')
-      // Cancels the order
-      const { $mostro, $router } = useNuxtApp()
-      // @ts-ignore
-      $mostro.cancel(this.order)
-      $router.replace({ path: '/' })
-    }
-  },
-  computed: {
-    ...mapState(useOrders, ['getOrderStatus', 'getOrderById']),
-    ...mapState(useMessages, ['getMostroMessagesByOrderId']),
-    ...mapState(useDisputes, ['byOrderId']),
-    payInvoiceMessage() {
-      const orderId = this.$route.params.id as string
-      const messages = this.getMostroMessagesByOrderId(orderId)
-      return messages
-        .find((msg: MostroMessage) => msg.order.action === Action.WaitingSellerToPay || msg.order.action === Action.PayInvoice)
-    },
-    giveInvoiceMessage() {
-      const orderId = this.$route.params.id as string
-      const messages = this.getMostroMessagesByOrderId(orderId)
-      return messages.find((msg: MostroMessage) => msg.order.action === Action.AddInvoice || msg.order.action === Action.TakeSell)
-    },
-    currentOrderStatus(): OrderStatus {
-      return this.getOrderStatus(this.orderId)
-    },
-    order(): Order | undefined {
-      return this.getOrderById(this.orderId)
-    },
-    buyerPubkey() {
-      return this.order?.buyer_pubkey ?? '?'
-    },
-    sellerPubkey() {
-      return this.order?.seller_pubkey ?? '?'
-    },
-    isBuy() {
-      if (!this.order) console.warn(`Order with id ${this.orderId} not found`)
-      return this.order?.kind === OrderType.BUY
-    },
-    isSell() {
-      if (!this.order) console.warn(`Order with id ${this.orderId} not found`)
-      return this.order?.kind === OrderType.SELL
-    },
-    isLocalSeller() {
-      return this.pubkey === this.order?.master_seller_pubkey
-    },
-    isLocalBuyer() {
-      return this.pubkey === this.order?.master_buyer_pubkey
-    },
-    showRelease() {
-      return this.isLocalSeller && this.currentOrderStatus === OrderStatus.FIAT_SENT
-    },
-    showCancel() {
-      return this.currentOrderStatus === OrderStatus.WAITING_BUYER_INVOICE && this.isLocalBuyer
-    },
-    isDisputed() {
-      return this.byOrderId[this.orderId] !== undefined
-    },
-    showDispute() {
-      if (this.isDisputed) {
-        // Dispute already exists
-        return false
-      }
-      if (this.isLocalBuyer) {
-        // Rule for local buyer
-        return this.currentOrderStatus === OrderStatus.FIAT_SENT
-      } else {
-        // Rule for local seller
-        return [OrderStatus.ACTIVE, OrderStatus.FIAT_SENT].includes(this.currentOrderStatus)
-      }
-    },
-    showFiatSent() {
-      if (this.isDisputed) {
-        return false
-      }
-      return this.currentOrderStatus === OrderStatus.ACTIVE && this.isLocalBuyer
-    },
-    showPayInvoice() {
-      const messages: MostroMessage[] = this.getMostroMessagesByOrderId(this.orderId)
-      if (!messages || messages.length === 0) return false
-      return messages[messages.length - 1].order.action === Action.PayInvoice &&
-        this.currentOrderStatus !== OrderStatus.CANCELED
-    },
-    isCancelled() {
-      return this.currentOrderStatus === OrderStatus.CANCELED
-    },
-    showGiveInvoice() {      return this.currentOrderStatus === OrderStatus.WAITING_BUYER_INVOICE && this.giveInvoiceMessage
-    }
-  }
+const emit = defineEmits(['dispute'])
+const route = useRoute()
+const router = useRouter()
+const authStore = useAuth()
+const messagesStore = useMessages()
+const ordersStore = useOrders()
+const disputesStore = useDisputes()
+const { $mostro } = useNuxtApp()
+
+const orderId = computed(() => route.params.id as string)
+const pubkey = computed(() => authStore.pubKey)
+
+// Methods
+const handleDispute = () => {
+  if (order.value) $mostro.dispute(order.value)
+  else console.warn(`Order with id ${orderId.value} not found`)
 }
+
+const handleCancel = () => {
+  console.log('handleCancel')
+  if (order.value) $mostro.cancel(order.value)
+  else console.warn(`Order with id ${orderId.value} not found`)
+  router.replace({ path: '/' })
+}
+
+// Computed properties
+const payInvoiceMessage = computed(() => {
+  const messages = messagesStore.getMostroMessagesByOrderId(orderId.value)
+  return messages.find((msg: MostroMessage) =>
+    msg.order.action === Action.WaitingSellerToPay || msg.order.action === Action.PayInvoice
+  )
+})
+
+const giveInvoiceMessage = computed(() => {
+  const messages = messagesStore.getMostroMessagesByOrderId(orderId.value)
+  return messages.find((msg: MostroMessage) =>
+    msg.order.action === Action.AddInvoice || msg.order.action === Action.TakeSell
+  )
+})
+
+const currentOrderStatus = computed(() =>
+  ordersStore.getOrderStatus(orderId.value)
+)
+
+const order = computed(() =>
+  ordersStore.getOrderById(orderId.value)
+)
+
+const isLocalSeller = computed(() =>
+  pubkey.value === order.value?.master_seller_pubkey
+)
+
+const isLocalBuyer = computed(() =>
+  pubkey.value === order.value?.master_buyer_pubkey
+)
+
+const showRelease = computed(() =>
+  isLocalSeller.value && currentOrderStatus.value === OrderStatus.FIAT_SENT
+)
+
+const showCancel = computed(() =>
+  currentOrderStatus.value === OrderStatus.WAITING_BUYER_INVOICE && isLocalBuyer.value
+)
+
+const isDisputed = computed(() =>
+  disputesStore.byOrderId[orderId.value] !== undefined
+)
+
+const showDispute = computed(() => {
+  if (isDisputed.value) return false
+  if (isLocalBuyer.value) {
+    return currentOrderStatus.value === OrderStatus.FIAT_SENT
+  }
+  return [OrderStatus.ACTIVE, OrderStatus.FIAT_SENT].includes(currentOrderStatus.value)
+})
+
+const showFiatSent = computed(() => {
+  if (isDisputed.value) return false
+  return currentOrderStatus.value === OrderStatus.ACTIVE && isLocalBuyer.value
+})
+
+const showPayInvoice = computed(() => {
+  const messages: MostroMessage[] = messagesStore.getMostroMessagesByOrderId(orderId.value)
+  if (!messages || messages.length === 0) return false
+  return messages[messages.length - 1].order.action === Action.PayInvoice &&
+    currentOrderStatus.value !== OrderStatus.CANCELED
+})
+
+const showGiveInvoice = computed(() =>
+  currentOrderStatus.value === OrderStatus.WAITING_BUYER_INVOICE && giveInvoiceMessage.value
+)
 </script>
