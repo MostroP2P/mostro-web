@@ -156,6 +156,11 @@ type Peer = {
   pubkey: string
 }
 
+export type PaymentRequest = [
+  Partial<Order>,
+  string,
+  number
+]
 
 /**
  * Message sent by mostro
