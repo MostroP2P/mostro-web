@@ -19,7 +19,13 @@ export const useOrders = defineStore('orders', {
       const mostro = useNuxtApp().$mostro as Mostro
       mostro.on('order-update', (order: Order, ev: NDKEvent) => {
         // This is a public order update, so we don't know if it's ours
-        this.addOrder({ order, event: ev })
+        if (this.orders[order.id]) {
+          // If the order already exists, we update it
+          this.updateOrder({ order, event: ev }, true)
+        } else {
+          // If the order doesn't exist, we add it
+          this.addOrder({ order, event: ev })
+        }
       })
       mostro.on('mostro-message', (message: MostroMessage, ev: NDKEvent) => {
         const orderMessage = message.order
@@ -55,33 +61,26 @@ export const useOrders = defineStore('orders', {
       delete this.orders[order.id]
     },
     updateOrder({ order, event } : {order: Order, event: NDKEvent }, updateStatus: boolean = false) {
-      const existingOrder = this.orders[order.id]      
+      const existingOrder = this.orders[order.id]
       if (existingOrder) {
-        // We just update buyer & seller pubkeys if they're not set yet
-        if (!existingOrder.master_buyer_pubkey && order.master_buyer_pubkey) {
-          existingOrder.master_buyer_pubkey = order.master_buyer_pubkey
+        // Create a new object with the updated values to maintain reactivity
+        this.orders[order.id] = {
+          ...existingOrder,
+          master_buyer_pubkey: (!existingOrder.master_buyer_pubkey && order.master_buyer_pubkey)
+            ? order.master_buyer_pubkey
+            : existingOrder.master_buyer_pubkey,
+          master_seller_pubkey: (!existingOrder.master_seller_pubkey && order.master_seller_pubkey)
+            ? order.master_seller_pubkey
+            : existingOrder.master_seller_pubkey,
+          is_mine: existingOrder.is_mine || order.is_mine,
+          status: updateStatus
+            ? order.status
+            : existingOrder.status,
+          fiat_amount: order.fiat_amount,
+          updated_at: !existingOrder.updated_at
+            ? order.created_at
+            : Math.max(existingOrder.updated_at, event.created_at as number)
         }
-        if (!existingOrder.master_seller_pubkey && order.master_seller_pubkey) {
-          existingOrder.master_seller_pubkey = order.master_seller_pubkey
-        }
-        // A similar treatment is done for the 'is_mine' flag
-        if (!existingOrder.is_mine) {
-          existingOrder.is_mine = order.is_mine
-        }
-        // The 'status' is updated only if the `updateStatus` flag is set to `true`
-        // This is because we want to update when receving a replaceable event, but
-        // not necessarily when receiving a DM
-        if (updateStatus) {
-          // We don't want to update an order's status if the event timestamp is older
-          // than the `updated_at` field of the stored order, if we have one
-          if (!existingOrder.updated_at || event.created_at && event?.created_at > existingOrder?.updated_at) {
-            existingOrder.status = order.status
-          }
-        }
-        // Updating amount for range orders
-        existingOrder.fiat_amount = order.fiat_amount
-        // Adds or updates the 'update_at' field
-        existingOrder.updated_at = !existingOrder.updated_at ?  order.created_at : Math.max(existingOrder.updated_at, event.created_at as number)
       } else {
         console.warn(`Could not find order with id ${order.id} to update`)
       }
