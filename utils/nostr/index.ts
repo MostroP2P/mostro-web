@@ -285,7 +285,7 @@ export class Nostr extends EventEmitter<{
       authors: [mostroDecoded.data as string]
     }
     if (!this.subscriptions.has(NOSTR_REPLACEABLE_EVENT_KIND)) {
-      const subscription = this.ndk.subscribe(filters, { closeOnEose: false })
+      const subscription = this.ndk.subscribe(filters, { closeOnEose: false, subId: 'orders', groupable: true, groupableDelay: 300 })
       subscription.on('event', this._queueOrderEvent.bind(this))
       subscription.on('event:dup', this._handleDupEvent.bind(this))
       subscription.on('eose', this._handleOrderEose.bind(this))
@@ -304,7 +304,7 @@ export class Nostr extends EventEmitter<{
       since: Math.floor(Date.now() / 1e3) - EVENT_INTEREST_WINDOW,
     }
     if (!this.subscriptions.has(NOSTR_GIFT_WRAP_KIND)) {
-      const subscription = this.ndk.subscribe(filters, { closeOnEose: false })
+      const subscription = this.ndk.subscribe(filters, { closeOnEose: false, subId: 'gift-wraps', groupable: true, groupableDelay: 300 })
       subscription.on('event', this._queueGiftWrapEvent.bind(this))
       subscription.on('event:dup', this._handleDupEvent.bind(this))
       subscription.on('eose', this._handleGiftWrapEose.bind(this))
