@@ -50,7 +50,7 @@ export class Nostr extends EventEmitter<{
   'relay:disconnect': (relay: NDKRelay) => void,
   'relay:auth': (relay: NDKRelay, challenge: string) => void,
   'relay:flapping': (relay: NDKRelay) => void,
-  'notice': (relay: NDKRelay, err: any) => void
+  'relay:notice': (relay: NDKRelay, err: any) => void
 }> {
   private ndk: NDK
   private users = new Map<string, NDKUser>()
@@ -87,7 +87,6 @@ export class Nostr extends EventEmitter<{
       dexieAdapter.locking = true
       cacheAdapter = dexieAdapter
     }
-    // this.ndk = new NDK()
     this.ndk = new NDK({
       enableOutboxModel: true,
       cacheAdapter: cacheAdapter,
@@ -105,6 +104,10 @@ export class Nostr extends EventEmitter<{
       this.debug && console.debug(`🔗 connecting to relay: ${relay.url}...`)
       this.emit('relay:connecting', relay)
     })
+    this.ndk.pool.on('relay:ready', (relay: NDKRelay) => {
+      this.debug && console.debug(`🎉 relay ${relay.url} is ready`)
+      this.emit('relay:ready', relay)
+    })
     this.ndk.pool.on('relay:disconnect', (relay: NDKRelay) => {
       this.debug && console.debug(`🚨 disconnected from relay: ${relay.url}`)
       if (!this.mustKeepRelays.has(relay.url)) {
@@ -116,13 +119,20 @@ export class Nostr extends EventEmitter<{
       }
       this.emit('relay:disconnect', relay)
     })
+    this.ndk.pool.on('flapping', (relay: NDKRelay) => {
+      this.debug && console.debug(`🔄 flapping relay: ${relay.url}`)
+      this.emit('relay:flapping', relay)
+    })
+    this.ndk.pool.on('notice', (relay: NDKRelay, err: any) => {
+      this.debug && console.warn(`>>> Notice from relay ${relay.url}: ${err}`)
+      this.emit('relay:notice', relay, err)
+    })
     this.ndk.pool.on('relay:auth', (relay: NDKRelay, challenge: string) => {
       this.debug && console.debug(`🔑 relay ${relay.url} requires auth. Challenge: ${challenge}`)
       this.emit('relay:auth', relay, challenge)
     })
     this.ndk.outboxPool?.on('relay:connect', (relay: NDKRelay) => {
       this.debug && console.log(`🎉 connected to outbox relay: ${relay.url}`)
-      this.emit('relay:connect', relay)
     })
 
     const { relays } = this.options
