@@ -494,16 +494,6 @@ export class Nostr extends EventEmitter<{
     }
   }
 
-  async sendDirectMessage(message: string, destination: string): Promise<void> {
-    const event = new NDKEvent(this.ndk)
-    event.kind = NDKKind.Text,
-    event.created_at = Math.floor(Date.now() / 1000)
-    event.content = message
-    event.pubkey = this.getMyPubKey()
-    this.debug && console.log(`💬 sending direct message to 🧌: ${message}`)
-    return this.giftWrapAndPublishEvent(event, destination)
-  }
-
   async sendDirectMessageToPeer(message: string, destination: string, tags: string[][]): Promise<void> {
     const event = new NDKEvent(this.ndk)
     event.kind = NOSTR_DIRECT_MESSAGE_KIND,

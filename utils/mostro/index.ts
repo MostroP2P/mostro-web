@@ -381,10 +381,6 @@ export class Mostro extends EventEmitter<{
     })
   }
 
-  async submitDirectMessage(message: string, destination: string): Promise<void> {
-    await this.nostr.sendDirectMessage(message, destination)
-  }
-
   async submitDirectMessageToPeer(message: string, destination: string, tags: string[][]): Promise<void> {
     await this.nostr.sendDirectMessageToPeer(message, destination, tags)
   }
