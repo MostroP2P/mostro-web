@@ -4,6 +4,7 @@ import { nip19 } from 'nostr-tools'
 import { Nostr } from '../nostr/index'
 import { Action, type NewOrder, Order, OrderStatus, OrderType, type MostroInfo, type MostroMessage } from './types'
 import type { GiftWrap, Rumor, Seal } from '../nostr/types'
+import type { IMostro, MostroEvents } from './mostro-interface'
 
 const REQUEST_TIMEOUT = 30000 // 30 seconds timeout
 
@@ -29,13 +30,7 @@ export enum PublicKeyType {
   NPUB = 'npub'
 }
 
-export class Mostro extends EventEmitter<{
-  'mostro-message': (mostroMessage: MostroMessage, ev: NDKEvent) => void,
-  'peer-message': (gift: GiftWrap, seal: Seal, rumor: Rumor) => void,
-  'order-update': (order: Order, ev: NDKEvent) => void,
-  'info-update': (info: MostroInfo) => void,
-  'ready': () => void
-}> {
+export class Mostro extends EventEmitter<MostroEvents> implements IMostro {
   mostro: string
   nostr: Nostr
   pubkeyCache: PublicKeyCache = { npub: null, hex: null }
