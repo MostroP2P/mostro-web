@@ -20,7 +20,8 @@ interface GetUserParams {
 }
 
 // Message kinds
-type ExtendedNDKKind = NDKKind | 38383
+type ExtendedNDKKind = NDKKind | 38383 | 14
+export const NOSTR_DIRECT_MESSAGE_KIND: ExtendedNDKKind = 14
 export const NOSTR_REPLACEABLE_EVENT_KIND: ExtendedNDKKind = 38383
 export const NOSTR_SEAL_KIND = 13
 export const NOSTR_GIFT_WRAP_KIND = 1059
@@ -259,12 +260,16 @@ export class Nostr extends EventEmitter<{
   private async _processQueuedGiftWraps() {
     const unwrappedEventQueue: UnwrappedEvent[] = []
     for (const event of this.giftWrapQueue) {
-      const { rumor, seal } = await this.unwrapEvent(event)
-      if (rumor.pubkey !== seal.pubkey) {
-        console.warn('🚨 Mismatch between rumor and seal pubkeys: ', rumor.pubkey, ' != ', seal.pubkey)
-        continue
+      try {
+        const { rumor, seal } = await this.unwrapEvent(event)
+        if (rumor.pubkey !== seal.pubkey) {
+          console.warn('🚨 Mismatch between rumor and seal pubkeys: ', rumor.pubkey, ' != ', seal.pubkey)
+          continue
+        }
+        unwrappedEventQueue.push({ gift: event, rumor, seal })
+      } catch (err) {
+        console.error('Error unwrapping gift wrap event: ', err)
       }
-      unwrappedEventQueue.push({ gift: event, rumor, seal })
     }
     // Sorting rumors by 'created_at' fields. We can only do this after unwrapping
     unwrappedEventQueue.sort((a, b) => (a.rumor.created_at as number) - (b.rumor.created_at as number))
@@ -424,10 +429,8 @@ export class Nostr extends EventEmitter<{
 
   createRumor(event: Partial<UnsignedEvent>, privateKey: Uint8Array) : Rumor {
     const rumor = {
-      created_at: this.now(),
-      content: "",
-      tags: [],
       ...event,
+      created_at: this.now(),
       pubkey: getPublicKey(privateKey),
     } as any
 
@@ -454,7 +457,7 @@ export class Nostr extends EventEmitter<{
         kind: NOSTR_GIFT_WRAP_KIND,
         content: this.nip44Encrypt(event, randomKey, recipientPublicKey),
         created_at: this.randomNow(),
-        tags: [["p", recipientPublicKey]],
+        tags: [['p', recipientPublicKey]],
       },
       randomKey
     ) as NostrEvent
@@ -497,8 +500,18 @@ export class Nostr extends EventEmitter<{
     event.created_at = Math.floor(Date.now() / 1000)
     event.content = message
     event.pubkey = this.getMyPubKey()
-    const destinationEmoji = this.options.mostroPubKey === destination ? '🧌' : '👤'
-    this.debug && console.log(`💬 sending direct message to ${destinationEmoji}: ${message}`)
+    this.debug && console.log(`💬 sending direct message to 🧌: ${message}`)
+    return this.giftWrapAndPublishEvent(event, destination)
+  }
+
+  async sendDirectMessageToPeer(message: string, destination: string, tags: string[][]): Promise<void> {
+    const event = new NDKEvent(this.ndk)
+    event.kind = NOSTR_DIRECT_MESSAGE_KIND,
+    event.created_at = Math.floor(Date.now() / 1000)
+    event.content = message
+    event.pubkey = this.getMyPubKey()
+    event.tags = tags
+    this.debug && console.log(`💬 sending direct message to 👤: ${message}`)
     return this.giftWrapAndPublishEvent(event, destination)
   }
 

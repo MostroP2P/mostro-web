@@ -31,7 +31,7 @@ export enum PublicKeyType {
 
 export class Mostro extends EventEmitter<{
   'mostro-message': (mostroMessage: MostroMessage, ev: NDKEvent) => void,
-  'peer-message': (seal: Seal, rumor: Rumor) => void,
+  'peer-message': (gift: GiftWrap, seal: Seal, rumor: Rumor) => void,
   'order-update': (order: Order, ev: NDKEvent) => void,
   'info-update': (info: MostroInfo) => void,
   'ready': () => void
@@ -303,7 +303,7 @@ export class Mostro extends EventEmitter<{
       // Handle messages from other peers, emitting event to be handled
       // by the responsible component
       console.info(`[🎁][🍐 -> me] [d: ${delta}]: `, rumor.content, rumor)
-      this.emit('peer-message', seal, rumor)
+      this.emit('peer-message', gift, seal, rumor)
     }
   }
 
@@ -381,8 +381,12 @@ export class Mostro extends EventEmitter<{
     })
   }
 
-  async submitDirectMessage(message: string, npub: string): Promise<void> {
-    await this.nostr.sendDirectMessage(message, npub)
+  async submitDirectMessage(message: string, destination: string): Promise<void> {
+    await this.nostr.sendDirectMessage(message, destination)
+  }
+
+  async submitDirectMessageToPeer(message: string, destination: string, tags: string[][]): Promise<void> {
+    await this.nostr.sendDirectMessageToPeer(message, destination, tags)
   }
 
   getMostroPublicKey(type?: PublicKeyType): string {

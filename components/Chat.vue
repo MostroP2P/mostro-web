@@ -126,10 +126,14 @@ const sendMessage = async () => {
   if (!text) return
   isSending.value = true
   try {
-    await $mostro.submitDirectMessage(text, npubToHex(props.npub))
+    const promises = []
     if (authStore.pubKey) {
-      await $mostro.submitDirectMessage(text, authStore.pubKey)
+      const tags = [['p', npubToHex(props.npub)], ['p', authStore.pubKey]]
+      // Send message to both the peer and myself
+      promises.push($mostro.submitDirectMessageToPeer(text, npubToHex(props.npub), tags))
+      promises.push($mostro.submitDirectMessageToPeer(text, authStore.pubKey, tags))
     }
+    await Promise.all(promises)
     inputMessage.value = ''
   } catch (err) {
     console.error('Error at sending message: ', err)
@@ -140,8 +144,11 @@ const sendMessage = async () => {
 const { format } = useTimeago()
 const getMessageTime = (message: PeerMessage) => format(message.created_at * 1e3)
 
-const messages = useMessages()
-const peerMessages = computed(() => messages.getPeerMessagesByNpub(props.npub))
+const messagesStore = useMessages() as MessagesState
+const peerMessages = computed(() => {
+  const messages = messagesStore.messages.peer[props.npub] ?? []
+  return [...messages].sort((a, b) => a.created_at - b.created_at)
+})
 
 onMounted(() => {
   const pubkey = npubToHex(props.npub)
@@ -154,10 +161,10 @@ watch(peerMessages, () => {
     // delete the input field
     inputMessage.value = ''
   }
-  const lastMessage = peerMessages.value[peerMessages.value.length - 1]
+  const messages = toRaw(peerMessages.value)
+  const lastMessage = messages[messages.length - 1]
   if (lastMessage) {
-    const id = lastMessage.id
-    setTimeout(() => scrollToBottom(id), 100)
+    setTimeout(() => scrollToBottom(lastMessage.id), 100)
   }
 })
 

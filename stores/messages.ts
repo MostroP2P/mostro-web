@@ -12,6 +12,8 @@ import { useOrders } from './orders'
 import type { NDKEvent } from '@nostr-dev-kit/ndk'
 import type { MostroMessage, Order } from '~/utils/mostro/types'
 import type { Mostro } from '~/utils/mostro'
+import type { GiftWrap, Rumor, Seal } from '~/utils/nostr/types'
+import { nip19 } from 'nostr-tools'
 
 export interface MessagesState {
   messages: {
@@ -26,13 +28,14 @@ export const useMessages = defineStore('messages', {
   state: () => ({
     messages: {
       mostro: [] as MostroMessage[],
-      peer: {}
+      peer: {} as Record<string, PeerMessage[]>,
     }
   }),
   actions: {
     nuxtClientInit() {
       const mostro = useNuxtApp().$mostro as Mostro
       mostro.on('mostro-message', this.addMostroMessage)
+      mostro.on('peer-message', this.addPeerMessage)
     },
     async addMostroMessage(
       message: MostroMessage,
@@ -94,12 +97,38 @@ export const useMessages = defineStore('messages', {
         console.warn('>>> addMostroMessage: message has unknown property property. message: ', message, ', ev: ', event)
       }
     },
-    addPeerMessage(peerMessage: PeerMessage) {
-      const { peerNpub } = peerMessage
-      const updatedMessages = Object.assign({}, this.messages) as MessagesState['messages']
-      const existingMessages = updatedMessages.peer[peerNpub] ?? []
-      updatedMessages.peer[peerNpub] = [...existingMessages, peerMessage]
-      this.messages = updatedMessages
+    addPeerMessage(gift: GiftWrap, seal: Seal, rumor: Rumor) {
+      // Decides whether this message is from me or my peer
+      const mostro = useNuxtApp().$mostro as Mostro
+      const myPubKey = mostro.getNostr().getMyPubKey()
+      // If the seal pubkey is mine, the peer npub should be extracted from the seal p tag
+      // Otherwise, it should be extracted from the seal pubkey
+      const peerHex = seal.pubkey !== myPubKey ? seal.pubkey : rumor.tags.find(tag => tag[1] !== myPubKey)?.[1]
+      if (peerHex !== undefined) {
+        const peerNpub = nip19.npubEncode(peerHex)
+        let sender: 'me' | 'other' = 'other'
+        if (seal.pubkey === myPubKey) {
+          sender = 'me'
+          console.info('< [me -> 🍐]: ', rumor.content)
+        } else {
+          console.info('< [🍐 -> me]: ', rumor.content)
+        }
+
+        const chatMessage: PeerMessage = {
+          id: rumor.id,
+          peerNpub,
+          text: rumor.content,
+          created_at: rumor.created_at,
+          sender
+        }
+
+        if (!this.messages.peer[peerNpub]) {
+          this.messages.peer[peerNpub] = []
+        }
+        this.messages.peer[peerNpub].push(chatMessage)
+      } else {
+        console.warn('Unexpected situation in addPeerMessage: peerHex is undefined')
+      }
     }
   },
   getters: {
