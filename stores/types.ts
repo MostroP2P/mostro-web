@@ -104,11 +104,11 @@ export enum Action {
 // Peer messages
 export type PeerThreadSummary = {
   peer: string,
-  lastMessage: PeerMessage,
+  lastMessage: ChatMessage,
   messageCount: number
 }
 
-export type PeerMessage = {
+export type ChatMessage = {
   id: string,
   peerNpub: string,
   sender: 'me' | 'other',

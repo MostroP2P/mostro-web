@@ -75,7 +75,7 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { useAuth } from '@/stores/auth'
 import { useMessages } from '~/stores/messages'
 import { useTimeago } from '@/composables/timeago'
-import type { PeerMessage } from '~/stores/types'
+import type { ChatMessage } from '~/stores/types'
 import { useProfile } from '@/composables/useProfile'
 import useNip19 from '@/composables/useNip19'
 
@@ -142,7 +142,7 @@ const sendMessage = async () => {
   }
 }
 const { format } = useTimeago()
-const getMessageTime = (message: PeerMessage) => format(message.created_at * 1e3)
+const getMessageTime = (message: ChatMessage) => format(message.created_at * 1e3)
 
 const messagesStore = useMessages() as MessagesState
 const peerMessages = computed(() => {

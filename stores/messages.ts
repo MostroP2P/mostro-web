@@ -1,6 +1,6 @@
 import type {
   ThreadSummary,
-  PeerMessage,
+  ChatMessage,
   PeerThreadSummary,
 } from './types'
 import {
@@ -19,7 +19,7 @@ export interface MessagesState {
   messages: {
     mostro: MostroMessage[],
     peer: {
-      [key: string]: PeerMessage[]
+      [key: string]: ChatMessage[]
     }
   }
 }
@@ -28,7 +28,7 @@ export const useMessages = defineStore('messages', {
   state: () => ({
     messages: {
       mostro: [] as MostroMessage[],
-      peer: {} as Record<string, PeerMessage[]>,
+      peer: {} as Record<string, ChatMessage[]>,
     }
   }),
   actions: {
@@ -114,7 +114,7 @@ export const useMessages = defineStore('messages', {
           console.info('< [🍐 -> me]: ', rumor.content)
         }
 
-        const chatMessage: PeerMessage = {
+        const chatMessage: ChatMessage = {
           id: rumor.id,
           peerNpub,
           text: rumor.content,
@@ -219,14 +219,14 @@ export const useMessages = defineStore('messages', {
           .sort((a: MostroMessage, b: MostroMessage) => a.created_at - b.created_at)
       }
     },
-    getPeerMessagesByNpub(state: MessagesState) : (npub: string) => PeerMessage[] {
+    getPeerMessagesByNpub(state: MessagesState) : (npub: string) => ChatMessage[] {
       return (npub: string) => {
         if (!npub) return []
         if (state?.messages?.peer[npub]) {
           const messages = [...state.messages.peer[npub]]
           console.log(`Found ${messages.length} messages for npub ${npub}`, messages)
           return messages
-            .sort((a: PeerMessage, b: PeerMessage) => a.created_at - b.created_at)
+            .sort((a: ChatMessage, b: ChatMessage) => a.created_at - b.created_at)
         } else {
           console.warn(`No messages found for npub ${npub}`)
           return []
