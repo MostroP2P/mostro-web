@@ -119,6 +119,19 @@ export class Order {
 
 export type NewOrder = Pick<Order, 'kind' | 'status' | 'amount' | 'fiat_code' | 'fiat_amount' | 'min_amount' | 'max_amount' | 'payment_method' | 'premium' | 'created_at' | 'buyer_invoice'>
 
+export type SmallOrder = {
+  amount: number,
+  fiat_amount: number,
+  fiat_code: string,
+  id: string,
+  payment_method: string,
+  premium: number,
+  buyer_pubkey: string,
+  seller_pubkey: string
+  master_buyer_pubkey?: string,
+  master_seller_pubkey?: string,
+}
+
 export enum OrderStatus {
   ACTIVE = 'active',
   CANCELED = 'canceled',

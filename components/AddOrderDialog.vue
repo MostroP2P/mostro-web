@@ -46,7 +46,7 @@
 <script lang="ts" setup>
 import { computed } from 'vue'
 import { useAuth } from '@/stores/auth'
-import { OrderType } from '@/stores/types'
+import { OrderType } from '~/utils/mostro/types'
 const authStore = useAuth()
 const isAuthenticated = computed(() => authStore.isAuthenticated)
 </script>

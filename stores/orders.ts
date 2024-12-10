@@ -1,7 +1,7 @@
 import { NDKEvent } from '@nostr-dev-kit/ndk'
-import { Action, OrderStatus, type OrderMapType, type OrderOwnershipMapType } from './types'
+import { OrderStatus, type OrderMapType, type OrderOwnershipMapType } from './types'
 import type { Mostro } from '~/utils/mostro'
-import type { MostroMessage, Order } from '~/utils/mostro/types'
+import { Action, type MostroMessage, type Order } from '~/utils/mostro/types'
 
 export const ORDER_LIFETIME_IN_SECONDS = 24 * 60 * 60 // 24 hours
 
@@ -47,7 +47,7 @@ export const useOrders = defineStore('orders', {
         order.is_mine = true
       }
     },
-    addUserOrder({ order, event }: {order: Order, event: NDKEvent}) {
+    addUserOrder({ order, event }: {order: Order, event?: NDKEvent}) {
       if (!this.orders[order.id]) {
         // If the order doesn't yet exist, we add it
         this.orders[order.id] = order

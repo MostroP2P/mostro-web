@@ -4,13 +4,12 @@ import type {
   PeerThreadSummary,
 } from './types'
 import {
-  Action,
   OrderStatus
 } from './types'
 import { useOrders } from './orders'
 // import { useAlertStore } from './alerts'
 import type { NDKEvent } from '@nostr-dev-kit/ndk'
-import type { MostroMessage, Order } from '~/utils/mostro/types'
+import { Action, type MostroMessage, type Order } from '~/utils/mostro/types'
 import type { Mostro } from '~/utils/mostro'
 import type { GiftWrap, Rumor, Seal } from '~/utils/nostr/types'
 import { nip19 } from 'nostr-tools'

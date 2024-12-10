@@ -269,6 +269,7 @@ export class Nostr extends EventEmitter<{
         unwrappedEventQueue.push({ gift: event, rumor, seal })
       } catch (err) {
         console.error('Error unwrapping gift wrap event: ', err)
+        console.error('Event: ', event.rawEvent())
       }
     }
     // Sorting rumors by 'created_at' fields. We can only do this after unwrapping
