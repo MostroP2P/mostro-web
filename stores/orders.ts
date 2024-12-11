@@ -115,52 +115,44 @@ export const useOrders = defineStore('orders', {
         case Action.AddInvoice:
           if (existingOrder.status === OrderStatus.WAITING_PAYMENT) {
             existingOrder.status = OrderStatus.WAITING_BUYER_INVOICE
-            existingOrder.updated_at = Math.floor(Date.now() / 1E3)
           }
           if (existingOrder.status === OrderStatus.WAITING_BUYER_INVOICE) {
             existingOrder.status = OrderStatus.WAITING_PAYMENT
-            existingOrder.updated_at = Math.floor(Date.now() / 1E3)
           }
           // When the buyer is the taker
           if (existingOrder.status === OrderStatus.PENDING) {
             existingOrder.status = OrderStatus.WAITING_BUYER_INVOICE
-            existingOrder.updated_at = Math.floor(Date.now() / 1E3)
           }
           break
         case Action.WaitingSellerToPay:
           if (existingOrder.status === OrderStatus.PENDING) {
             existingOrder.status = OrderStatus.WAITING_PAYMENT
-            existingOrder.updated_at = Math.floor(Date.now() / 1E3)
           }
           break
         case Action.PayInvoice:
           if (existingOrder.status === OrderStatus.PENDING) {
             existingOrder.status = OrderStatus.WAITING_PAYMENT
-            existingOrder.updated_at = Math.floor(Date.now() / 1E3)
           }
           break
         case Action.FiatSent:
           if (existingOrder.status === OrderStatus.ACTIVE) {
             existingOrder.status = OrderStatus.FIAT_SENT
-            existingOrder.updated_at = Math.floor(Date.now() / 1E3)
           }
           break
         case Action.PurchaseCompleted:
           existingOrder.status = OrderStatus.SUCCESS
-          existingOrder.updated_at = Math.floor(Date.now() / 1E3)
           break
         case Action.WaitingSellerToPay:
           if (existingOrder.status === OrderStatus.WAITING_BUYER_INVOICE) {
             existingOrder.status = OrderStatus.WAITING_PAYMENT
-            existingOrder.updated_at = Math.floor(Date.now() / 1E3)
           }
           break
         case Action.HoldInvoicePaymentAccepted:
         case Action.BuyerTookOrder:
           existingOrder.status = OrderStatus.ACTIVE
-          existingOrder.updated_at = Math.floor(Date.now() / 1E3)
           break
       }
+      existingOrder.updated_at = Math.floor(Date.now() / 1E3)
     },
     markDisputed(order: Order, event: NDKEvent) {
       const existingOrder = this.orders[order.id]
