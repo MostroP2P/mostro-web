@@ -35,7 +35,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import type { PropType } from 'vue'
-import type { Order } from '~/utils/mostro/types'
+import { Action, type Order } from '~/utils/mostro/types'
 import { useRouter } from 'vue-router'
 import type { Mostro } from '~/utils/mostro';
 
