@@ -66,6 +66,7 @@ export class Nostr extends EventEmitter<{
   // Queue for order messages
   private orderQueue: NDKEvent[] = []
   private orderEoseReceived: boolean = false
+  private orderSubscriptionComplete: boolean = false
 
   private options: NostrOptions
   private debug: boolean
@@ -240,7 +241,35 @@ export class Nostr extends EventEmitter<{
   private _handleOrderEose() {
     this.debug && console.warn('🔚 order subscription eose')
     this.orderEoseReceived = true
+    this.orderSubscriptionComplete = true
     this._processQueuedOrders()
+    // Try to subscribe to gift wraps if we already have a pubkey
+    this.trySubscribeGiftWraps()
+  }
+
+  /**
+   * Try to subscribe to gift wraps if we already have a pubkey. This is called after both after the EOSE
+   * of the order subscription and when the public key is available. At one of these points we should
+   * be able to subscribe to gift wraps.
+   *
+   * The intent here is to make sure that we have all public order messages before subscribing to gift wraps.
+   */
+  private trySubscribeGiftWraps() {
+    if (!this.orderSubscriptionComplete) {
+      this.debug && console.log('⏳ Waiting for order subscription to complete before subscribing to gift wraps')
+      return
+    }
+
+    try {
+      const myPubKey = this.getMyPubKey()
+      if (myPubKey) {
+        this.subscribeGiftWraps(myPubKey)
+      } else {
+        this.debug && console.log('⏳ No pubkey available yet, gift wrap subscription delayed')
+      }
+    } catch (err) {
+      this.debug && console.log('⏳ No signer available yet, gift wrap subscription delayed')
+    }
   }
 
   private async _handleGiftWrapEose() {
@@ -481,7 +510,7 @@ export class Nostr extends EventEmitter<{
 
   updatePubKey(newPubKey: string | null | undefined) {
     if (newPubKey) {
-      this.subscribeGiftWraps(newPubKey);
+      this.trySubscribeGiftWraps()
     } else {
       this.unsubscribeGiftWraps()
     }
