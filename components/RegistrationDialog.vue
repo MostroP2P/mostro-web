@@ -7,20 +7,21 @@
         Register
       </v-btn>
     </template>
-    <v-card>
+    <v-card class="p-8">
       <v-card-title class="text-h6">Create Account</v-card-title>
       <v-row class="mx-4 mt-5 mb-3">
         <div class="body-2">
           Your private key is used to sign Mostro events. If you generate one, make sure you keep a backup.
         </div>
       </v-row>
-      <!-- Show Generate Button if NSEC is Not Generated -->
-      <v-row class="mx-4 my-3 d-flex justify-center" v-if="!nsecGenerated">
+      <!-- Show Generate Button -->
+      <v-row class="mx-4 my-3 d-flex justify-center">
         <v-btn
           @click="onGeneratePrivateKey"
           variant="outlined"
           prepend-icon="mdi-autorenew"
-          class="rounded full-width hover-white"
+          class="rounded hover-white"
+          block
         >
           Generate Key
         </v-btn>
@@ -31,17 +32,21 @@
         <v-text-field
           v-model="privateKey"
           outlined
-          class="rounded-input mb-4"
+          class="rounded-input"
           :rules="[
             (v: string) => isNotEmpty(v) || 'Private key cannot be empty',
             (v: string) => (v === '' || isValidNsec(v) || isValidHex(v)) || 'Invalid private key (not NSEC or HEX format)'
           ]"
-          label="Enter your nsec or hex"
-          :disabled="isProcessing"
+          label="Your nsec or hex"
+          :disabled="false"
           :type="nsecVisible ? 'text' : 'password'"
           :append-icon="nsecVisible ? 'mdi-eye' : 'mdi-eye-off'"
           @click:append="toggleNsecVisibility"
+          style="user-select: text;"
         >
+          <template #append>
+            <v-icon class="mx-2" @click="copyToClipboard">mdi-content-copy</v-icon>
+          </template>
         </v-text-field>
       </v-row>
       <v-row class="mx-4">
@@ -49,13 +54,14 @@
           v-model="password"
           outlined
           label="Password"
-          class="rounded-input mb-4"
+          class="rounded-[50px] mb-4"
           type="password"
           :disabled="isProcessing"
           :rules="[
             v => !!v || 'You need a password',
             v => validPassword || `Your password cannot be shorter than ${MIN_PASSWORD_LENGTH}`
           ]"
+          style="border-radius: 50px;"
         >
         </v-text-field>
       </v-row>
@@ -79,7 +85,8 @@
           color="primary"
           :disabled="!validSecret || !validPassword || !validConfirmation || isProcessing"
           @click="onPrivateKeyConfirmed"
-          class="rounded full-width"
+          class="rounded"
+          block
         >
           Confirm
         </v-btn>
@@ -115,6 +122,14 @@
 
   const toggleNsecVisibility = () => {
     nsecVisible.value = !nsecVisible.value
+  }
+
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(privateKey.value).then(() => {
+      console.log('Private key copied to clipboard')
+    }).catch(err => {
+      console.error('Could not copy text: ', err)
+    })
   }
 
   const onGeneratePrivateKey = async () => {
