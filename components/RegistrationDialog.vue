@@ -11,7 +11,7 @@
       <v-card-title class="text-h6">Create Account</v-card-title>
       <v-row class="mx-4 mt-5 mb-3">
         <div class="body-2">
-          Your private key is used to sign Mostro events. If you generate one, make sure you keep a backup.
+          Your private key is used to sign Mostro events. Make sure you keep it somewhere safe.
         </div>
       </v-row>
       <!-- Show Generate Button -->
