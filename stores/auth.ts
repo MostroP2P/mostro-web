@@ -1,107 +1,121 @@
-import { watch } from 'vue'
-import { AUTH_LOCAL_STORAGE_ENCRYPTED_KEY, AUTH_LOCAL_STORAGE_DECRYPTED_KEY } from './types'
-import type { EncryptedPrivateKey } from './types'
-import { nip19, getPublicKey } from 'nostr-tools'
+import { ref, watch } from 'vue';
+import { getPublicKey } from 'nostr-tools';
+import { argon2id } from 'argon2-browser';
 
-export enum AuthMethod {
-  LOCAL = 'local',
-  NIP07 = 'nip-07',
-  NOT_SET = 'not-set'
+// Key storage constants
+const AUTH_SESSION_STORAGE_ENCRYPTED_KEY = 'auth_encrypted_key';
+const AUTH_SESSION_STORAGE_EXPIRY = 'auth_key_expiry';
+
+// Utility: Derive AES-GCM encryption key from Argon2
+async function deriveKeyFromPassphrase(passphrase: string): Promise<CryptoKey> {
+  const encoder = new TextEncoder();
+  const salt = crypto.getRandomValues(new Uint8Array(16)); // Random salt
+
+  // Derive key using Argon2id
+  const hash = await argon2id({
+    pass: passphrase,
+    salt: salt,
+    time: 3, // Number of iterations
+    mem: 65536, // Memory usage in KiB (64 MB)
+    parallelism: 1,
+    hashLen: 32,
+  });
+
+  return crypto.subtle.importKey(
+    'raw',
+    hash.hash,
+    { name: 'AES-GCM' },
+    false,
+    ['encrypt', 'decrypt']
+  );
 }
 
-export interface ExtensionLoginPayload {
-  authMethod: AuthMethod,
-  publicKey: string
+// Utility: Encrypt data using AES-GCM
+async function encryptData(data: string, passphrase: string): Promise<string> {
+  const key = await deriveKeyFromPassphrase(passphrase);
+  const iv = crypto.getRandomValues(new Uint8Array(12)); // Random IV
+  const encrypted = await crypto.subtle.encrypt(
+    { name: 'AES-GCM', iv },
+    key,
+    new TextEncoder().encode(data)
+  );
+
+  return JSON.stringify({
+    iv: Array.from(iv),
+    encrypted: Array.from(new Uint8Array(encrypted)),
+  });
 }
 
-export interface LocalLoginPayload {
-  authMethod: AuthMethod,
-  privateKey: string
+// Utility: Decrypt data using AES-GCM
+async function decryptData(encryptedData: string, passphrase: string): Promise<string> {
+  const { iv, encrypted } = JSON.parse(encryptedData);
+  const key = await deriveKeyFromPassphrase(passphrase);
+
+  const decrypted = await crypto.subtle.decrypt(
+    { name: 'AES-GCM', iv: new Uint8Array(iv) },
+    key,
+    new Uint8Array(encrypted)
+  );
+
+  return new TextDecoder().decode(decrypted);
 }
 
-export type LoginPayload = ExtensionLoginPayload | LocalLoginPayload
-
-export interface AuthState {
-  authMethod: AuthMethod
-  encryptedPrivateKey: EncryptedPrivateKey | null,
-  pubKey: string | null,
-  privKey: string | null
-}
-
-export function isNsec(nsec: string): boolean {
-  try {
-    const decoded = nip19.decode(nsec)
-    return decoded.type === 'nsec'
-  } catch (error) {
-    return false
-  }
-}
-
+// Vue Store for Auth
 export const useAuth = defineStore('auth', {
   state: () => ({
-    authMethod: AuthMethod.NOT_SET,
-    encryptedPrivateKey: null as EncryptedPrivateKey | null,
     pubKey: null as string | null,
-    privKey: null as string | null
+    privKey: null as string | null, // Decrypted private key only in memory
+    encryptedKey: sessionStorage.getItem(AUTH_SESSION_STORAGE_ENCRYPTED_KEY),
+    expiry: sessionStorage.getItem(AUTH_SESSION_STORAGE_EXPIRY),
   }),
+
   actions: {
-    nuxtClientInit() {
-      const encryptedPrivKey = localStorage.getItem(AUTH_LOCAL_STORAGE_ENCRYPTED_KEY)
-      if(encryptedPrivKey) {
-        this.encryptedPrivateKey = JSON.parse(encryptedPrivKey)
-      }
-      const decryptedPrivKey = ref<string | null>(localStorage.getItem(AUTH_LOCAL_STORAGE_DECRYPTED_KEY))
-      if (decryptedPrivKey.value) {
-        try {
-          this.privKey = decryptedPrivKey.value
-          this.pubKey = getPublicKey(Buffer.from(this.privKey, 'hex'))
-          this.authMethod = AuthMethod.LOCAL
-        } catch(err) {
-          console.warn('Error setting local key from local storage: ', err)
-          this.delete()
-        }
-      }
-      watch(() => this.encryptedPrivateKey, (newVal) => {
-        localStorage.setItem(AUTH_LOCAL_STORAGE_ENCRYPTED_KEY, JSON.stringify(newVal))
-      })
-      watch(() => this.privKey, (newVal) => {
-        localStorage.setItem(AUTH_LOCAL_STORAGE_DECRYPTED_KEY, newVal || '')
-      })
+    async login(privateKey: string, passphrase: string) {
+      // Encrypt the private key with Argon2 and AES-GCM
+      this.encryptedKey = await encryptData(privateKey, passphrase);
+      this.expiry = (Date.now() + 30 * 60 * 1000).toString(); // TTL = 30 minutes
+
+      sessionStorage.setItem(AUTH_SESSION_STORAGE_ENCRYPTED_KEY, this.encryptedKey);
+      sessionStorage.setItem(AUTH_SESSION_STORAGE_EXPIRY, this.expiry);
+
+      // Decrypted key only exists in memory
+      this.privKey = privateKey;
+      this.pubKey = getPublicKey(Buffer.from(privateKey, 'hex'));
     },
-    login(loginPayload: LoginPayload) {
-      this.authMethod = loginPayload.authMethod
-      if (loginPayload.authMethod === AuthMethod.LOCAL) {
-        const localLoginPayload = loginPayload as LocalLoginPayload
-        const { privateKey } = localLoginPayload
-        if (isNsec(privateKey)) {
-          const decoded = nip19.decode(privateKey)
-          this.privKey = decoded.data as string
-        } else {
-          this.privKey = privateKey
-        }
-        this.pubKey = getPublicKey(Buffer.from(this.privKey, 'hex'))
-      } else if (this.authMethod === AuthMethod.NIP07) {
-        const extensionLoginPayload = loginPayload as ExtensionLoginPayload
-        this.pubKey = extensionLoginPayload.publicKey
+
+    async loadFromStorage(passphrase: string) {
+      if (!this.encryptedKey || !this.expiry) return;
+
+      if (Date.now() > parseInt(this.expiry)) {
+        this.logout();
+        console.warn('Stored key has expired.');
+        return;
+      }
+
+      try {
+        // Decrypt the key and load into memory
+        const decryptedKey = await decryptData(this.encryptedKey, passphrase);
+        this.privKey = decryptedKey;
+        this.pubKey = getPublicKey(Buffer.from(decryptedKey, 'hex'));
+      } catch (err) {
+        console.error('Failed to decrypt key:', err);
+        this.logout();
       }
     },
-    setEncryptedPrivateKey(encryptedPrivateKey: EncryptedPrivateKey | null) {
-      this.encryptedPrivateKey = encryptedPrivateKey
-    },
-    delete() {
-      this.logout()
-      this.encryptedPrivateKey = null
-    },
+
     logout() {
-      this.privKey = null
-      this.pubKey = null
-      localStorage.removeItem(AUTH_LOCAL_STORAGE_DECRYPTED_KEY)
-      this.authMethod = AuthMethod.NOT_SET
+      this.privKey = null;
+      this.pubKey = null;
+      this.encryptedKey = null;
+
+      sessionStorage.removeItem(AUTH_SESSION_STORAGE_ENCRYPTED_KEY);
+      sessionStorage.removeItem(AUTH_SESSION_STORAGE_EXPIRY);
     },
   },
+
   getters: {
     isAuthenticated(state) {
-      return state.authMethod !== AuthMethod.NOT_SET
+      return !!state.privKey && !!state.pubKey;
     },
-  }
-})
+  },
+});
