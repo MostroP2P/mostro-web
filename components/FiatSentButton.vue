@@ -1,5 +1,5 @@
 <template>
-  <v-dialog v-model="showDialog" width="600">
+  <v-dialog v-model="showDialog" width="600" @update:model-value="resetError">
     <template v-slot:activator="{ props }">
       <v-btn v-bind="props" variant="text" prepend-icon="mdi-cash" class="mx-2" min-width="160">
         Fiat Sent
@@ -14,6 +14,9 @@
         <npub :publicKey="sellerPubkey"/>
         .
       </v-card-text>
+      <div v-if="errorMessage" class="text-red text-caption px-4 pb-2">
+        {{ errorMessage }}
+      </div>
       <v-card-actions>
         <v-spacer></v-spacer>
         <v-btn variant="text" color="warning" @click="showDialog = false">
@@ -44,14 +47,20 @@ export default {
     const { getOrderById } = useOrders()
     const showDialog = ref(false)
     const isLoading = ref(false)
+    const errorMessage = ref('')
 
     const order = computed(() => getOrderById(route.params.id as string))
     const fiatAmount = computed(() => order.value?.fiat_amount)
     const fiatCode = computed(() => order.value?.fiat_code)
     const sellerPubkey = computed(() => order.value?.master_seller_pubkey ?? '')
 
+    const resetError = () => {
+      errorMessage.value = ''
+    }
+
     const onConfirm = async () => {
       isLoading.value = true
+      errorMessage.value = ''
       try {
         if (order.value) {
           const { $mostro } = useNuxtApp()
@@ -62,6 +71,7 @@ export default {
         showDialog.value = false
       } catch(err) {
         console.error('Error issuing the fiatSent message: ', err)
+        errorMessage.value = 'Failed to send fiat confirmation. Please try again.'
       } finally {
         isLoading.value = false
       }
@@ -79,7 +89,9 @@ export default {
       order,
       fiatAmount,
       fiatCode,
-      sellerPubkey
+      sellerPubkey,
+      errorMessage,
+      resetError
     }
   }
 }
