@@ -2,7 +2,22 @@
   <div>
     <v-alert class="mb-2" title="Dispute" :text="message" :type="color" variant="tonal" icon="mdi-alert-octagram">
     </v-alert>
-    <Chat :npub="solverNpub" :enabled="chatEnabled" style="background-color: gray;" />
+    <Chat v-if="solverNpub" :npub="solverNpub" :enabled="chatEnabled" style="background-color: gray;" />
+    <div v-else class="d-flex align-center justify-center fill-height">
+      <div class="text-center">
+        <v-icon
+          size="64"
+          color="info"
+          class="mb-4"
+        >
+          mdi-account-question
+        </v-icon>
+        <h3 class="text-h6 text-info mb-2">No Solver Assigned</h3>
+        <p class="text-body-1 text-medium-emphasis">
+          Please wait while an administrator is assigned to your dispute.
+        </p>
+      </div>
+    </div>
   </div>
 </template>
 
