@@ -25,6 +25,7 @@
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useDisputes } from '~/stores/disputes'
+import { DisputeStatus } from '~/stores/types'
 import { PublicKeyType } from '~/utils/mostro'
 
 const disputeStore = useDisputes()
@@ -59,18 +60,22 @@ const dispute = computed(() => {
 })
 
 const message = computed(() => {
-  if (!dispute || !dispute.value) return ''
-  if (dispute.value.status === DisputeStatus.INITIATED) {
-    return 'A dispute has been started on this order. An admin user will reach ' +
-          'out and ask questions about the order. Be prepared to provide evidence ' +
-          'to back up your claim.'
-  } else if (dispute.value.status === DisputeStatus.IN_PROGRESS) {
-    return 'A dispute is currently in progress. ' +
-          'Please reply to the admin and provide evidence to back up your claim.'
-  } else if (dispute.value.status === DisputeStatus.SETTLED) {
-    return 'The admin/solver has settled the dispute. The buyer has won the dispute.'
-  } else if (dispute.value.status === DisputeStatus.CANCELED) {
-    return 'The admin/solver has canceled the dispute. The seller has won the dispute.'
+  if (!dispute.value) return ''
+
+  switch (dispute.value.status) {
+    case DisputeStatus.INITIATED:
+      return 'A dispute has been started on this order. An admin user will reach ' +
+             'out and ask questions about the order. Be prepared to provide evidence ' +
+             'to back up your claim.'
+    case DisputeStatus.IN_PROGRESS:
+      return 'A dispute is currently in progress. ' +
+             'Please reply to the admin and provide evidence to back up your claim.'
+    case DisputeStatus.SETTLED:
+      return 'The admin/solver has settled the dispute. The buyer has won the dispute.'
+    case DisputeStatus.CANCELED:
+      return 'The admin/solver has canceled the dispute. The seller has won the dispute.'
+    default:
+      return 'Unknown dispute status'
   }
 })
 </script>
