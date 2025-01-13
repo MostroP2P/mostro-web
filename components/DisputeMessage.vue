@@ -15,6 +15,8 @@
 </template>
 
 <script lang="ts" setup>
+import { Action, type MostroMessage } from '~/utils/mostro/types';
+
 
 const props = defineProps({
   message: {
