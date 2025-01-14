@@ -5,7 +5,7 @@
       class="flex-grow-1"
       id="messages-container"
     >
-      <div id="scrollingContent" style="height: calc(100vh - 450px)">
+      <div id="scrollingContent" style="height: calc(100vh - 310px)">
         <v-card-text v-if="peerMessages && peerMessages.length > 0">
           <v-row v-for="(message, index) in peerMessages" :key="message.id" :id="`message-${index}`" class="message-row">
             <v-col cols="12" :class="['d-flex', message.sender === 'me' ? 'justify-end' : '']">
@@ -71,16 +71,15 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useAuth } from '@/stores/auth'
 import { useMessages } from '~/stores/messages'
 import { useTimeago } from '@/composables/timeago'
-import type { PeerMessage } from '~/stores/types'
-import type { Mostro } from '~/plugins/02-mostro'
+import type { ChatMessage } from '~/stores/types'
 import { useProfile } from '@/composables/useProfile'
 import useNip19 from '@/composables/useNip19'
 
-const { hexToNpub } = useNip19()
+const { hexToNpub, npubToHex } = useNip19()
 
 const myProfilePictureUrl = ref<string | null>(null)
 const peerProfilePictureUrl = ref<string | null>(null)
@@ -90,8 +89,8 @@ const isSending = ref<boolean>(false)
 const authStore = useAuth()
 const isAuthenticated = computed(() => authStore.isAuthenticated)
 
-const nuxtApp = useNuxtApp()
-const $mostro: Mostro = nuxtApp.$mostro as Mostro
+const { $mostro } = useNuxtApp()
+const $nostr = $mostro.nostr
 
 const props = defineProps({
   npub: {
@@ -127,7 +126,14 @@ const sendMessage = async () => {
   if (!text) return
   isSending.value = true
   try {
-    await $mostro.submitDirectMessage(text, props.npub, undefined)
+    const promises = []
+    if (authStore.pubKey) {
+      const tags = [['p', npubToHex(props.npub)], ['p', authStore.pubKey]]
+      // Send message to both the peer and myself
+      promises.push($mostro.submitDirectMessageToPeer(text, npubToHex(props.npub), tags))
+      promises.push($mostro.submitDirectMessageToPeer(text, authStore.pubKey, tags))
+    }
+    await Promise.all(promises)
     inputMessage.value = ''
   } catch (err) {
     console.error('Error at sending message: ', err)
@@ -136,10 +142,18 @@ const sendMessage = async () => {
   }
 }
 const { format } = useTimeago()
-const getMessageTime = (message: PeerMessage) => format(message.created_at * 1e3)
+const getMessageTime = (message: ChatMessage) => format(message.created_at * 1e3)
 
-const messages = useMessages()
-const peerMessages = computed(() => messages.getPeerMessagesByNpub(props.npub))
+const messagesStore = useMessages() as MessagesState
+const peerMessages = computed(() => {
+  const messages = messagesStore.messages.peer[props.npub] ?? []
+  return [...messages].sort((a, b) => a.created_at - b.created_at)
+})
+
+onMounted(() => {
+  const pubkey = npubToHex(props.npub)
+  $nostr.subscribeGiftWraps(pubkey)
+})
 
 watch(peerMessages, () => {
   if (isSending.value) {
@@ -147,9 +161,11 @@ watch(peerMessages, () => {
     // delete the input field
     inputMessage.value = ''
   }
-  const lastMessage = peerMessages.value[peerMessages.value.length - 1]
-  const id = lastMessage.id
-  setTimeout(() => scrollToBottom(id), 100)
+  const messages = toRaw(peerMessages.value)
+  const lastMessage = messages[messages.length - 1]
+  if (lastMessage) {
+    setTimeout(() => scrollToBottom(lastMessage.id), 100)
+  }
 })
 
 </script>

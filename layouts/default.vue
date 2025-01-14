@@ -24,31 +24,7 @@
         </v-list-item>
       </v-list>
       <template v-slot:append>
-        <div class="d-flex justify-center">
-          <div class="text-subtitle-1 text-disabled mr-2">
-            Relay Health
-          </div>
-          <v-icon class="text-disabled d-flex justify-center">
-            mdi-signal
-          </v-icon>
-        </div>
-        <div class="d-flex justify-center relay-status">
-          <v-tooltip
-            v-for="relay in relaysStore.relays"
-            location="top"
-            :text="relay.url"
-            open-on-click
-          >
-            <template v-slot:activator="{ props }">
-              <div
-                v-bind="props"
-                :key="relay.url"
-                class="relay-dot"
-                :style="{ backgroundColor: relay.status }">
-              </div>
-            </template>
-          </v-tooltip>
-        </div>
+        <RelayHealth/>
         <div class="text-caption text-disabled d-flex justify-center">
           Version: {{ version }}
         </div>

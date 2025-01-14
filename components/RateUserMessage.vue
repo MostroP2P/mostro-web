@@ -36,9 +36,8 @@
 <script lang="ts" setup>
 import { computed, ref } from 'vue'
 import type { PropType } from 'vue'
-import type { MostroMessage } from '~/stores/types'
+import type { MostroMessage } from '~/utils/mostro/types'
 import CreatedAt from '~/components/CreatedAt.vue'
-import type { Mostro } from '~/plugins/02-mostro'
 import { useOrders } from '~/stores/orders'
 
 
@@ -58,8 +57,7 @@ const creationDate = computed(() => {
 
 const rateUser = async () => {
   console.log(rating.value)
-  const nuxtApp = useNuxtApp()
-  const $mostro: Mostro = nuxtApp.$mostro as Mostro
+  const { $mostro } = useNuxtApp()
   const orders = useOrders()
   const order = orders.getOrderById(props.message.order.id)
   if (order) {

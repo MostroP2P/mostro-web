@@ -19,7 +19,7 @@
 </template>
 <script lang="ts">
 import type { PropType } from 'vue'
-import type { MostroMessage } from '~/stores/types'
+import type { MostroMessage } from '~/utils/mostro/types'
 import CreatedAt from '~/components/CreatedAt.vue'
 export default {
   props: {

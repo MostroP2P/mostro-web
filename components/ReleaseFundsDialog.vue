@@ -37,7 +37,7 @@
 <script lang="ts">
 import { mapState } from 'pinia'
 import { useOrders } from '~/stores/orders'
-import { Order } from '~/stores/types'
+import type { Order } from '~/utils/mostro/types'
 export default {
   data() {
     return {

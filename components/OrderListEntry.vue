@@ -39,7 +39,7 @@
 </template>
 
 <script setup lang="ts">
-import { Order, OrderType } from '@/stores/types'
+import { OrderType, type Order } from '~/utils/mostro/types'
 import { useAuth } from '@/stores/auth'
 import { useTimeago } from '@/composables/timeago'
 import fiat from '~/assets/fiat.json'

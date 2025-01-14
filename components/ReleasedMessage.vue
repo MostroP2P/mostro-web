@@ -19,7 +19,7 @@
 import type { PropType } from 'vue'
 import { mapState } from 'pinia'
 import { useRoute } from 'vue-router'
-import type { MostroMessage, Order } from '~/stores/types'
+import type { MostroMessage, Order } from '~/utils/mostro/types'
 import { useOrders } from '@/stores/orders'
 import NPub from '~/components/NPub.vue'
 export default {

@@ -1,23 +1,24 @@
 import type {
   ThreadSummary,
-  MostroMessage,
-  PeerMessage,
+  ChatMessage,
   PeerThreadSummary,
 } from './types'
 import {
-  Order,
-  Action,
   OrderStatus
 } from './types'
 import { useOrders } from './orders'
-import type { MostroEvent } from '~/plugins/02-mostro'
 import { useAlertStore } from './alerts'
+import type { NDKEvent } from '@nostr-dev-kit/ndk'
+import { Action, type MostroMessage, type Order } from '~/utils/mostro/types'
+import type { Mostro } from '~/utils/mostro'
+import type { GiftWrap, Rumor, Seal } from '~/utils/nostr/types'
+import { nip19 } from 'nostr-tools'
 
 export interface MessagesState {
   messages: {
     mostro: MostroMessage[],
     peer: {
-      [key: string]: PeerMessage[]
+      [key: string]: ChatMessage[]
     }
   }
 }
@@ -30,12 +31,18 @@ export const useMessages = defineStore('messages', {
   state: () => ({
     messages: {
       mostro: [] as MostroMessage[],
-      peer: {}
+      peer: {} as Record<string, ChatMessage[]>,
     }
   }),
   actions: {
+    nuxtClientInit() {
+      const mostro = useNuxtApp().$mostro as Mostro
+      mostro.on('mostro-message', this.addMostroMessage)
+      mostro.on('peer-message', this.addPeerMessage)
+    },
     async addMostroMessage(
-      { message, event } : { message: MostroMessage, event: MostroEvent }
+      message: MostroMessage,
+      event: NDKEvent
     ) {
       if (message.order) {
         const orderMessage = message.order
@@ -87,20 +94,46 @@ export const useMessages = defineStore('messages', {
         } else if (orderMessage?.action === Action.OutOfRangeSatsAmount) {
           this.handleOutOfRangeSatsAmount(message)
         }
-        orderStore.updateOrderStatus(message.order.id, orderMessage.action, event)
+        orderStore.updateOrderStatus(message.order.id, orderMessage.action as Action, event)
         this.messages.mostro.push(message)
-      } else if (message.cant_do) {
-        console.warn(`>>> [${message.cant_do.id}] CantDo, id: ${message.cant_do.id} message: ${message.cant_do?.content?.text_message}`)
+      } else if (message['cant-do']) {
+        console.warn(`>>> [${message['cant-do'].id}] CantDo, id: ${message['cant-do'].id} message: ${message['cant-do']?.content?.text_message}`)
       } else {
         console.warn('>>> addMostroMessage: message has unknown property property. message: ', message, ', ev: ', event)
       }
     },
-    addPeerMessage(peerMessage: PeerMessage) {
-      const { peerNpub } = peerMessage
-      const updatedMessages = Object.assign({}, this.messages) as MessagesState['messages']
-      const existingMessages = updatedMessages.peer[peerNpub] ?? []
-      updatedMessages.peer[peerNpub] = [...existingMessages, peerMessage]
-      this.messages = updatedMessages
+    addPeerMessage(gift: GiftWrap, seal: Seal, rumor: Rumor) {
+      // Decides whether this message is from me or my peer
+      const mostro = useNuxtApp().$mostro as Mostro
+      const myPubKey = mostro.getNostr().getMyPubKey()
+      // If the seal pubkey is mine, the peer npub should be extracted from the seal p tag
+      // Otherwise, it should be extracted from the seal pubkey
+      const peerHex = seal.pubkey !== myPubKey ? seal.pubkey : rumor.tags.find(tag => tag[1] !== myPubKey)?.[1]
+      if (peerHex !== undefined) {
+        const peerNpub = nip19.npubEncode(peerHex)
+        let sender: 'me' | 'other' = 'other'
+        if (seal.pubkey === myPubKey) {
+          sender = 'me'
+          console.info('< [me -> 🍐]: ', rumor.content)
+        } else {
+          console.info('< [🍐 -> me]: ', rumor.content)
+        }
+
+        const chatMessage: ChatMessage = {
+          id: rumor.id,
+          peerNpub,
+          text: rumor.content,
+          created_at: rumor.created_at,
+          sender
+        }
+
+        if (!this.messages.peer[peerNpub]) {
+          this.messages.peer[peerNpub] = []
+        }
+        this.messages.peer[peerNpub].push(chatMessage)
+      } else {
+        console.warn('Unexpected situation in addPeerMessage: peerHex is undefined')
+      }
     },
     handleOutOfRangeSatsAmount(message: MostroMessage) {
       const now = Date.now() / 1e3
@@ -203,14 +236,14 @@ export const useMessages = defineStore('messages', {
           .sort((a: MostroMessage, b: MostroMessage) => a.created_at - b.created_at)
       }
     },
-    getPeerMessagesByNpub(state: MessagesState) : (npub: string) => PeerMessage[] {
+    getPeerMessagesByNpub(state: MessagesState) : (npub: string) => ChatMessage[] {
       return (npub: string) => {
         if (!npub) return []
         if (state?.messages?.peer[npub]) {
           const messages = [...state.messages.peer[npub]]
           console.log(`Found ${messages.length} messages for npub ${npub}`, messages)
           return messages
-            .sort((a: PeerMessage, b: PeerMessage) => a.created_at - b.created_at)
+            .sort((a: ChatMessage, b: ChatMessage) => a.created_at - b.created_at)
         } else {
           console.warn(`No messages found for npub ${npub}`)
           return []

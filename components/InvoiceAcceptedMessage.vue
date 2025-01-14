@@ -20,7 +20,7 @@
 import type { PropType } from 'vue'
 import { mapState } from 'pinia'
 import { useOrders } from '~/stores/orders'
-import type { MostroMessage } from '~/stores/types'
+import type { MostroMessage } from '~/utils/mostro/types'
 import textMessage from '~/mixins/text-message'
 import CreatedAt from '~/components/CreatedAt.vue'
 import NPub from '~/components/NPub.vue'
