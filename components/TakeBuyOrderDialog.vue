@@ -34,9 +34,9 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import type { PropType } from 'vue'
-import { Order } from '~/stores/types'
 import { useRouter } from 'vue-router'
-import type { Mostro } from '~/plugins/02-mostro'
+import type { Order } from '~/utils/mostro/types'
+import type { Mostro } from '~/utils/mostro'
 
 const props = defineProps({
   order: {

@@ -1,7 +1,7 @@
 import { NDKEvent } from '@nostr-dev-kit/ndk'
-import type { MostroEvent } from '~/plugins/02-mostro'
-import { Action, OrderStatus, type OrderMapType, type OrderOwnershipMapType } from './types'
-import { Order } from './types'
+import { OrderStatus, type OrderMapType, type OrderOwnershipMapType } from './types'
+import type { Mostro } from '~/utils/mostro'
+import { Action, type MostroMessage, type Order } from '~/utils/mostro/types'
 
 export const ORDER_LIFETIME_IN_SECONDS = 24 * 60 * 60 // 24 hours
 
@@ -15,62 +15,72 @@ export const useOrders = defineStore('orders', {
     userOrders: {}
   }),
   actions: {
-    addOrder({ order, event }: {order: Order, event: MostroEvent }) {
-      if (!this.orders[order.id]) {
-        // Because of the asynchronous nature of messages, we can
-        // have an order being added from the network which we already know
-        // is ours from the local storage data. So here we check the
-        // `userOrders` map
-        if (this.userOrders[order.id]) {
-          order.is_mine = true
+    nuxtClientInit() {
+      const mostro = useNuxtApp().$mostro as Mostro
+      mostro.on('order-update', (order: Order, ev: NDKEvent) => {
+        // This is a public order update, so we don't know if it's ours
+        if (this.orders[order.id]) {
+          // If the order already exists, we update it
+          this.updateOrder({ order, event: ev }, true)
+        } else {
+          // If the order doesn't exist, we add it
+          this.addOrder({ order, event: ev })
         }
-        // Adds the 'updated_at' field, setting it to the event's creation time
-        order.updated_at = event.created_at
-        this.orders[order.id] = order
+      })
+      mostro.on('mostro-message', (message: MostroMessage, ev: NDKEvent) => {
+        const orderMessage = message.order
+        if (orderMessage && orderMessage.action === Action.NewOrder) {
+          // If we get a mostro message with a new-order action,
+          // this means we got an ack to our order submission. Which means
+          // this order is ours.
+          const order = orderMessage.content.order as Order
+          this.addUserOrder({ order, event: ev })
+        }
+      })
+    },
+    addOrder({ order, event }: {order: Order, event: NDKEvent }) {
+      this.orders[order.id] = order
+      this.orders[order.id].updated_at = Math.abs(Date.now() / 1E3)
+      if (this.userOrders[order.id]) {
+        // If the order is in the `userOrders` map, it means it's ours,
+        // so we set the `is_mine` flag to `true`
+        order.is_mine = true
       }
     },
-    addUserOrder({ order, event }: {order: Order, event: NDKEvent}) {
+    addUserOrder({ order, event }: {order: Order, event?: NDKEvent}) {
       if (!this.orders[order.id]) {
         // If the order doesn't yet exist, we add it
         this.orders[order.id] = order
       }
-      // We mark it as ours and add it to the `userOrders` map
       this.orders[order.id].is_mine = true
-      // Adds the 'updated_at' field, setting it to the event's creation time
-      order.updated_at = event.created_at
+      this.orders[order.id].updated_at = Math.abs(Date.now() / 1E3)
+      // We also add it to the `userOrders` map
       this.userOrders[order.id] = true
     },
     removeOrder(order: Order) {
       delete this.orders[order.id]
     },
-    updateOrder({ order, event } : {order: Order, event: MostroEvent }, updateStatus: boolean = false) {
-      const existingOrder = this.orders[order.id]      
+    updateOrder({ order, event } : {order: Order, event: NDKEvent }, updateStatus: boolean = false) {
+      const existingOrder = this.orders[order.id]
       if (existingOrder) {
-        // We just update buyer & seller pubkeys if they're not set yet
-        if (!existingOrder.master_buyer_pubkey && order.master_buyer_pubkey) {
-          existingOrder.master_buyer_pubkey = order.master_buyer_pubkey
+        // Create a new object with the updated values to maintain reactivity
+        this.orders[order.id] = {
+          ...existingOrder,
+          master_buyer_pubkey: (!existingOrder.master_buyer_pubkey && order.master_buyer_pubkey)
+            ? order.master_buyer_pubkey
+            : existingOrder.master_buyer_pubkey,
+          master_seller_pubkey: (!existingOrder.master_seller_pubkey && order.master_seller_pubkey)
+            ? order.master_seller_pubkey
+            : existingOrder.master_seller_pubkey,
+          is_mine: existingOrder.is_mine || order.is_mine,
+          status: updateStatus
+            ? order.status
+            : existingOrder.status,
+          fiat_amount: order.fiat_amount,
+          updated_at: !existingOrder.updated_at
+            ? order.created_at
+            : Math.max(existingOrder.updated_at, event.created_at as number)
         }
-        if (!existingOrder.master_seller_pubkey && order.master_seller_pubkey) {
-          existingOrder.master_seller_pubkey = order.master_seller_pubkey
-        }
-        // A similar treatment is done for the 'is_mine' flag
-        if (!existingOrder.is_mine) {
-          existingOrder.is_mine = order.is_mine
-        }
-        // The 'status' is updated only if the `updateStatus` flag is set to `true`
-        // This is because we want to update when receving a replaceable event, but
-        // not necessarily when receiving a DM
-        if (updateStatus) {
-          // We don't want to update an order's status if the event timestamp is older
-          // than the `updated_at` field of the stored order, if we have one
-          if (!existingOrder.updated_at || event.created_at && event?.created_at > existingOrder?.updated_at) {
-            existingOrder.status = order.status
-          }
-        }
-        // Updating amount for range orders
-        existingOrder.fiat_amount = order.fiat_amount
-        // Adds or updates the 'update_at' field
-        existingOrder.updated_at = !existingOrder.updated_at ?  order.created_at : Math.max(existingOrder.updated_at, event.created_at as number)
       } else {
         console.warn(`Could not find order with id ${order.id} to update`)
       }
@@ -105,52 +115,44 @@ export const useOrders = defineStore('orders', {
         case Action.AddInvoice:
           if (existingOrder.status === OrderStatus.WAITING_PAYMENT) {
             existingOrder.status = OrderStatus.WAITING_BUYER_INVOICE
-            existingOrder.updated_at = Math.floor(Date.now() / 1E3)
           }
           if (existingOrder.status === OrderStatus.WAITING_BUYER_INVOICE) {
             existingOrder.status = OrderStatus.WAITING_PAYMENT
-            existingOrder.updated_at = Math.floor(Date.now() / 1E3)
           }
           // When the buyer is the taker
           if (existingOrder.status === OrderStatus.PENDING) {
             existingOrder.status = OrderStatus.WAITING_BUYER_INVOICE
-            existingOrder.updated_at = Math.floor(Date.now() / 1E3)
           }
           break
         case Action.WaitingSellerToPay:
           if (existingOrder.status === OrderStatus.PENDING) {
             existingOrder.status = OrderStatus.WAITING_PAYMENT
-            existingOrder.updated_at = Math.floor(Date.now() / 1E3)
           }
           break
         case Action.PayInvoice:
           if (existingOrder.status === OrderStatus.PENDING) {
             existingOrder.status = OrderStatus.WAITING_PAYMENT
-            existingOrder.updated_at = Math.floor(Date.now() / 1E3)
           }
           break
         case Action.FiatSent:
           if (existingOrder.status === OrderStatus.ACTIVE) {
             existingOrder.status = OrderStatus.FIAT_SENT
-            existingOrder.updated_at = Math.floor(Date.now() / 1E3)
           }
           break
         case Action.PurchaseCompleted:
           existingOrder.status = OrderStatus.SUCCESS
-          existingOrder.updated_at = Math.floor(Date.now() / 1E3)
           break
         case Action.WaitingSellerToPay:
           if (existingOrder.status === OrderStatus.WAITING_BUYER_INVOICE) {
             existingOrder.status = OrderStatus.WAITING_PAYMENT
-            existingOrder.updated_at = Math.floor(Date.now() / 1E3)
           }
           break
         case Action.HoldInvoicePaymentAccepted:
         case Action.BuyerTookOrder:
           existingOrder.status = OrderStatus.ACTIVE
-          existingOrder.updated_at = Math.floor(Date.now() / 1E3)
           break
       }
+      existingOrder.updated_at = Math.floor(Date.now() / 1E3)
     },
     markDisputed(order: Order, event: NDKEvent) {
       const existingOrder = this.orders[order.id]

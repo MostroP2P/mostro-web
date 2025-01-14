@@ -68,10 +68,10 @@
 </template>
 
 <script setup lang="ts">
-import { Order, OrderType, type FiatData } from '@/stores/types'
+import { OrderType, type Order } from '~/utils/mostro/types'
 import { useAuth } from '~/stores/auth'
 import fiat from '~/assets/fiat.json'
-import type { Mostro } from '~/plugins/02-mostro'
+import type { Mostro } from '~/utils/mostro'
 
 const ORDER_LIFETIME_IN_SECONDS = 3600 * 24 // 24 hours
 
@@ -104,9 +104,19 @@ watch(showDialog, (newVal, oldVal) => {
   }
 })
 
-const cancelOrder = () => {
-  const mostro = nuxtApp.vueApp.config.globalProperties.$mostro as Mostro
-  mostro.cancel(props.order)
+const cancelOrder = async () => {
+  const orderStore = useOrders()
+  const { $mostro } = useNuxtApp()
+  try {
+    const response = await $mostro.cancel(props.order)
+    if (response['cant-do']) {
+      console.warn('Cant do: ', response['cant-do'])
+    }
+  } catch(err) {
+    console.error('Error cancelling order: ', err)
+  }
+  orderStore.removeOrder(props.order)
+  showDialog.value = false
 }
 
 const getOrderVerb = () => {

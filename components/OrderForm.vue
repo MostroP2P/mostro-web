@@ -137,9 +137,12 @@ import { defineComponent } from 'vue'
 import type { PropType } from 'vue'
 import * as bolt11 from 'light-bolt11-decoder'
 import invoiceValidator, { type DecodedInvoice, type Section } from '~/mixins/invoice-validator'
-import { OrderStatus, OrderPricingMode, OrderType } from '@/stores/types'
-import type { FiatData, NewOrder } from '@/stores/types'
+import { OrderStatus, OrderPricingMode } from '@/stores/types'
+import type { FiatData } from '@/stores/types'
 import fiat from '~/assets/fiat.json'
+import type { NewOrder, Order } from '~/utils/mostro/types'
+import { OrderType } from '~/utils/mostro/types'
+import type { NDKEvent } from '@nostr-dev-kit/ndk'
 
 interface Fiat {
   [key: string]: FiatData;
@@ -279,15 +282,21 @@ export default defineComponent({
       }
       if (!this.isMarketPricing) {
         if (this.orderType === OrderType.BUY) {
-          order.buyer_invoice = this.buyerInvoice !== '' ? this.buyerInvoice : null
+          order.buyer_invoice = this.buyerInvoice !== '' ? this.buyerInvoice : undefined
         }
         // If the order is nor market-priced,
         // a fixed sats amount is required always
         order.amount = satsAmount
       }
       try {
+        const t1 = Date.now()
         // @ts-ignore
-        await this.$mostro.submitOrder(order)
+        const response = await this.$mostro.submitOrder(order)
+        const t2 = Date.now()
+        console.log('🚀 Order submitted: ', response, 'in', t2 - t1, 'ms')
+        const orderStore = useOrders()
+        const confirmedOrder = response.order.content.order as Order
+        orderStore.addUserOrder({ order: confirmedOrder })
         this.onClose()
       } catch(err) {
         console.error('Error while submitting order: ', err)

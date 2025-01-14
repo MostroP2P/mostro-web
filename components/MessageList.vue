@@ -13,8 +13,7 @@
 </template>
 <script lang="ts">
 import { mapState } from 'pinia'
-import { Action, OrderStatus } from '~/stores/types'
-import type { MostroMessage } from '~/stores/types'
+import { Action, OrderStatus, type MostroMessage } from '~/utils/mostro/types'
 import { useMessages } from '@/stores/messages'
 import { useOrders } from '@/stores/orders'
 export default {

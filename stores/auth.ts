@@ -2,6 +2,7 @@ import { watch } from 'vue'
 import { AUTH_LOCAL_STORAGE_ENCRYPTED_KEY, AUTH_LOCAL_STORAGE_DECRYPTED_KEY } from './types'
 import type { EncryptedPrivateKey } from './types'
 import { nip19, getPublicKey } from 'nostr-tools'
+import type { Mostro } from '~/utils/mostro'
 
 export enum AuthMethod {
   LOCAL = 'local',
@@ -56,6 +57,10 @@ export const useAuth = defineStore('auth', {
           this.privKey = decryptedPrivKey.value
           this.pubKey = getPublicKey(Buffer.from(this.privKey, 'hex'))
           this.authMethod = AuthMethod.LOCAL
+          // Informing the mostro plugin about the private key
+          const nuxt = useNuxtApp()
+          const $mostro: Mostro = nuxt.$mostro as Mostro
+          $mostro.updatePrivKey(this.privKey)
         } catch(err) {
           console.warn('Error setting local key from local storage: ', err)
           this.delete()
@@ -79,10 +84,14 @@ export const useAuth = defineStore('auth', {
         } else {
           this.privKey = privateKey
         }
+        // Informing the mostro plugin about the private key
+        const nuxt = useNuxtApp()
+        const $mostro: Mostro = nuxt.$mostro as Mostro
+        $mostro.updatePrivKey(this.privKey)
+
         this.pubKey = getPublicKey(Buffer.from(this.privKey, 'hex'))
       } else if (this.authMethod === AuthMethod.NIP07) {
-        const extensionLoginPayload = loginPayload as ExtensionLoginPayload
-        this.pubKey = extensionLoginPayload.publicKey
+        console.warn('NIP07 login not longer supported')
       }
     },
     setEncryptedPrivateKey(encryptedPrivateKey: EncryptedPrivateKey | null) {

@@ -1,4 +1,4 @@
-import type { Nostr } from "~/plugins/01-nostr"
+import type { Mostro } from '~/utils/mostro'
 
 export type Profile = {
   image: string | undefined
@@ -16,7 +16,8 @@ export function useProfile() {
     }
     if (profileMap.has(npub)) return profileMap.get(npub)
     const nuxt = useNuxtApp()
-    const $nostr: Nostr = nuxt.$nostr as Nostr
+    const $mostro: Mostro = nuxt.$mostro as Mostro
+    const $nostr = $mostro.getNostr()
     if ($nostr) {
       try {
         const userProfileResp = await $nostr.fetchProfile({ npub })

@@ -24,6 +24,7 @@
         </v-list-item>
       </v-list>
       <template v-slot:append>
+        <RelayHealth/>
         <div class="text-caption text-disabled d-flex justify-center">
           Version: {{ version }}
         </div>
