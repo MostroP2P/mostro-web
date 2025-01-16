@@ -9,6 +9,7 @@
     "pregenerate": "echo \"export const GIT_COMMIT = '$(git rev-parse HEAD)'\" > ./constants/version.js",
     "type-check": "tsc --noEmit",
     "build": "nuxt build",
+    "start": "nuxt start",
     "dev": "npm run type-check && nuxt dev --host",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
