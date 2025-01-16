@@ -388,55 +388,6 @@ export class Nostr extends EventEmitter<{
     return await user.fetchProfile()
   }
 
-  async signEvent(event: NDKEvent): Promise<void> {
-    if (this._signer) {
-      await event.sign(this._signer)
-    } else {
-      throw new Error('No signer available to sign the event')
-    }
-  }
-
-  async decryptMessage(ev: NDKEvent): Promise<string> {
-    if (!this._signer) {
-      throw new Error('No signer available to decrypt the message')
-    }
-    const { sender, recipient } = this.obtainParties(ev)
-
-    if (sender.pubkey === this.getMyPubKey()) {
-      // I was the sender
-      return await this._signer.decrypt(recipient, ev.content)
-    } else {
-      // I was the recipient
-      return await this._signer.decrypt(sender, ev.content)
-    }
-  }
-
-  /**
-   * Function used to extract the two participating parties in this communication.
-   *
-   * @param ev - The event from which to extract the parties
-   * @returns The two parties
-   */
-  obtainParties(ev: NDKEvent) : NIP04Parties {
-    if (ev.kind !== 4) {
-      throw Error('Trying to obtain parties of a non NIP-04 message')
-    }
-    const parties = ev.tags
-      .filter(([k, _v]) => k === 'p')
-    const _recipient = parties.find(([k, v]) => k === 'p' && v !== ev.author.pubkey)
-    if (!_recipient) {
-      console.error(`No recipient found in event: `, ev.rawEvent())
-      throw new Error(`No recipient found in event with id: ${ev.rawEvent().id}`)
-    }
-    const recipient = new NDKUser({
-      hexpubkey: _recipient[1]
-    })
-    return {
-      sender: ev.author,
-      recipient
-    }
-  }
-
   nip44ConversationKey(privateKey: Uint8Array, publicKey: string) {
     return nip44.v2.utils.getConversationKey(Buffer.from(privateKey), publicKey)
   }
