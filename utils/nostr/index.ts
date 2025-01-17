@@ -26,12 +26,6 @@ export const NOSTR_REPLACEABLE_EVENT_KIND: ExtendedNDKKind = 38383
 export const NOSTR_SEAL_KIND = 13
 export const NOSTR_GIFT_WRAP_KIND = 1059
 
-
-interface NIP04Parties {
-  sender: NDKUser
-  recipient: NDKUser
-}
-
 export type EventCallback = (event: NDKEvent) => Promise<void>
 export type GiftWrapCallback = (rumor: Rumor, seal: Seal) => Promise<void>
 
