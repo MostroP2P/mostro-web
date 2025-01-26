@@ -5,6 +5,8 @@ import { Nostr } from '../nostr/index'
 import { Action, type NewOrder, Order, OrderStatus, OrderType, type MostroInfo, type MostroMessage } from './types'
 import type { GiftWrap, Rumor, Seal } from '../nostr/types'
 import type { IMostro, MostroEvents } from './mostro-interface'
+import { KeyDerivation } from '../key-derivation'
+import { TradeKeyManager } from '../trade-keys'
 
 const REQUEST_TIMEOUT = 30000 // 30 seconds timeout
 
@@ -30,11 +32,18 @@ export enum PublicKeyType {
   NPUB = 'npub'
 }
 
+export enum SigningMode {
+  INITIAL = 'initial', // Initial signing mode, uses the identity key at the seal level and provides a signature with the trade key in the rumor
+  TRADE = 'trade'     // Trade signing mode, uses the trade key at the seal level
+}
+
 export class Mostro extends EventEmitter<MostroEvents> implements IMostro {
   mostro: string
   nostr: Nostr
   pubkeyCache: PublicKeyCache = { npub: null, hex: null }
   private debug: boolean
+  private masterPrivKey: string | null = null
+  private tradeKeyManager: TradeKeyManager
 
   private readyResolve!: () => void
   private readyPromise: Promise<void>
@@ -46,6 +55,7 @@ export class Mostro extends EventEmitter<MostroEvents> implements IMostro {
     super()
     this.mostro = opts.mostroPubKey
     this.debug = opts.debug || false
+    this.tradeKeyManager = new TradeKeyManager()
 
     this.nostr = new Nostr({ 
       relays: opts.relays, 
@@ -61,6 +71,29 @@ export class Mostro extends EventEmitter<MostroEvents> implements IMostro {
 
     // Wait for Nostr to be ready
     this.nostr.on('ready', this.onNostrReady.bind(this))
+  }
+
+  async connect() {
+    await this.tradeKeyManager.init()
+    await this.nostr.connect()
+    return this.readyPromise
+  }
+
+  async updatePrivKey(privKey: string) {
+    this.masterPrivKey = privKey
+    
+    // Initialize trade key manager if not already done
+    await this.tradeKeyManager.init()
+
+    // Check if we have an identity key, if not create it
+    const identityKey = await this.tradeKeyManager.getIdentityKey()
+    if (!identityKey) {
+      const derivedKey = KeyDerivation.deriveTradeKey(privKey, 0)
+      await this.tradeKeyManager.storeTradeKey(null, derivedKey)
+      this.nostr.setIdentitySigner(derivedKey)
+    } else {
+      this.nostr.setIdentitySigner(identityKey.derivedKey)
+    }
   }
 
   async waitForAction(action: Action, orderId: string, timeout: number = 60000): Promise<MostroMessage> {
@@ -113,15 +146,6 @@ export class Mostro extends EventEmitter<MostroEvents> implements IMostro {
     })
 
     return [requestId, promise]
-  }
-
-  async connect() {
-    try {
-      await this.nostr.connect()
-      return this.readyPromise
-    } catch (error) {
-      console.error('Mostro. Failed to connect to relays:', error)
-    }
   }
 
   onNostrReady() {
@@ -304,7 +328,7 @@ export class Mostro extends EventEmitter<MostroEvents> implements IMostro {
 
   private async sendMostroRequest(action: Action, payload: any): Promise<MostroMessage> {
     const [requestId, promise] = this.createPendingRequest()
-    const fullPayload = {
+    const fullPayload: { order: any } | [order: any, string] = {
       order: {
         version: 1,
         request_id: requestId,
@@ -312,14 +336,62 @@ export class Mostro extends EventEmitter<MostroEvents> implements IMostro {
         ...payload
       }
     }
-    await this.nostr.createAndPublishMostroEvent(fullPayload, this.getMostroPublicKey(PublicKeyType.HEX))
-    return promise
+
+    try {
+      // For initial order actions, don't use a trade key
+      if (action === Action.TakeBuy || action === Action.TakeSell || action === Action.NewOrder) {
+        this.nostr.setSigningMode(SigningMode.INITIAL)
+      } else {
+        this.nostr.setSigningMode(SigningMode.TRADE)
+        // For all other actions, get and use the trade key for this order
+        const orderId = payload.id
+        if (!orderId) {
+          throw new Error('Order ID is required for trade actions')
+        }
+        const tradeKey = await this.tradeKeyManager.getKeyByOrderId(orderId)
+        if (!tradeKey) {
+          throw new Error(`No trade key found for order ${orderId}`)
+        }
+        this.nostr.setTradeSigner(tradeKey.derivedKey)
+      }
+
+      await this.nostr.createAndPublishMostroEvent(fullPayload, this.getMostroPublicKey(PublicKeyType.HEX))
+      return promise
+    } finally {
+      // Always clear the trade signer after use
+      this.nostr.setTradeSigner('')
+    }
   }
 
   async submitOrder(order: NewOrder) {
-    return this.sendMostroRequest(Action.NewOrder, {
-      content: { order }
-    })
+    if (!this.masterPrivKey) {
+      throw new Error('Master private key not set')
+    }
+
+    // Generate a new key for this order
+    const newKeyIndex = this.tradeKeyManager.nextKeyIndex
+    const tradeKey = KeyDerivation.deriveTradeKey(this.masterPrivKey, newKeyIndex)
+    
+    // Set the trade signer for this order
+    this.nostr.setTradeSigner(tradeKey)
+
+    try {
+      const response = await this.sendMostroRequest(Action.NewOrder, {
+        content: { order }
+      })
+
+      // If the order was successful, update the trade key with the order ID
+      if (response.order?.payload?.order?.id) {
+        const orderId = response.order.payload.order.id
+        // Store the key (orderId will be set after we get the response)
+        await this.tradeKeyManager.storeTradeKey(orderId, tradeKey)
+      }
+
+      return response
+    } finally {
+      // Clear the trade signer after the order is submitted
+      this.nostr.setTradeSigner('')
+    }
   }
 
   async takeSell(order: Order, amount?: number | undefined) {
@@ -341,13 +413,15 @@ export class Mostro extends EventEmitter<MostroEvents> implements IMostro {
       content: {
         payment_request: [null, invoice, amount]
       }
-    })  }
+    })
+  }
 
   async release(order: Order) {
     return this.sendMostroRequest(Action.Release, {
       id: order.id,
       content: null
-    })  }
+    })
+  }
 
   async fiatSent(order: Order) {
     return this.sendMostroRequest(Action.FiatSent, {
@@ -389,10 +463,6 @@ export class Mostro extends EventEmitter<MostroEvents> implements IMostro {
       default:
         return this.mostro
     }
-  }
-
-  updatePrivKey(privKey: string) {
-    this.nostr.updatePrivKey(privKey)
   }
 
   getNostr(): Nostr {

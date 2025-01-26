@@ -1,12 +1,18 @@
-import { defineVitestConfig } from '@nuxt/test-utils/config'
+import { defineConfig } from 'vitest/config'
 import Vue from '@vitejs/plugin-vue'
 import path from 'path'
 
-export default defineVitestConfig({
+export default defineConfig({
   plugins: [Vue()],
   test: {
     globals: true,
-    environment: 'jsdom',
+    environment: 'node',
+    environmentMatchGlobs: [
+      // Run browser-specific tests in jsdom
+      ['**/browser/**/*.test.ts', 'jsdom'],
+      // Run Node-specific tests in node
+      ['**/node/**/*.test.ts', 'node'],
+    ],
     testTransformMode: {
       web: ['\\.[jt]sx$'],
     },

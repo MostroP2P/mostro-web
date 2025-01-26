@@ -179,22 +179,24 @@ export type PaymentRequest = [
  * Message sent by mostro
  */
 export type MostroMessage = {
-  order: {
+  order?: {
     version: number,
     id: string,
     request_id?: number,
     action: Action,
-    content: {
+    trade_index?: number,
+    payload: {
       payment_request?: PaymentRequest,
       small_order?: SmallOrder,
       peer?: Peer,
       order?: Order,
       rating_user?: number
       dispute?: string
-    },
+      amount?: number
+    } | null,
     created_at: number
   },
-  ['cant-do']: {
+  ['cant-do']?: {
     version: number,
     id: string,
     request_id?: number,
@@ -204,5 +206,5 @@ export type MostroMessage = {
       text_message: string,
     }
   }
-  created_at: number
+  created_at?: number
 }
