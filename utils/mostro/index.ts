@@ -22,11 +22,6 @@ export interface MostroOptions {
   debug?: boolean
 }
 
-type PublicKeyCache = {
-  npub: null | string,
-  hex: null | string
-}
-
 export enum PublicKeyType {
   HEX = 'hex',
   NPUB = 'npub'
@@ -40,7 +35,6 @@ export enum SigningMode {
 export class Mostro extends EventEmitter<MostroEvents> implements IMostro {
   mostro: string
   nostr: Nostr
-  pubkeyCache: PublicKeyCache = { npub: null, hex: null }
   private debug: boolean
   private masterPrivKey: string | null = null
   private tradeKeyManager: TradeKeyManager
