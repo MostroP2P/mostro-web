@@ -27,6 +27,8 @@ export interface MessagesState {
 // and ignore past messages.
 const MIN_EXPECTED_RESPONSE_TIME = 60
 
+const tradeKeyManager = new TradeKeyManager()
+
 export const useMessages = defineStore('messages', {
   state: () => ({
     messages: {
@@ -102,17 +104,16 @@ export const useMessages = defineStore('messages', {
         console.warn('>>> addMostroMessage: message has unknown property property. message: ', message, ', ev: ', event)
       }
     },
-    addPeerMessage(gift: GiftWrap, seal: Seal, rumor: Rumor) {
-      // Decides whether this message is from me or my peer
-      const mostro = useNuxtApp().$mostro as Mostro
-      const myPubKey = mostro.getNostr().getMyPubKey()
-      // If the seal pubkey is mine, the peer npub should be extracted from the seal p tag
-      // Otherwise, it should be extracted from the seal pubkey
-      const peerHex = seal.pubkey !== myPubKey ? seal.pubkey : rumor.tags.find(tag => tag[1] !== myPubKey)?.[1]
+    async addPeerMessage(gift: GiftWrap, seal: Seal, rumor: Rumor) {
+      // Check if the seal pubkey is recorded as one of my trade keys
+      const isMessageMine = await tradeKeyManager.isTradeKey(seal.pubkey)
+      // If the message is mine, the peer's pubkey will be placed at the external gift wrap layer.
+      // Otherwise, it will be placed at the middle seal layer.
+      const peerHex = isMessageMine ? gift.pubkey : seal.pubkey
       if (peerHex !== undefined) {
         const peerNpub = nip19.npubEncode(peerHex)
         let sender: 'me' | 'other' = 'other'
-        if (seal.pubkey === myPubKey) {
+        if (isMessageMine) {
           sender = 'me'
           console.info('< [me -> 🍐]: ', rumor.content)
         } else {

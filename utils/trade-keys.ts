@@ -85,6 +85,14 @@ export class TradeKeyManager {
     return newIndex
   }
 
+  async isTradeKey(key: string): Promise<boolean> {
+    const keyRecord = await this.db.tradeKeys
+      .where('derivedKey')
+      .equals(key)
+      .first()
+    return keyRecord !== undefined
+  }
+
   /**
    * Get the next key index to be used
    */
