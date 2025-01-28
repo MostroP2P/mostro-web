@@ -207,7 +207,7 @@ export class Nostr extends EventEmitter<{
     this.subscribeGiftWraps(myPubKey)
   }
 
-  private subscribeGiftWraps(myPubkey: string) {
+  subscribeGiftWraps(myPubkey: string) {
     this.debug && console.log('📣 subscribing to gift wraps')
     const filters = {
       kinds: [NOSTR_GIFT_WRAP_KIND],
