@@ -33,7 +33,7 @@ export const useOrders = defineStore('orders', {
           // If we get a mostro message with a new-order action,
           // this means we got an ack to our order submission. Which means
           // this order is ours.
-          const order = orderMessage.content.order as Order
+          const order = orderMessage.payload?.order as Order
           this.addUserOrder({ order, event: ev })
         }
       })

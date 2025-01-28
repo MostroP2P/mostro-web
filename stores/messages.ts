@@ -49,18 +49,18 @@ export const useMessages = defineStore('messages', {
         const orderStore = useOrders()
         const disputeStore = useDisputes()
         if (orderMessage?.action === Action.NewOrder) {
-          const order: Order = orderMessage.content.order as Order
+          const order: Order = orderMessage.payload?.order as Order
           orderStore.addUserOrder({ order, event })
         } else if (
           orderMessage?.action === Action.BuyerTookOrder ||
           orderMessage?.action === Action.HoldInvoicePaymentAccepted ||
           orderMessage?.action === Action.HoldInvoicePaymentSettled
         ) {
-          const order: Order = orderMessage?.content?.order as Order
+          const order: Order = orderMessage?.payload?.order as Order
           if (order)
             orderStore.updateOrder({ order, event })
         } else if (orderMessage?.action === Action.RateReceived) {
-          const rating = orderMessage?.content?.rating_user
+          const rating = orderMessage?.payload?.rating_user
           const order: Order = orderStore.getOrderById(orderMessage.id) as Order
           if (order && rating) {
             orderStore.updateOrderRating({ order, rating, confirmed: true })
@@ -72,13 +72,13 @@ export const useMessages = defineStore('messages', {
           console.log('>>> Dispute initiated for order: ', message.order.id)
           const order: Order = orderStore.getOrderById(orderMessage.id) as Order
           if (order) {
-            if (!message?.order?.content?.dispute) {
+            if (!message?.order?.payload?.dispute) {
               console.warn('>>> addMostroMessage: message has no dispute property. message: ', message)
               return
             }
             orderStore.markDisputed(order, event)
             const dispute: Dispute = {
-              id: message.order.content.dispute as string,
+              id: message.order.payload?.dispute as string,
               orderId: order.id,
               createdAt: message.created_at,
               status: DisputeStatus.INITIATED
