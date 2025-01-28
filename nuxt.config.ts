@@ -3,6 +3,13 @@ export default defineNuxtConfig({
   ssr: false,
   devtools: { enabled: true },
 
+  vite: {
+    plugins: [
+      require('vite-plugin-wasm')(),
+      require('vite-plugin-top-level-await')()
+    ]
+  },
+
   runtimeConfig: {
     public: {
       relays: process.env.RELAYS,

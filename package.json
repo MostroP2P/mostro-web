@@ -27,6 +27,8 @@
     "jsdom": "^24.1.1",
     "nuxt": "^3.12.4",
     "typescript": "^5.5.4",
+    "vite-plugin-top-level-await": "^1.4.4",
+    "vite-plugin-wasm": "^3.4.1",
     "vitest": "^2.0.5",
     "vue-tsc": "^2.0.29"
   },
