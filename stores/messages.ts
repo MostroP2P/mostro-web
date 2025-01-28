@@ -80,7 +80,7 @@ export const useMessages = defineStore('messages', {
             const dispute: Dispute = {
               id: message.order.payload?.dispute as string,
               orderId: order.id,
-              createdAt: message.created_at,
+              createdAt: message.created_at || 0,
               status: DisputeStatus.INITIATED
             }
             disputeStore.addDispute(dispute)
@@ -137,7 +137,7 @@ export const useMessages = defineStore('messages', {
     },
     handleOutOfRangeSatsAmount(message: MostroMessage) {
       const now = Date.now() / 1e3
-      const createdAt = new Date(message.created_at)
+      const createdAt = new Date(message.created_at || 0)
       const diff = now - createdAt.getTime()
       if (diff < MIN_EXPECTED_RESPONSE_TIME) {
         const alertStore = useAlertStore()
@@ -214,15 +214,15 @@ export const useMessages = defineStore('messages', {
         const messageSlice = state.messages.mostro.slice(0)
         // Filtering messages by order id
         const messages = messageSlice
-          .filter((message: MostroMessage) => message.order)
-          .filter((message: MostroMessage) => message.order.id === orderId)
+          .filter((message: MostroMessage) => message?.order)
+          .filter((message: MostroMessage) => message?.order?.id === orderId)
 
         // Reducing messages to only the last one for each action
         type ReducerAcc = { [key: string]: MostroMessage }
         const reduced = messages.reduce<ReducerAcc>((acc: ReducerAcc, message: MostroMessage) => {
           if (!message.order) return acc
           const orderMessage = message.order
-          if(acc[orderMessage.action] && acc[orderMessage.action].order.created_at < orderMessage.created_at) {
+          if(acc[orderMessage.action] && (acc[orderMessage.action]?.order?.created_at || 0) < orderMessage.created_at) {
             acc[orderMessage.action] = message
           } else if (!acc[orderMessage.action]) {
             acc[orderMessage.action] = message
@@ -233,7 +233,7 @@ export const useMessages = defineStore('messages', {
         if (!reduced) return []
         // Converting back to an array
         return Object.values(reduced)
-          .sort((a: MostroMessage, b: MostroMessage) => a.created_at - b.created_at)
+          .sort((a: MostroMessage, b: MostroMessage) => (a.created_at || 0) - (b.created_at || 0))
       }
     },
     getPeerMessagesByNpub(state: MessagesState) : (npub: string) => ChatMessage[] {
