@@ -16,12 +16,10 @@
 <script lang="ts" setup>
 import { computed, watch } from 'vue'
 import { useAuth } from '@/stores/auth'
-import type { Nostr } from '~/plugins/01-nostr'
-import { useProfile } from '~/composables/useProfile'
 import useNip19 from '~/composables/useNip19'
+import type { Nostr } from '~/utils/nostr'
 
 const { hexToNpub } = useNip19()
-const { getProfile } = useProfile()
 
 const profilePic = ref<string | undefined>(undefined)
 const userName = ref<string | undefined>(undefined)
@@ -33,35 +31,12 @@ watch(() => authStore.pubKey, async (newPubkey: string | null) => {
     const $nostr: Nostr = nuxt.$nostr as Nostr
     if ($nostr) {
       const npub = hexToNpub(newPubkey)
-      const profile = await getProfile(npub)
-      if (profile) {
-        const { image, username } = profile
-        if (image) {
-          profilePic.value = image
-        }
-        if (username) {
-          userName.value = username
-        }
-      }
     }
   } else {
     profilePic.value = undefined
     userName.value = undefined
   }
 })
-
-if (authStore.pubKey) {
-  getProfile(hexToNpub(authStore.pubKey)).then(profile => {
-    if (!profile) return
-    const { image, username } = profile as Profile
-    if (image) {
-      profilePic.value = image
-    }
-    if (username) {
-      userName.value = username
-    }
-  })
-}
 
 const onLogout = () => {
   authStore.logout()
