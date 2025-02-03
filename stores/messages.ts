@@ -13,7 +13,7 @@ import { Action, type MostroMessage, type Order } from '~/utils/mostro/types'
 import type { Mostro } from '~/utils/mostro'
 import type { GiftWrap, Rumor, Seal } from '~/utils/nostr/types'
 import { nip19 } from 'nostr-tools'
-
+import { KeyManager } from '~/utils/key-manager'
 export interface MessagesState {
   messages: {
     mostro: MostroMessage[],
@@ -27,7 +27,7 @@ export interface MessagesState {
 // and ignore past messages.
 const MIN_EXPECTED_RESPONSE_TIME = 60
 
-const tradeKeyManager = new TradeKeyManager()
+const keyManager = new KeyManager()
 
 export const useMessages = defineStore('messages', {
   state: () => ({
@@ -106,7 +106,7 @@ export const useMessages = defineStore('messages', {
     },
     async addPeerMessage(gift: GiftWrap, seal: Seal, rumor: Rumor) {
       // Check if the seal pubkey is recorded as one of my trade keys
-      const isMessageMine = await tradeKeyManager.isTradeKey(seal.pubkey)
+      const isMessageMine = await keyManager.isTradeKey(seal.pubkey)
       // If the message is mine, the peer's pubkey will be placed at the external gift wrap layer.
       // Otherwise, it will be placed at the middle seal layer.
       const peerHex = isMessageMine ? gift.pubkey : seal.pubkey

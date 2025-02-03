@@ -80,7 +80,7 @@
 import { ref, computed } from 'vue'
 import CryptoJS from 'crypto-js'
 import { generateSecretKey } from 'nostr-tools'
-import { AuthMethod, useAuth } from '~/stores/auth'
+import { useAuth } from '~/stores/auth'
 import { useCrypto } from '~/composables/useCrypto'
 import { useSecretValidator } from '~/composables/useSecretValidator'
 import useNip19 from '~/composables/useNip19'
@@ -124,11 +124,11 @@ const onPrivateKeyConfirmed = async function () {
     let rawKeyBytes = Buffer.from(rawKey)
     let base64Key = rawKeyBytes.toString('base64')
     const ciphertext = CryptoJS.AES.encrypt(privKey, base64Key).toString()
-    authStore.encryptedPrivateKey = { ciphertext, salt: salt.toString('base64') }
-    authStore.login({
-      privateKey: privateKey.value,
-      authMethod: AuthMethod.LOCAL
-    })
+    // authStore.encryptedPrivateKey = { ciphertext, salt: salt.toString('base64') }
+    // authStore.login({
+    //   privateKey: privateKey.value,
+    //   authMethod: AuthMethod.LOCAL
+    // })
   } catch(err) {
     console.error('Error while generating encryption key. Err: ', err)
   } finally {

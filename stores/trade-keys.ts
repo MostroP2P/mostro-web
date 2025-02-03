@@ -1,11 +1,11 @@
 import { defineStore } from 'pinia'
-import { TradeKeyManager } from '~/utils/trade-keys'
+import { KeyManager } from '~/utils/key-manager'
 
 export const useTradeKeys = defineStore('trade-keys', () => {
-  const manager = new TradeKeyManager()
+  const manager = new KeyManager()
 
   return {
-    init: () => manager.init(),
+    init: (mnemonic: string) => manager.init(mnemonic),
     getIdentityKey: () => manager.getIdentityKey(),
     getKeyByOrderId: (orderId: string) => manager.getKeyByOrderId(orderId),
     storeTradeKey: (orderId: string | null, derivedKey: string) => manager.storeTradeKey(orderId, derivedKey),

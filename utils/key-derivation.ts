@@ -29,4 +29,20 @@ export class KeyDerivation {
 
     return Buffer.from(derived.privateKey!).toString('hex')
   }
+
+  /**
+   * Derives the identity key from a master private key using BIP32
+   * @param seed - Master private key in hex format
+   * @returns Derived private key in hex format
+   */
+  static deriveIdentityKey(seed: Uint8Array<ArrayBufferLike>): string {
+    const node = bip32.fromSeed(seed)
+    const derived = node
+      .deriveHardened(this.PURPOSE)
+      .deriveHardened(this.COIN_TYPE)
+      .deriveHardened(this.ACCOUNT)
+      .derive(this.CHANGE)
+      .derive(0)
+    return Buffer.from(derived.privateKey!).toString('hex')
+  }
 } 

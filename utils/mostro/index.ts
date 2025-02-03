@@ -6,7 +6,7 @@ import { Action, type NewOrder, Order, OrderStatus, OrderType, type MostroInfo, 
 import type { GiftWrap, Rumor, Seal } from '../nostr/types'
 import type { IMostro, MostroEvents } from './mostro-interface'
 import { KeyDerivation } from '../key-derivation'
-import { TradeKeyManager } from '../trade-keys'
+import { KeyManager } from '../key-manager'
 
 const REQUEST_TIMEOUT = 30000 // 30 seconds timeout
 
@@ -37,7 +37,7 @@ export class Mostro extends EventEmitter<MostroEvents> implements IMostro {
   nostr: Nostr
   private debug: boolean
   private masterPrivKey: string | null = null
-  private tradeKeyManager: TradeKeyManager
+  private keyManager: KeyManager
 
   private readyResolve!: () => void
   private readyPromise: Promise<void>
@@ -49,7 +49,7 @@ export class Mostro extends EventEmitter<MostroEvents> implements IMostro {
     super()
     this.mostro = opts.mostroPubKey
     this.debug = opts.debug || false
-    this.tradeKeyManager = new TradeKeyManager()
+    this.keyManager = new KeyManager()
 
     this.nostr = new Nostr({ 
       relays: opts.relays, 
@@ -68,26 +68,20 @@ export class Mostro extends EventEmitter<MostroEvents> implements IMostro {
   }
 
   async connect() {
-    await this.tradeKeyManager.init()
     await this.nostr.connect()
     return this.readyPromise
   }
 
-  async updateMasterPrivateKey(privKey: string) {
-    this.masterPrivKey = privKey
-    
+  async updateMnemonic(mnemonic: string) {
     // Initialize trade key manager if not already done
-    await this.tradeKeyManager.init()
+    await this.keyManager.init(mnemonic)
 
     // Check if we have an identity key, if not create it
-    const identityKey = await this.tradeKeyManager.getIdentityKey()
+    const identityKey = this.keyManager.getIdentityKey()
     if (!identityKey) {
-      const derivedKey = KeyDerivation.deriveTradeKey(privKey, 0)
-      await this.tradeKeyManager.storeTradeKey(null, derivedKey)
-      this.nostr.setIdentitySigner(derivedKey)
-    } else {
-      this.nostr.setIdentitySigner(identityKey.derivedKey)
+      throw new Error('No identity key found')
     }
+    this.nostr.setIdentitySigner(identityKey)
   }
 
   async waitForAction(action: Action, orderId: string, timeout: number = 60000): Promise<MostroMessage> {
@@ -343,7 +337,7 @@ export class Mostro extends EventEmitter<MostroEvents> implements IMostro {
         if (!orderId) {
           throw new Error('Order ID is required for trade actions')
         }
-        const tradeKey = await this.tradeKeyManager.getKeyByOrderId(orderId)
+        const tradeKey = await this.keyManager.getKeyByOrderId(orderId)
         if (!tradeKey) {
           throw new Error(`No trade key found for order ${orderId}`)
         }
@@ -364,7 +358,7 @@ export class Mostro extends EventEmitter<MostroEvents> implements IMostro {
     }
 
     // Generate a new key for this order
-    const newKeyIndex = this.tradeKeyManager.nextKeyIndex
+    const newKeyIndex = this.keyManager.nextKeyIndex
     const tradeKey = KeyDerivation.deriveTradeKey(this.masterPrivKey, newKeyIndex)
     
     // Set the trade signer for this order
@@ -379,7 +373,7 @@ export class Mostro extends EventEmitter<MostroEvents> implements IMostro {
       if (response.order?.payload?.order?.id) {
         const orderId = response.order.payload.order.id
         // Store the key (orderId will be set after we get the response)
-        await this.tradeKeyManager.storeTradeKey(orderId, tradeKey)
+        await this.keyManager.storeTradeKey(orderId, tradeKey)
       }
 
       return response

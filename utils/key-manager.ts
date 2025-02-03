@@ -1,3 +1,4 @@
+import { mnemonicToSeedSync } from '@scure/bip39'
 import Dexie from 'dexie'
 
 interface TradeKeyRecord {
@@ -19,21 +20,29 @@ class TradeKeysDatabase extends Dexie {
   }
 }
 
-export class TradeKeyManager {
+export class KeyManager {
   private db: TradeKeysDatabase
   private lastKeyIndex: number = 0
   private initialized: boolean = false
+  private identityKey: string | null = null
 
   constructor() {
     this.db = new TradeKeysDatabase()
   }
 
   /**
-   * Initialize the manager by loading the last used key index
+   * Initialize with entropy/mnemonic
    */
-  async init(): Promise<void> {
+  async init(mnemonic: string): Promise<void> {
     if (this.initialized) return
 
+    // Derive master key
+    const seed = mnemonicToSeedSync(mnemonic)
+
+    // Derive identity key
+    this.identityKey = KeyDerivation.deriveIdentityKey(seed)
+
+    // Load last used key index
     const lastRecord = await this.db.tradeKeys
       .orderBy('keyIndex')
       .last()
@@ -48,11 +57,8 @@ export class TradeKeyManager {
   /**
    * Get the identity key (index 0)
    */
-  async getIdentityKey(): Promise<TradeKeyRecord | undefined> {
-    return await this.db.tradeKeys
-      .where('keyIndex')
-      .equals(0)
-      .first()
+  getIdentityKey(): string | null {
+    return this.identityKey
   }
 
   /**
