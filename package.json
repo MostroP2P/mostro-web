@@ -21,6 +21,7 @@
     "@nuxt/test-utils": "^3.14.0",
     "@nuxtjs/i18n": "^8.3.3",
     "@types/bip21": "^2.0.3",
+    "@types/crypto-js": "^4.2.2",
     "@types/node": "^22.0.2",
     "@vue/test-utils": "^2.4.6",
     "auto-changelog": "^2.4.0",
