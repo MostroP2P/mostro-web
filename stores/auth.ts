@@ -60,7 +60,7 @@ export const useAuth = defineStore('auth', {
           // Informing the mostro plugin about the private key
           const nuxt = useNuxtApp()
           const $mostro: Mostro = nuxt.$mostro as Mostro
-          $mostro.updatePrivKey(this.privKey)
+          $mostro.updateMasterPrivateKey(this.privKey)
         } catch(err) {
           console.warn('Error setting local key from local storage: ', err)
           this.delete()
@@ -87,7 +87,7 @@ export const useAuth = defineStore('auth', {
         // Informing the mostro plugin about the private key
         const nuxt = useNuxtApp()
         const $mostro: Mostro = nuxt.$mostro as Mostro
-        $mostro.updatePrivKey(this.privKey)
+        $mostro.updateMasterPrivateKey(this.privKey)
 
         this.pubKey = getPublicKey(Buffer.from(this.privKey, 'hex'))
       } else if (this.authMethod === AuthMethod.NIP07) {

@@ -40,6 +40,6 @@ export interface IMostro {
   
   // Utility methods
   getMostroPublicKey(type?: PublicKeyType): string
-  updatePrivKey(privKey: string): void
+  updateMasterPrivateKey(privKey: string): void
   getNostr(): Nostr
 }

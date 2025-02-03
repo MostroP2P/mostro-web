@@ -73,7 +73,7 @@ export class Mostro extends EventEmitter<MostroEvents> implements IMostro {
     return this.readyPromise
   }
 
-  async updatePrivKey(privKey: string) {
+  async updateMasterPrivateKey(privKey: string) {
     this.masterPrivKey = privKey
     
     // Initialize trade key manager if not already done
