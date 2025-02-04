@@ -361,7 +361,7 @@ export class Mostro extends EventEmitter<MostroEvents> implements IMostro {
 
     try {
       const response = await this.sendMostroRequest(Action.NewOrder, {
-        content: { order }
+        payload: { order }
       })
 
       // If the order was successful, update the trade key with the order ID
