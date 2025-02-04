@@ -36,7 +36,6 @@ export class Mostro extends EventEmitter<MostroEvents> implements IMostro {
   mostro: string
   nostr: Nostr
   private debug: boolean
-  private masterPrivKey: string | null = null
   private keyManager: KeyManager
 
   private readyResolve!: () => void
@@ -353,13 +352,9 @@ export class Mostro extends EventEmitter<MostroEvents> implements IMostro {
   }
 
   async submitOrder(order: NewOrder) {
-    if (!this.masterPrivKey) {
-      throw new Error('Master private key not set')
-    }
-
     // Generate a new key for this order
     const newKeyIndex = this.keyManager.nextKeyIndex
-    const tradeKey = KeyDerivation.deriveTradeKey(this.masterPrivKey, newKeyIndex)
+    const tradeKey = this.keyManager.getTradeKey(newKeyIndex)
     
     // Set the trade signer for this order
     this.nostr.setTradeSigner(tradeKey)

@@ -25,6 +25,7 @@ export class KeyManager {
   private lastKeyIndex: number = 0
   private initialized: boolean = false
   private identityKey: string | null = null
+  seed: Uint8Array | undefined
 
   constructor() {
     this.db = new TradeKeysDatabase()
@@ -37,10 +38,10 @@ export class KeyManager {
     if (this.initialized) return
 
     // Derive master key
-    const seed = mnemonicToSeedSync(mnemonic)
+    this.seed = mnemonicToSeedSync(mnemonic)
 
     // Derive identity key
-    this.identityKey = KeyDerivation.deriveIdentityKey(seed)
+    this.identityKey = KeyDerivation.deriveIdentityKey(this.seed)
 
     // Load last used key index
     const lastRecord = await this.db.tradeKeys
@@ -59,6 +60,13 @@ export class KeyManager {
    */
   getIdentityKey(): string | null {
     return this.identityKey
+  }
+
+  getTradeKey(keyIndex: number): string {
+    if (!this.seed) {
+      throw new Error('KeyManager not initialized')
+    }
+    return KeyDerivation.deriveTradeKey(this.seed, keyIndex)
   }
 
   /**

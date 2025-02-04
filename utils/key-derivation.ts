@@ -16,8 +16,7 @@ export class KeyDerivation {
    * @param tradeIndex - Index for key derivation
    * @returns Derived private key in hex format
    */
-  static deriveTradeKey(masterPrivKey: string, tradeIndex: number): string {
-    const seed = Buffer.from(masterPrivKey, 'hex')
+  static deriveTradeKey(seed: Uint8Array<ArrayBufferLike>, tradeIndex: number): string {
     const node = bip32.fromSeed(seed)
     
     // Derive using path m/44'/1237'/38383'/0/tradeIndex
