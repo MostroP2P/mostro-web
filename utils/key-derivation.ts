@@ -1,5 +1,6 @@
 import { BIP32Factory } from 'bip32'
 import * as ecc from 'tiny-secp256k1'
+import { mnemonicToSeedSync } from 'bip39'
 
 const bip32 = BIP32Factory(ecc)
 
@@ -45,4 +46,10 @@ export class KeyDerivation {
       .derive(0)
     return Buffer.from(derived.privateKey!).toString('hex')
   }
+}
+
+export async function getFingerprint(mnemonic: string): Promise<Uint8Array<ArrayBufferLike>> {
+  const seed = mnemonicToSeedSync(mnemonic)
+  const root = bip32.fromSeed(seed)
+  return root.fingerprint
 } 

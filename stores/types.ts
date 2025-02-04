@@ -96,7 +96,7 @@ export interface RootState {
   auth: AuthState
 }
 
-export interface EncryptedPrivateKey {
+export interface EncryptedMnemonic {
   ciphertext: string,
   salt: string
 }

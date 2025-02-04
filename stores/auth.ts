@@ -2,12 +2,6 @@ import { watch } from 'vue'
 import { AUTH_LOCAL_STORAGE_ENCRYPTED_MNEMONIC, AUTH_LOCAL_STORAGE_DECRYPTED_MNEMONIC } from './types'
 import { nip19 } from 'nostr-tools'
 
-export interface LocalLoginPayload {
-  mnemonic: string
-}
-
-export type LoginPayload = LocalLoginPayload
-
 export interface AuthState {
   encryptedMnemonic: string | null,
   mnemonic: string | null
@@ -24,14 +18,14 @@ export function isNsec(nsec: string): boolean {
 
 export const useAuth = defineStore('auth', {
   state: () => ({
-    encryptedMnemonic: null as string | null,
+    encryptedMnemonic: null as EncryptedMnemonic | null,
     mnemonic: null as string | null
   }),
   actions: {
     nuxtClientInit() {
       const encryptedMnemonic = localStorage.getItem(AUTH_LOCAL_STORAGE_ENCRYPTED_MNEMONIC)
       if(encryptedMnemonic) {
-        this.encryptedMnemonic = encryptedMnemonic
+        this.encryptedMnemonic = JSON.parse(encryptedMnemonic)
       }
       const mnemonic = localStorage.getItem(AUTH_LOCAL_STORAGE_DECRYPTED_MNEMONIC)
       if (mnemonic) {
@@ -50,7 +44,7 @@ export const useAuth = defineStore('auth', {
       }
       watch(() => this.encryptedMnemonic, (newEncryptedMnemonic) => {
         if (newEncryptedMnemonic) {
-          localStorage.setItem(AUTH_LOCAL_STORAGE_ENCRYPTED_MNEMONIC, newEncryptedMnemonic)
+          localStorage.setItem(AUTH_LOCAL_STORAGE_ENCRYPTED_MNEMONIC, JSON.stringify(newEncryptedMnemonic))
         }
       })
       watch(() => this.mnemonic, (newMnemonic) => {
@@ -59,15 +53,14 @@ export const useAuth = defineStore('auth', {
         }
       })
     },
-    login(loginPayload: LoginPayload) {
-      const localLoginPayload = loginPayload as LocalLoginPayload
-      this.mnemonic = localLoginPayload.mnemonic
+    login(mnemonic: string) {
+      this.mnemonic = mnemonic
 
       // Initialize KeyManager
       const keyManager = new KeyManager()
       keyManager.init(this.mnemonic)
     },
-    setEncryptedMnemonic(encryptedMnemonic: string) {
+    setEncryptedMnemonic(encryptedMnemonic: EncryptedMnemonic) {
       this.encryptedMnemonic = encryptedMnemonic
     },
     setMnemonic(mnemonic: string) {

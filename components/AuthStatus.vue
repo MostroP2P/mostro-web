@@ -3,8 +3,8 @@
     <ProfileDetailsDialog :userName="userName" :profilePic="profilePic"/>
     <client-only>
       <div v-if="!isLoggedIn">
-        <registration-dialog v-if="!hasEncryptedKey"/>
-        <login-dialog v-if="hasEncryptedKey"/>
+        <registration-dialog v-if="!hasEncryptedMnemonic"/>
+        <login-dialog v-if="hasEncryptedMnemonic"/>
       </div>
       <div v-else class="mt-5 d-flex flex-column align-center justify-center">
         <v-btn outlined @click="onLogout" prepend-icon="mdi-logout-variant">Logout</v-btn>
@@ -16,22 +16,24 @@
 <script lang="ts" setup>
 import { computed, watch } from 'vue'
 import { useAuth } from '@/stores/auth'
-import useNip19 from '~/composables/useNip19'
-import type { Nostr } from '~/utils/nostr'
-
-const { hexToNpub } = useNip19()
+import { generateAvatar, BackgroundSets, CharacterSets } from 'robohash-avatars'
+import { getFingerprint } from '~/utils/key-derivation'
 
 const profilePic = ref<string | undefined>(undefined)
 const userName = ref<string | undefined>(undefined)
 
 const authStore = useAuth()
-watch(() => authStore.pubKey, async (newPubkey: string | null) => {
-  if (newPubkey) {
-    const nuxt = useNuxtApp()
-    const $nostr: Nostr = nuxt.$nostr as Nostr
-    if ($nostr) {
-      const npub = hexToNpub(newPubkey)
-    }
+watch(() => authStore.mnemonic, async (newMnemonic: string | null) => {
+  if (newMnemonic) {
+    const fingerprint = await getFingerprint(newMnemonic)
+    profilePic.value = generateAvatar({
+      username: fingerprint.toString(),
+      background: BackgroundSets.RandomBackground1,
+      characters: CharacterSets.Robots,
+      width: 400,
+      height: 400
+    })
+    userName.value = undefined
   } else {
     profilePic.value = undefined
     userName.value = undefined
@@ -42,8 +44,8 @@ const onLogout = () => {
   authStore.logout()
 }
 
-const hasEncryptedKey = computed<boolean>(() => {
-  return authStore.encryptedPrivateKey !== null
+const hasEncryptedMnemonic = computed<boolean>(() => {
+  return authStore.encryptedMnemonic !== null
 })
 
 const isLoggedIn = computed<boolean>(() => {
