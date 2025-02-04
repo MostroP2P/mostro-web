@@ -293,7 +293,8 @@ export class Mostro extends EventEmitter<MostroEvents> implements IMostro {
     // Check if this is a message from Mostro
     if (rumor.pubkey === this.getMostroPublicKey(PublicKeyType.HEX)) {
       const message = rumor.content
-      const mostroMessage = JSON.parse(message) as MostroMessage
+      const mostroMessageArray = JSON.parse(message) as [MostroMessage]
+      const mostroMessage = mostroMessageArray[0]
       mostroMessage.created_at = rumor.created_at // Sets the created_at timestamp to the event timestamp
       this.debug && console.info(`[🎁][🧌 -> me] [d: ${delta}]: `, mostroMessage, ', ev: ', rumor)
       this.emit('mostro-message', mostroMessage, rumor as NDKEvent)
