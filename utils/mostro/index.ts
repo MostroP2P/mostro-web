@@ -327,21 +327,12 @@ export class Mostro extends EventEmitter<MostroEvents> implements IMostro {
     }
 
     try {
-      // For initial order actions, don't use a trade key
       if (action === Action.TakeBuy || action === Action.TakeSell || action === Action.NewOrder) {
+        // For initial order actions, don't use a trade key
         this.nostr.setSigningMode(SigningMode.INITIAL)
       } else {
-        this.nostr.setSigningMode(SigningMode.TRADE)
         // For all other actions, get and use the trade key for this order
-        const orderId = payload.id
-        if (!orderId) {
-          throw new Error('Order ID is required for trade actions')
-        }
-        const tradeKey = await this.keyManager.getKeyByOrderId(orderId)
-        if (!tradeKey) {
-          throw new Error(`No trade key found for order ${orderId}`)
-        }
-        this.nostr.setTradeSigner(tradeKey.derivedKey)
+        this.nostr.setSigningMode(SigningMode.TRADE)
       }
 
       await this.nostr.createAndPublishMostroEvent(fullPayload, this.getMostroPublicKey(PublicKeyType.HEX))
@@ -352,87 +343,121 @@ export class Mostro extends EventEmitter<MostroEvents> implements IMostro {
     }
   }
 
-  async submitOrder(order: NewOrder) {
-    // Generate a new key for this order
-    const newKeyIndex = this.keyManager.nextKeyIndex
-    const tradeKey = this.keyManager.getTradeKey(newKeyIndex)
+  private async withTradeKeyManagement(orderId: string | null, action: Action, requestFn: () => Promise<MostroMessage>): Promise<MostroMessage> {
+    let tradeKey = ''
     
-    // Set the trade signer for this order
-    this.nostr.setTradeSigner(tradeKey)
+    // Generate new key for order creation and taking actions
+    if (action === Action.TakeBuy || action === Action.TakeSell || action === Action.NewOrder) {
+      const newKeyIndex = this.keyManager.nextKeyIndex
+      tradeKey = this.keyManager.getTradeKey(newKeyIndex)
+      this.nostr.setTradeSigner(tradeKey)
+    } else {
+      // For all other actions, get and use the trade key for this order
+      if (!orderId) {
+        throw new Error('Order ID is required for trade actions')
+      }
+      const tradeKey = await this.keyManager.getKeyByOrderId(orderId)
+      if (!tradeKey) {
+        throw new Error(`No trade key found for order ${orderId}`)
+      }
+      this.nostr.setTradeSigner(tradeKey.derivedKey)
+    }
 
     try {
-      const response = await this.sendMostroRequest(Action.NewOrder, {
-        payload: { order }
-      })
+      const response = await requestFn()
 
-      // If the order was successful, update the trade key with the order ID
-      if (response.order?.payload?.order?.id) {
-        const orderId = response.order.payload.order.id
-        // Store the key (orderId will be set after we get the response)
-        await this.keyManager.storeTradeKey(orderId, tradeKey)
+      // If successful, store the trade key
+      if (tradeKey && response.order?.payload?.order?.id) {
+        const newOrderId = response.order.payload.order.id
+        await this.keyManager.storeTradeKey(newOrderId, tradeKey)
       }
 
       return response
     } finally {
-      // Clear the trade signer after the order is submitted
+      // Clear the trade signer after use
       this.nostr.setTradeSigner('')
     }
   }
 
+  async submitOrder(order: NewOrder) {
+    return this.withTradeKeyManagement(null, Action.NewOrder, () =>
+      this.sendMostroRequest(Action.NewOrder, {
+        payload: { order }
+      })
+    )
+  }
+
   async takeSell(order: Order, amount?: number | undefined) {
-    return this.sendMostroRequest(Action.TakeSell, {
-      id: order.id,
-      content: amount ? { amount } : null
-    })
+    return this.withTradeKeyManagement(order.id, Action.TakeSell, () =>
+      this.sendMostroRequest(Action.TakeSell, {
+        id: order.id,
+        content: amount ? { amount } : null
+      })
+    )
   }
 
   async takeBuy(order: Order, amount?: number | undefined) {
-    return this.sendMostroRequest(Action.TakeBuy, {
-      id: order.id,
-      content: amount ? { amount } : null
-    })  }
+    return this.withTradeKeyManagement(order.id, Action.TakeBuy, () =>
+      this.sendMostroRequest(Action.TakeBuy, {
+        id: order.id,
+        content: amount ? { amount } : null
+      })
+    )
+  }
 
   async addInvoice(order: Order, invoice: string, amount: number | null = null) {
-    return this.sendMostroRequest(Action.AddInvoice, {
-      id: order.id,
-      content: {
-        payment_request: [null, invoice, amount]
-      }
-    })
+    return this.withTradeKeyManagement(order.id, Action.AddInvoice, () =>
+      this.sendMostroRequest(Action.AddInvoice, {
+        id: order.id,
+        content: {
+          payment_request: [null, invoice, amount]
+        }
+      })
+    )
   }
 
   async release(order: Order) {
-    return this.sendMostroRequest(Action.Release, {
-      id: order.id,
-      content: null
-    })
+    return this.withTradeKeyManagement(order.id, Action.Release, () =>
+      this.sendMostroRequest(Action.Release, {
+        id: order.id,
+        content: null
+      })
+    )
   }
 
   async fiatSent(order: Order) {
-    return this.sendMostroRequest(Action.FiatSent, {
-      id: order.id
-    })
+    return this.withTradeKeyManagement(order.id, Action.FiatSent, () =>
+      this.sendMostroRequest(Action.FiatSent, {
+        id: order.id
+      })
+    )
   }
 
   async rateUser(order: Order, rating: number) {
-    return this.sendMostroRequest(Action.RateUser, {
-      id: order.id,
-      content: { rating_user: rating }
-    })
+    return this.withTradeKeyManagement(order.id, Action.RateUser, () =>
+      this.sendMostroRequest(Action.RateUser, {
+        id: order.id,
+        content: { rating_user: rating }
+      })
+    )
   }
 
   async dispute(order: Order) {
-    return this.sendMostroRequest(Action.Dispute, {
-      id: order.id,
-      content: null
-    })
+    return this.withTradeKeyManagement(order.id, Action.Dispute, () =>
+      this.sendMostroRequest(Action.Dispute, {
+        id: order.id,
+        content: null
+      })
+    )
   }
 
   async cancel(order: Order) {
-    return this.sendMostroRequest(Action.Cancel, {
-      id: order.id,
-      content: null
-    })
+    return this.withTradeKeyManagement(order.id, Action.Cancel, () =>
+      this.sendMostroRequest(Action.Cancel, {
+        id: order.id,
+        content: null
+      })
+    )
   }
 
   async submitDirectMessageToPeer(message: string, destination: string, tags: string[][]): Promise<void> {
