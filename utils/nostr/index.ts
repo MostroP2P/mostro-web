@@ -14,11 +14,6 @@ import type { MostroMessage } from '../mostro/types'
  */
 const EVENT_INTEREST_WINDOW = 60 * 60 * 24 * 14 // 14 days
 
-/**
- * The amount of time that the gift wrap timestamp will randomly shifted every time
- */
-const GIFT_WRAP_TIME_WINDOW = 2 * 24 * 60 * 60
-
 // Message kinds
 type ExtendedNDKKind = NDKKind | 38383 | 14
 export const NOSTR_DIRECT_MESSAGE_KIND: ExtendedNDKKind = 14
