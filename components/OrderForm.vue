@@ -290,13 +290,14 @@ export default defineComponent({
       }
       try {
         const t1 = Date.now()
-        // @ts-ignore
         const response = await this.$mostro.submitOrder(order)
         const t2 = Date.now()
         console.log('🚀 Order submitted: ', response, 'in', t2 - t1, 'ms')
         const orderStore = useOrders()
-        const confirmedOrder = response.order.content.order as Order
-        orderStore.addUserOrder({ order: confirmedOrder })
+        const confirmedOrder = response.order?.payload?.order as Order
+        if (confirmedOrder) {
+          orderStore.addUserOrder({ order: confirmedOrder })
+        }
         this.onClose()
       } catch(err) {
         console.error('Error while submitting order: ', err)

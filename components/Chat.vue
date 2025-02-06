@@ -76,7 +76,6 @@ import { useAuth } from '@/stores/auth'
 import { useMessages } from '~/stores/messages'
 import { useTimeago } from '@/composables/timeago'
 import type { ChatMessage } from '~/stores/types'
-import { useProfile } from '@/composables/useProfile'
 import useNip19 from '@/composables/useNip19'
 
 const { hexToNpub, npubToHex } = useNip19()
@@ -106,15 +105,6 @@ const props = defineProps({
 })
 
 const isInputEnabled = computed(() => isAuthenticated.value && !!props.npub && props.enabled)
-
-const { getProfile } = useProfile()
-getProfile(props.npub)
-  .then(profile => peerProfilePictureUrl.value = profile?.image ?? null)
-
-if (authStore.pubKey) {
-  getProfile(hexToNpub(authStore.pubKey))
-    .then(profile => myProfilePictureUrl.value = profile?.image ?? null)
-}
 
 const scrollToBottom = async (id: string) => {
   const msgElement = document.getElementById(id)

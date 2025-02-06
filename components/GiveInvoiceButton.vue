@@ -63,7 +63,7 @@ export default defineComponent({
     const mostroStore = useMostroStore()
     const { error, parseInvoice, invoice } = useBolt11Parser()
     const order = computed(() => {
-      return orderStore.getOrderById(props.message.order.content.order?.id ?? '')
+      return orderStore.getOrderById(props.message.order?.payload?.order?.id ?? '')
     })
     const mostroInfo = mostroStore.getMostroInfo(order.value?.mostro_id ?? '')
 
@@ -117,7 +117,7 @@ export default defineComponent({
     })
 
     const satsAmount = computed(() => {
-      return props.message.order.content.order?.amount ?? '?'
+      return props.message.order?.payload?.order?.amount ?? '?'
     })
 
     const submitDisabled = computed(() => {

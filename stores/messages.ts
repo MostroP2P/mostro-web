@@ -13,7 +13,7 @@ import { Action, type MostroMessage, type Order } from '~/utils/mostro/types'
 import type { Mostro } from '~/utils/mostro'
 import type { GiftWrap, Rumor, Seal } from '~/utils/nostr/types'
 import { nip19 } from 'nostr-tools'
-
+import { KeyManager } from '~/utils/key-manager'
 export interface MessagesState {
   messages: {
     mostro: MostroMessage[],
@@ -26,6 +26,8 @@ export interface MessagesState {
 // Minimum expected response time in seconds. This is used to display alerts in a timely manner
 // and ignore past messages.
 const MIN_EXPECTED_RESPONSE_TIME = 60
+
+const keyManager = new KeyManager()
 
 export const useMessages = defineStore('messages', {
   state: () => ({
@@ -49,18 +51,18 @@ export const useMessages = defineStore('messages', {
         const orderStore = useOrders()
         const disputeStore = useDisputes()
         if (orderMessage?.action === Action.NewOrder) {
-          const order: Order = orderMessage.content.order as Order
+          const order: Order = orderMessage.payload?.order as Order
           orderStore.addUserOrder({ order, event })
         } else if (
           orderMessage?.action === Action.BuyerTookOrder ||
           orderMessage?.action === Action.HoldInvoicePaymentAccepted ||
           orderMessage?.action === Action.HoldInvoicePaymentSettled
         ) {
-          const order: Order = orderMessage?.content?.order as Order
+          const order: Order = orderMessage?.payload?.order as Order
           if (order)
             orderStore.updateOrder({ order, event })
         } else if (orderMessage?.action === Action.RateReceived) {
-          const rating = orderMessage?.content?.rating_user
+          const rating = orderMessage?.payload?.rating_user
           const order: Order = orderStore.getOrderById(orderMessage.id) as Order
           if (order && rating) {
             orderStore.updateOrderRating({ order, rating, confirmed: true })
@@ -72,15 +74,15 @@ export const useMessages = defineStore('messages', {
           console.log('>>> Dispute initiated for order: ', message.order.id)
           const order: Order = orderStore.getOrderById(orderMessage.id) as Order
           if (order) {
-            if (!message?.order?.content?.dispute) {
+            if (!message?.order?.payload?.dispute) {
               console.warn('>>> addMostroMessage: message has no dispute property. message: ', message)
               return
             }
             orderStore.markDisputed(order, event)
             const dispute: Dispute = {
-              id: message.order.content.dispute as string,
+              id: message.order.payload?.dispute as string,
               orderId: order.id,
-              createdAt: message.created_at,
+              createdAt: message.created_at || 0,
               status: DisputeStatus.INITIATED
             }
             disputeStore.addDispute(dispute)
@@ -102,17 +104,16 @@ export const useMessages = defineStore('messages', {
         console.warn('>>> addMostroMessage: message has unknown property property. message: ', message, ', ev: ', event)
       }
     },
-    addPeerMessage(gift: GiftWrap, seal: Seal, rumor: Rumor) {
-      // Decides whether this message is from me or my peer
-      const mostro = useNuxtApp().$mostro as Mostro
-      const myPubKey = mostro.getNostr().getMyPubKey()
-      // If the seal pubkey is mine, the peer npub should be extracted from the seal p tag
-      // Otherwise, it should be extracted from the seal pubkey
-      const peerHex = seal.pubkey !== myPubKey ? seal.pubkey : rumor.tags.find(tag => tag[1] !== myPubKey)?.[1]
+    async addPeerMessage(gift: GiftWrap, seal: Seal, rumor: Rumor) {
+      // Check if the seal pubkey is recorded as one of my trade keys
+      const isMessageMine = await keyManager.isTradeKey(seal.pubkey)
+      // If the message is mine, the peer's pubkey will be placed at the external gift wrap layer.
+      // Otherwise, it will be placed at the middle seal layer.
+      const peerHex = isMessageMine ? gift.pubkey : seal.pubkey
       if (peerHex !== undefined) {
         const peerNpub = nip19.npubEncode(peerHex)
         let sender: 'me' | 'other' = 'other'
-        if (seal.pubkey === myPubKey) {
+        if (isMessageMine) {
           sender = 'me'
           console.info('< [me -> 🍐]: ', rumor.content)
         } else {
@@ -137,7 +138,7 @@ export const useMessages = defineStore('messages', {
     },
     handleOutOfRangeSatsAmount(message: MostroMessage) {
       const now = Date.now() / 1e3
-      const createdAt = new Date(message.created_at)
+      const createdAt = new Date(message.created_at || 0)
       const diff = now - createdAt.getTime()
       if (diff < MIN_EXPECTED_RESPONSE_TIME) {
         const alertStore = useAlertStore()
@@ -214,15 +215,15 @@ export const useMessages = defineStore('messages', {
         const messageSlice = state.messages.mostro.slice(0)
         // Filtering messages by order id
         const messages = messageSlice
-          .filter((message: MostroMessage) => message.order)
-          .filter((message: MostroMessage) => message.order.id === orderId)
+          .filter((message: MostroMessage) => message?.order)
+          .filter((message: MostroMessage) => message?.order?.id === orderId)
 
         // Reducing messages to only the last one for each action
         type ReducerAcc = { [key: string]: MostroMessage }
         const reduced = messages.reduce<ReducerAcc>((acc: ReducerAcc, message: MostroMessage) => {
           if (!message.order) return acc
           const orderMessage = message.order
-          if(acc[orderMessage.action] && acc[orderMessage.action].order.created_at < orderMessage.created_at) {
+          if(acc[orderMessage.action] && (acc[orderMessage.action]?.order?.created_at || 0) < orderMessage.created_at) {
             acc[orderMessage.action] = message
           } else if (!acc[orderMessage.action]) {
             acc[orderMessage.action] = message
@@ -233,7 +234,7 @@ export const useMessages = defineStore('messages', {
         if (!reduced) return []
         // Converting back to an array
         return Object.values(reduced)
-          .sort((a: MostroMessage, b: MostroMessage) => a.created_at - b.created_at)
+          .sort((a: MostroMessage, b: MostroMessage) => (a.created_at || 0) - (b.created_at || 0))
       }
     },
     getPeerMessagesByNpub(state: MessagesState) : (npub: string) => ChatMessage[] {

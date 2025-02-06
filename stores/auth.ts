@@ -1,32 +1,10 @@
 import { watch } from 'vue'
-import { AUTH_LOCAL_STORAGE_ENCRYPTED_KEY, AUTH_LOCAL_STORAGE_DECRYPTED_KEY } from './types'
-import type { EncryptedPrivateKey } from './types'
-import { nip19, getPublicKey } from 'nostr-tools'
-import type { Mostro } from '~/utils/mostro'
-
-export enum AuthMethod {
-  LOCAL = 'local',
-  NIP07 = 'nip-07',
-  NOT_SET = 'not-set'
-}
-
-export interface ExtensionLoginPayload {
-  authMethod: AuthMethod,
-  publicKey: string
-}
-
-export interface LocalLoginPayload {
-  authMethod: AuthMethod,
-  privateKey: string
-}
-
-export type LoginPayload = ExtensionLoginPayload | LocalLoginPayload
+import { AUTH_LOCAL_STORAGE_ENCRYPTED_MNEMONIC, AUTH_LOCAL_STORAGE_DECRYPTED_MNEMONIC } from './types'
+import { nip19 } from 'nostr-tools'
 
 export interface AuthState {
-  authMethod: AuthMethod
-  encryptedPrivateKey: EncryptedPrivateKey | null,
-  pubKey: string | null,
-  privKey: string | null
+  encryptedMnemonic: string | null,
+  mnemonic: string | null
 }
 
 export function isNsec(nsec: string): boolean {
@@ -40,77 +18,66 @@ export function isNsec(nsec: string): boolean {
 
 export const useAuth = defineStore('auth', {
   state: () => ({
-    authMethod: AuthMethod.NOT_SET,
-    encryptedPrivateKey: null as EncryptedPrivateKey | null,
-    pubKey: null as string | null,
-    privKey: null as string | null
+    encryptedMnemonic: null as EncryptedMnemonic | null,
+    mnemonic: null as string | null
   }),
   actions: {
     nuxtClientInit() {
-      const encryptedPrivKey = localStorage.getItem(AUTH_LOCAL_STORAGE_ENCRYPTED_KEY)
-      if(encryptedPrivKey) {
-        this.encryptedPrivateKey = JSON.parse(encryptedPrivKey)
+      const encryptedMnemonic = localStorage.getItem(AUTH_LOCAL_STORAGE_ENCRYPTED_MNEMONIC)
+      if(encryptedMnemonic) {
+        this.encryptedMnemonic = JSON.parse(encryptedMnemonic)
       }
-      const decryptedPrivKey = ref<string | null>(localStorage.getItem(AUTH_LOCAL_STORAGE_DECRYPTED_KEY))
-      if (decryptedPrivKey.value) {
+      const mnemonic = localStorage.getItem(AUTH_LOCAL_STORAGE_DECRYPTED_MNEMONIC)
+      if (mnemonic) {
         try {
-          this.privKey = decryptedPrivKey.value
-          this.pubKey = getPublicKey(Buffer.from(this.privKey, 'hex'))
-          this.authMethod = AuthMethod.LOCAL
-          // Informing the mostro plugin about the private key
-          const nuxt = useNuxtApp()
-          const $mostro: Mostro = nuxt.$mostro as Mostro
-          $mostro.updatePrivKey(this.privKey)
+          this.mnemonic = mnemonic
+          // Initialize KeyManager with mnemonic
+          const keyManager = new KeyManager()
+          keyManager.init(mnemonic)
+
+          const { $mostro } = useNuxtApp()
+          $mostro.updateMnemonic(mnemonic)
         } catch(err) {
-          console.warn('Error setting local key from local storage: ', err)
+          console.warn('Error setting mnemonic from local storage: ', err)
           this.delete()
         }
       }
-      watch(() => this.encryptedPrivateKey, (newVal) => {
-        localStorage.setItem(AUTH_LOCAL_STORAGE_ENCRYPTED_KEY, JSON.stringify(newVal))
-      })
-      watch(() => this.privKey, (newVal) => {
-        localStorage.setItem(AUTH_LOCAL_STORAGE_DECRYPTED_KEY, newVal || '')
-      })
-    },
-    login(loginPayload: LoginPayload) {
-      this.authMethod = loginPayload.authMethod
-      if (loginPayload.authMethod === AuthMethod.LOCAL) {
-        const localLoginPayload = loginPayload as LocalLoginPayload
-        const { privateKey } = localLoginPayload
-        if (isNsec(privateKey)) {
-          const decoded = nip19.decode(privateKey)
-          this.privKey = decoded.data as string
-        } else {
-          this.privKey = privateKey
+      watch(() => this.encryptedMnemonic, (newEncryptedMnemonic) => {
+        if (newEncryptedMnemonic) {
+          localStorage.setItem(AUTH_LOCAL_STORAGE_ENCRYPTED_MNEMONIC, JSON.stringify(newEncryptedMnemonic))
         }
-        // Informing the mostro plugin about the private key
-        const nuxt = useNuxtApp()
-        const $mostro: Mostro = nuxt.$mostro as Mostro
-        $mostro.updatePrivKey(this.privKey)
-
-        this.pubKey = getPublicKey(Buffer.from(this.privKey, 'hex'))
-      } else if (this.authMethod === AuthMethod.NIP07) {
-        console.warn('NIP07 login not longer supported')
-      }
+      })
+      watch(() => this.mnemonic, (newMnemonic) => {
+        if (newMnemonic) {
+          localStorage.setItem(AUTH_LOCAL_STORAGE_DECRYPTED_MNEMONIC, newMnemonic)
+        }
+      })
     },
-    setEncryptedPrivateKey(encryptedPrivateKey: EncryptedPrivateKey | null) {
-      this.encryptedPrivateKey = encryptedPrivateKey
+    login(mnemonic: string) {
+      this.mnemonic = mnemonic
+
+      // Initialize KeyManager
+      const keyManager = new KeyManager()
+      keyManager.init(this.mnemonic)
+    },
+    setEncryptedMnemonic(encryptedMnemonic: EncryptedMnemonic) {
+      this.encryptedMnemonic = encryptedMnemonic
+    },
+    setMnemonic(mnemonic: string) {
+      this.mnemonic = mnemonic
     },
     delete() {
       this.logout()
-      this.encryptedPrivateKey = null
+      this.encryptedMnemonic = null
+      this.mnemonic = null
     },
     logout() {
-      this.privKey = null
-      this.pubKey = null
-      localStorage.removeItem(AUTH_LOCAL_STORAGE_DECRYPTED_KEY)
-      this.authMethod = AuthMethod.NOT_SET
+      this.mnemonic = null
     },
   },
   getters: {
     isAuthenticated(state) {
-      return state.authMethod !== AuthMethod.NOT_SET
+      return state.mnemonic !== null
     },
   }
 })

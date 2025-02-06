@@ -73,10 +73,8 @@
 
 <script lang="ts" setup>
 import CryptoJS from 'crypto-js'
-import { AuthMethod, useAuth } from '@/stores/auth'
-import type { LocalLoginPayload } from '@/stores/auth'
+import { useAuth } from '@/stores/auth'
 import { useCrypto } from '~/composables/useCrypto'
-import { useNip07 } from '~/composables/useNip07'
 
 // Minimum password length
 const MIN_PASSWORD_LENGTH = 10
@@ -91,29 +89,25 @@ const isDeleteConfirmation = ref<boolean>(false)
 
 const onPassword = async () => {
   isProcessing.value = true
-  if (!authStore.encryptedPrivateKey) {
-    console.warn('No encrypted private key found in local storage')
+  if (!authStore.encryptedMnemonic) {
+    console.warn('No encrypted mnemonic found in local storage')
     return
   }
   try {
-    let encryptedPrivateKey = authStore.encryptedPrivateKey
-    const salt = Buffer.from(encryptedPrivateKey.salt, 'base64')
-    const ciphertext = encryptedPrivateKey.ciphertext
+    let encryptedMnemonic = authStore.encryptedMnemonic
+    const salt = Buffer.from(encryptedMnemonic.salt, 'base64')
+    const ciphertext = encryptedMnemonic.ciphertext
     const { deriveKey } = useCrypto()
     const key = await deriveKey(password.value, salt.toString('base64'), ['encrypt', 'decrypt'])
     let rawKey = await window.crypto.subtle.exportKey('raw', key)
     let rawKeyBytes = Buffer.from(rawKey)
     let base64Key = rawKeyBytes.toString('base64')
     const plaintext = CryptoJS.AES.decrypt(ciphertext, base64Key).toString()
-    const privKey = Buffer.from(plaintext, 'hex').toString('utf8')
-    if (!privKey) {
+    const mnemonic = Buffer.from(plaintext, 'hex').toString('utf8')
+    if (!mnemonic) {
       throw Error('Invalid password')
     }
-    const localLoginPayload: LocalLoginPayload = {
-      privateKey: privKey,
-      authMethod: AuthMethod.LOCAL
-    }
-    authStore.login(localLoginPayload)
+    authStore.login(mnemonic)
     showDialog.value = false
   } catch(err) {
     console.warn('Login error: ', err)

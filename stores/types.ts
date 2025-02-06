@@ -1,7 +1,6 @@
 import { reactive } from 'vue'
 import type { AuthState } from './auth'
 import type { Order } from '~/utils/mostro/types'
-import type { NDKEvent } from '@nostr-dev-kit/ndk'
 
 export type ThreadSummary = {
   orderId: string,
@@ -56,6 +55,8 @@ export const USER_ORDERS_KEY = 'user-orders-key'
 export const NOTIFICATIONS_KEY = 'notifications-key'
 export const AUTH_LOCAL_STORAGE_ENCRYPTED_KEY = 'encrypted-private-key'
 export const AUTH_LOCAL_STORAGE_DECRYPTED_KEY = 'decrypted-private-key'
+export const AUTH_LOCAL_STORAGE_ENCRYPTED_MNEMONIC = 'encrypted-mostro-mnemonic'
+export const AUTH_LOCAL_STORAGE_DECRYPTED_MNEMONIC = 'mostro-mnemonic'
 
 export interface OrderState {
   orders: typeof reactive<OrderMapType>,
@@ -95,7 +96,7 @@ export interface RootState {
   auth: AuthState
 }
 
-export interface EncryptedPrivateKey {
+export interface EncryptedMnemonic {
   ciphertext: string,
   salt: string
 }

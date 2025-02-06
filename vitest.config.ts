@@ -1,12 +1,24 @@
-import { defineVitestConfig } from '@nuxt/test-utils/config'
+import { defineConfig } from 'vitest/config'
 import Vue from '@vitejs/plugin-vue'
 import path from 'path'
+import wasm from 'vite-plugin-wasm'
+import topLevelAwait from 'vite-plugin-top-level-await'
 
-export default defineVitestConfig({
-  plugins: [Vue()],
+export default defineConfig({
+  plugins: [
+    Vue(),
+    wasm(),
+    topLevelAwait()
+  ],
   test: {
     globals: true,
-    environment: 'jsdom',
+    environment: 'node',
+    environmentMatchGlobs: [
+      // Run browser-specific tests in jsdom
+      ['**/browser/**/*.test.ts', 'jsdom'],
+      // Run Node-specific tests in node
+      ['**/node/**/*.test.ts', 'node'],
+    ],
     testTransformMode: {
       web: ['\\.[jt]sx$'],
     },
