@@ -45,6 +45,7 @@ export class Nostr extends EventEmitter<{
   private ndk: NDK
   private users = new Map<string, NDKUser>()
   private subscriptions: Map<number, NDKSubscription> = new Map()
+  private dmSubscriptions: Map<string, NDKSubscription> = new Map()
   public mustKeepRelays: Set<string> = new Set()
   private identitySigner: NDKPrivateKeySigner | undefined
   private tradeSigner: NDKPrivateKeySigner | undefined
@@ -203,13 +204,13 @@ export class Nostr extends EventEmitter<{
   }
 
   subscribeGiftWraps(myPubkey: string) {
-    this.debug && console.log('📣 subscribing to gift wraps')
+    this.debug && console.log('📣 subscribing to gift wraps for key: ', myPubkey)
     const filters = {
       kinds: [NOSTR_GIFT_WRAP_KIND],
       '#p': [myPubkey],
       since: Math.floor(Date.now() / 1e3) - EVENT_INTEREST_WINDOW,
     }
-    if (!this.subscriptions.has(NOSTR_GIFT_WRAP_KIND)) {
+    if (!this.dmSubscriptions.has(myPubkey)) {
       const subscription = this.ndk.subscribe(filters, { closeOnEose: false, subId: 'gift-wraps', groupable: true, groupableDelay: 300 })
       subscription.on('event', this.handleGiftWrapMessage.bind(this))
       subscription.on('eose', () => {
@@ -217,7 +218,7 @@ export class Nostr extends EventEmitter<{
         this.giftWrapEoseReceived = true
         this._processQueuedGiftWraps()
       })
-      this.subscriptions.set(NOSTR_GIFT_WRAP_KIND, subscription)
+      this.dmSubscriptions.set(myPubkey, subscription)
     } else {
       console.warn('❌ Attempting to subscribe to gift wraps when already subscribed')
     }
