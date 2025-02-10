@@ -46,6 +46,7 @@ export class Order {
   payment_method: string
   premium: number
   created_at: number
+  expires_at: number | null
   buyer_pubkey?: string
   seller_pubkey?: string
   buyer_invoice?: string
@@ -59,6 +60,8 @@ export class Order {
   }
   disputed?: boolean = false
   mostro_id: string
+  buyer_token?: string | null
+  seller_token?: string | null
 
   constructor(
     id: string,
@@ -72,7 +75,10 @@ export class Order {
     premium: number,
     created_at: number,
     amount: number,
-    mostro_id: string
+    mostro_id: string,
+    expires_at: number | null,
+    buyer_token: string | null,
+    seller_token: string | null
   ) {
     this.id = id;
     this.kind = kind;
@@ -86,6 +92,9 @@ export class Order {
     this.created_at = created_at;
     this.amount = amount
     this.mostro_id = mostro_id
+    this.expires_at = expires_at
+    this.buyer_token = buyer_token
+    this.seller_token = seller_token
   }
   static deepEqual(order1: Order | NewOrder, order2: Order): boolean {
 
@@ -117,7 +126,23 @@ export class Order {
   }
 }
 
-export type NewOrder = Pick<Order, 'kind' | 'status' | 'amount' | 'fiat_code' | 'fiat_amount' | 'min_amount' | 'max_amount' | 'payment_method' | 'premium' | 'created_at' | 'buyer_invoice'>
+export type NewOrder = Pick<
+  Order,
+  'kind' |
+  'status' |
+  'amount' |
+  'fiat_code' |
+  'min_amount' |
+  'max_amount' |
+  'fiat_amount' |
+  'payment_method' |
+  'premium' |
+  'created_at' |
+  'expires_at' |
+  'buyer_token' |
+  'seller_token' |
+  'buyer_invoice'
+>
 
 export type SmallOrder = {
   amount: number,
@@ -181,7 +206,7 @@ export type PaymentRequest = [
 export type MostroMessage = {
   order?: {
     version: number,
-    id: string,
+    id?: string,
     request_id?: number,
     action: Action,
     trade_index?: number,

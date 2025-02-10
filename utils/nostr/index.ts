@@ -330,16 +330,17 @@ export class Nostr extends EventEmitter<{
     if (!myPubKey) {
       throw new Error('No trade pubkey found')
     }
+    console.log('🔑 Using trade key: (priv: ', this.tradeSigner?.privateKey, ', pub: ', myPubKey, ') for mostro event')
 
-    const event = new NDKEvent(this.ndk)
-    event.kind = NDKKind.Text
-    event.created_at = Math.floor(Date.now() / 1000)
-    event.content = cleartext
-    event.pubkey = myPubKey
-    event.tags = [['p', mostroPubKey]]
-    const nEvent = await event.toNostrEvent()
+    const rumorEvent = new NDKEvent(this.ndk)
+    rumorEvent.kind = NDKKind.Text
+    rumorEvent.created_at = Math.floor(Date.now() / 1000)
+    rumorEvent.content = cleartext
+    rumorEvent.pubkey = myPubKey
+    rumorEvent.tags = [['p', mostroPubKey]]
+    const nEvent = await rumorEvent.toNostrEvent()
     this.debug && console.info('[🎁][me -> 🧌]: ', nEvent)
-    return await this.giftWrapAndPublishMostroEvent(event, mostroPubKey)
+    return await this.giftWrapAndPublishMostroEvent(rumorEvent, mostroPubKey)
   }
 
   async sendDirectMessageToPeer(message: string, destination: string, tags: string[][]): Promise<void> {
@@ -378,23 +379,30 @@ export class Nostr extends EventEmitter<{
       throw new Error('No appropriate rumor signer available')
     }
 
+    // Parse the content if it's a string representation of JSON
+    const contentObj = typeof event.content === 'string' ? JSON.parse(event.content) : event.content
+    console.log('|> Content: ', JSON.stringify(contentObj.order, null, 0))
+    if (this.signingMode === SigningMode.INITIAL) {
     // If we're in the initial signing mode, we need to sign the SHA-256 of the serialized content
     // and provide the signature in the second element of the array
-    if (this.signingMode === SigningMode.INITIAL) {
-      // Parse the content if it's a string representation of JSON
-      const contentObj = typeof event.content === 'string' ? JSON.parse(event.content) : event.content
-      // Serialize without whitespace
-      const content = JSON.stringify(contentObj, null, 0)
+      const innerMessageObj = contentObj.order
+      console.log('|> Inner message: ', JSON.stringify(innerMessageObj, null, 0))
+      const content = JSON.stringify(innerMessageObj, null, 0)
       const sha256Content = sha256(content)
-      const signature = bytesToHex(schnorr.sign(sha256Content, rumorSigner.privateKey!))
+      console.log('|> SHA-256 content: ', bytesToHex(sha256Content))
+      const signature = bytesToHex(schnorr.sign(sha256Content, this.tradeSigner!.privateKey!))
+      console.log('|> Signature: ', signature)
       event.content = JSON.stringify([contentObj, signature])
       console.log('🎁 initial signing mode, content: ', event.content)
+    } else {
+      // For all other signing modes, we send a null signature
+      event.content = JSON.stringify([contentObj, null])
+      console.log('🎁 trade signing mode, content: ', event.content)
     }
 
     const sealPrivateKey = Buffer.from(sealSigner.privateKey!, 'hex')
     const rumorPrivateKey = Buffer.from(rumorSigner.privateKey!, 'hex')
-    // Converting Buffer to Uint8Array
-    const rumorPrivateKeyUint8 = new Uint8Array(rumorPrivateKey.buffer, rumorPrivateKey.byteOffset, rumorPrivateKey.length)
+    const rumorPrivateKeyUint8 = Buffer.from(this.tradeSigner!.privateKey!, 'hex')
     const rumor = nip59.createRumor(event.rawEvent(), rumorPrivateKeyUint8)
     const seal = nip59.createSeal(rumor, sealPrivateKey, destination)
     const giftWrap = nip59.createWrap(seal, destination)

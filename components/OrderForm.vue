@@ -273,12 +273,15 @@ export default defineComponent({
         status: OrderStatus.PENDING,
         amount: 0,
         fiat_code: this.selectedfiatCode,
-        fiat_amount: fiatAmount,
         min_amount: minAmount,
         max_amount: maxAmount,
-        created_at: Math.ceil(Date.now() / 1E3),
+        fiat_amount: fiatAmount,
+        payment_method: this.paymentMethod,
         premium: this.premium,
-        payment_method: this.paymentMethod
+        created_at: Math.ceil(Date.now() / 1E3),
+        expires_at: null,
+        buyer_token: null,
+        seller_token: null
       }
       if (!this.isMarketPricing) {
         if (this.orderType === OrderType.BUY) {

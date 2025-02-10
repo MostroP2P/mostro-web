@@ -1,6 +1,6 @@
 import { EventEmitter } from 'tseep'
 import { NDKEvent, NDKUser } from '@nostr-dev-kit/ndk'
-import { nip19 } from 'nostr-tools'
+import { getPublicKey, nip19 } from 'nostr-tools'
 import { Nostr } from '../nostr/index'
 import { Action, type NewOrder, Order, OrderStatus, OrderType, type MostroInfo, type MostroMessage } from './types'
 import type { GiftWrap, Rumor, Seal } from '../nostr/types'
@@ -161,6 +161,7 @@ export class Mostro extends EventEmitter<MostroEvents> implements IMostro {
     let payment_method = ''
     let premium: number | undefined = undefined
     let amount = 0
+    let expires_at: number | null = null
     ev.tags.forEach((tag: string[]) => {
       switch(tag[0]) {
         case 'd':
@@ -189,6 +190,9 @@ export class Mostro extends EventEmitter<MostroEvents> implements IMostro {
         case 'premium':
           premium = Number(tag[1])
           break
+        case 'expiration':
+          expires_at = Number(tag[1])
+          break
       }
     })
 
@@ -212,7 +216,10 @@ export class Mostro extends EventEmitter<MostroEvents> implements IMostro {
       premium,
       created_at,
       amount,
-      mostro_id
+      mostro_id,
+      null,
+      null,
+      expires_at
     )
   }
 
@@ -315,15 +322,22 @@ export class Mostro extends EventEmitter<MostroEvents> implements IMostro {
     }
   }
 
-  private async sendMostroRequest(action: Action, payload: any): Promise<MostroMessage> {
+  private async sendMostroRequest(action: Action, orderId: string | null, payload: any): Promise<MostroMessage> {
     const [requestId, promise] = this.createPendingRequest()
-    const fullPayload: { order: any } | [order: any, string] = {
+    const mostroMessage: MostroMessage = {
       order: {
         version: 1,
         request_id: requestId,
+        trade_index: null,
+        id: orderId,
         action,
         ...payload
       }
+    }
+
+    if (!orderId) {
+      // If the order ID is not provided, remove it from the message
+      delete mostroMessage?.order?.id
     }
 
     try {
@@ -335,7 +349,7 @@ export class Mostro extends EventEmitter<MostroEvents> implements IMostro {
         this.nostr.setSigningMode(SigningMode.TRADE)
       }
 
-      await this.nostr.createAndPublishMostroEvent(fullPayload, this.getMostroPublicKey(PublicKeyType.HEX))
+      await this.nostr.createAndPublishMostroEvent(mostroMessage, this.getMostroPublicKey(PublicKeyType.HEX))
       return promise
     } finally {
       // Always clear the trade signer after use
@@ -343,14 +357,20 @@ export class Mostro extends EventEmitter<MostroEvents> implements IMostro {
     }
   }
 
+  private isTradeKeySettingAction = (action: Action) => {
+    return action === Action.TakeBuy || action === Action.TakeSell || action === Action.NewOrder
+  }
+
   private async withTradeKeyManagement(orderId: string | null, action: Action, requestFn: () => Promise<MostroMessage>): Promise<MostroMessage> {
     let tradeKey = ''
     
     // Generate new key for order creation and taking actions
-    if (action === Action.TakeBuy || action === Action.TakeSell || action === Action.NewOrder) {
+    if (this.isTradeKeySettingAction(action)) {
       const newKeyIndex = this.keyManager.nextKeyIndex
       tradeKey = this.keyManager.getTradeKey(newKeyIndex)
+      console.log('🔑 Assigning new trade key: (priv: ', tradeKey, ', pub: ', getPublicKey(Buffer.from(tradeKey, 'hex')), ') for order ', orderId)
       this.nostr.setTradeSigner(tradeKey)
+      this.nostr.subscribeGiftWraps(getPublicKey(Buffer.from(tradeKey, 'hex')))
     } else {
       // For all other actions, get and use the trade key for this order
       if (!orderId) {
@@ -360,15 +380,17 @@ export class Mostro extends EventEmitter<MostroEvents> implements IMostro {
       if (!tradeKey) {
         throw new Error(`No trade key found for order ${orderId}`)
       }
+      console.log('🔑 Using existing trade key: (priv: ', tradeKey.derivedKey, ', pub: ', getPublicKey(Buffer.from(tradeKey.derivedKey, 'hex')), ') for order ', orderId)
       this.nostr.setTradeSigner(tradeKey.derivedKey)
     }
 
     try {
       const response = await requestFn()
 
-      // If successful, store the trade key
-      if (tradeKey && response.order?.payload?.order?.id) {
+      // If successful, and the action was a trade key setting action, store the trade key
+      if (this.isTradeKeySettingAction(action) && response.order?.payload?.order?.id) {
         const newOrderId = response.order.payload.order.id
+        console.log('🔑 Storing trade key for order ', newOrderId, ', priv: ', tradeKey, ', pub: ', getPublicKey(Buffer.from(tradeKey, 'hex')))
         await this.keyManager.storeTradeKey(newOrderId, tradeKey)
       }
 
@@ -381,7 +403,7 @@ export class Mostro extends EventEmitter<MostroEvents> implements IMostro {
 
   async submitOrder(order: NewOrder) {
     return this.withTradeKeyManagement(null, Action.NewOrder, () =>
-      this.sendMostroRequest(Action.NewOrder, {
+      this.sendMostroRequest(Action.NewOrder, null, {
         payload: { order }
       })
     )
@@ -389,27 +411,27 @@ export class Mostro extends EventEmitter<MostroEvents> implements IMostro {
 
   async takeSell(order: Order, amount?: number | undefined) {
     return this.withTradeKeyManagement(order.id, Action.TakeSell, () =>
-      this.sendMostroRequest(Action.TakeSell, {
+      this.sendMostroRequest(Action.TakeSell, order.id, {
         id: order.id,
-        content: amount ? { amount } : null
+        payload: amount ? { amount } : null
       })
     )
   }
 
   async takeBuy(order: Order, amount?: number | undefined) {
     return this.withTradeKeyManagement(order.id, Action.TakeBuy, () =>
-      this.sendMostroRequest(Action.TakeBuy, {
+      this.sendMostroRequest(Action.TakeBuy, order.id, {
         id: order.id,
-        content: amount ? { amount } : null
+        payload: amount ? { amount } : null
       })
     )
   }
 
   async addInvoice(order: Order, invoice: string, amount: number | null = null) {
     return this.withTradeKeyManagement(order.id, Action.AddInvoice, () =>
-      this.sendMostroRequest(Action.AddInvoice, {
+      this.sendMostroRequest(Action.AddInvoice, order.id, {
         id: order.id,
-        content: {
+        payload: {
           payment_request: [null, invoice, amount]
         }
       })
@@ -418,16 +440,16 @@ export class Mostro extends EventEmitter<MostroEvents> implements IMostro {
 
   async release(order: Order) {
     return this.withTradeKeyManagement(order.id, Action.Release, () =>
-      this.sendMostroRequest(Action.Release, {
+      this.sendMostroRequest(Action.Release, order.id, {
         id: order.id,
-        content: null
+        payload: null
       })
     )
   }
 
   async fiatSent(order: Order) {
     return this.withTradeKeyManagement(order.id, Action.FiatSent, () =>
-      this.sendMostroRequest(Action.FiatSent, {
+      this.sendMostroRequest(Action.FiatSent, order.id, {
         id: order.id
       })
     )
@@ -435,27 +457,27 @@ export class Mostro extends EventEmitter<MostroEvents> implements IMostro {
 
   async rateUser(order: Order, rating: number) {
     return this.withTradeKeyManagement(order.id, Action.RateUser, () =>
-      this.sendMostroRequest(Action.RateUser, {
+      this.sendMostroRequest(Action.RateUser, order.id, {
         id: order.id,
-        content: { rating_user: rating }
+        payload: { rating_user: rating }
       })
     )
   }
 
   async dispute(order: Order) {
     return this.withTradeKeyManagement(order.id, Action.Dispute, () =>
-      this.sendMostroRequest(Action.Dispute, {
+      this.sendMostroRequest(Action.Dispute, order.id, {
         id: order.id,
-        content: null
+        payload: null
       })
     )
   }
 
   async cancel(order: Order) {
     return this.withTradeKeyManagement(order.id, Action.Cancel, () =>
-      this.sendMostroRequest(Action.Cancel, {
+      this.sendMostroRequest(Action.Cancel, order.id, {
         id: order.id,
-        content: null
+        payload: null
       })
     )
   }
