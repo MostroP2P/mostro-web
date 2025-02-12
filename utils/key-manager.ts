@@ -15,7 +15,7 @@ class TradeKeysDatabase extends Dexie {
   constructor() {
     super('mostro-trade-keys-db')
     this.version(1).stores({
-      tradeKeys: '++id, orderId, keyIndex, derivedKey, createdAt'
+      tradeKeys: '++id, orderId, &keyIndex, derivedKey, createdAt'
     })
   }
 }
