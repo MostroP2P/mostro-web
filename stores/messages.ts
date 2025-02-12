@@ -63,7 +63,7 @@ export const useMessages = defineStore('messages', {
             orderStore.updateOrder({ order, event })
         } else if (orderMessage?.action === Action.RateReceived) {
           const rating = orderMessage?.payload?.rating_user
-          const order: Order = orderStore.getOrderById(orderMessage.id) as Order
+          const order: Order = orderStore.getOrderById(orderMessage.id as string) as Order
           if (order && rating) {
             orderStore.updateOrderRating({ order, rating, confirmed: true })
           }
@@ -72,7 +72,7 @@ export const useMessages = defineStore('messages', {
           orderMessage?.action === Action.DisputeInitiatedByPeer
         ) {
           console.log('>>> Dispute initiated for order: ', message.order.id)
-          const order: Order = orderStore.getOrderById(orderMessage.id) as Order
+          const order: Order = orderStore.getOrderById(orderMessage.id as string) as Order
           if (order) {
             if (!message?.order?.payload?.dispute) {
               console.warn('>>> addMostroMessage: message has no dispute property. message: ', message)
@@ -96,7 +96,7 @@ export const useMessages = defineStore('messages', {
         } else if (orderMessage?.action === Action.OutOfRangeSatsAmount) {
           this.handleOutOfRangeSatsAmount(message)
         }
-        orderStore.updateOrderStatus(message.order.id, orderMessage.action as Action, event)
+        orderStore.updateOrderStatus(message.order.id as string, orderMessage.action as Action, event)
         this.messages.mostro.push(message)
       } else if (message['cant-do']) {
         console.warn(`>>> [${message['cant-do'].id}] CantDo, id: ${message['cant-do'].id} message: ${message['cant-do']?.content?.text_message}`)
@@ -157,11 +157,11 @@ export const useMessages = defineStore('messages', {
       for (const message of state.messages.mostro) {
         if (!message.order) continue
         const orderMessage = message.order
-        if (!messageMap.has(orderMessage.id)) {
-          messageMap.set(orderMessage.id, 1)
+        if (!messageMap.has(orderMessage.id as string)) {
+          messageMap.set(orderMessage.id as string, 1)
         } else {
-          let currentCount = messageMap.get(orderMessage.id) as number
-          messageMap.set(orderMessage.id, currentCount + 1)
+          let currentCount = messageMap.get(orderMessage.id as string) as number
+          messageMap.set(orderMessage.id as string, currentCount + 1)
         }
       }
       return Array.from(messageMap).map(([orderId, messageCount]) => {
