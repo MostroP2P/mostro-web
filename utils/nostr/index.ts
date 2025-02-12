@@ -8,6 +8,7 @@ import NDKCacheAdapterDexie from '@nostr-dev-kit/ndk-cache-dexie'
 import { type GiftWrap, type Rumor, type Seal, type UnwrappedEvent } from './types'
 import { SigningMode } from '../mostro'
 import type { MostroMessage } from '../mostro/types'
+import type { KeyProvider } from './key-provider'
 
 /**
  * Maximum number of seconds to be returned in the initial query
@@ -28,6 +29,7 @@ export interface NostrOptions {
   relays: string
   mostroPubKey: string
   debug?: boolean
+  keyProvider: KeyProvider
 }
 
 export class Nostr extends EventEmitter<{
@@ -53,6 +55,7 @@ export class Nostr extends EventEmitter<{
   private mostroPubKey: string
   private relays: string
   private signingMode: SigningMode = SigningMode.INITIAL
+  private keyProvider: KeyProvider
 
   // Queue for gift wraps in order to process past events in the chronological order
   private giftWrapQueue: NDKEvent[] = []
@@ -68,6 +71,7 @@ export class Nostr extends EventEmitter<{
     this.mostroPubKey = opts.mostroPubKey
     this.relays = opts.relays
     this.debug = opts.debug || false
+    this.keyProvider = opts.keyProvider
 
     let cacheAdapter = undefined
 
@@ -219,17 +223,23 @@ export class Nostr extends EventEmitter<{
         this._processQueuedGiftWraps()
       })
       this.dmSubscriptions.set(myPubkey, subscription)
+      return new Promise((resolve) => setTimeout(() => resolve(true), 600))
     } else {
       console.warn('❌ Attempting to subscribe to gift wraps when already subscribed')
     }
   }
 
-  private handleGiftWrapMessage(event: NDKEvent) {
+  private async handleGiftWrapMessage(event: NDKEvent) {
     // Check if event has a 'p' tag that matches our identity public key
     const myPubKey = this.getIdentityPubKey()
-    const isForMe = event.tags.some(([tagName, tagValue]) => 
+    const isForIdentity = event.tags.some(([tagName, tagValue]) =>
       tagName === 'p' && tagValue === myPubKey
     )
+    const isForTrade = await Promise.all(event.tags.map(async ([tagName, tagValue]) =>
+      tagName === 'p' && await this.keyProvider.isTradeKey(tagValue)
+    ))
+
+    const isForMe = isForIdentity || isForTrade
 
     if (!isForMe) {
       this.debug && console.log('🚫 Ignoring gift wrap event not intended for us')
@@ -309,13 +319,25 @@ export class Nostr extends EventEmitter<{
 
   async unwrapEvent(event: NDKEvent): Promise<{rumor: Rumor, seal: Seal}> {
     const nostrEvent = await event.toNostrEvent()
+
+    // Get key for unwrapping the seal
+    const destinationPubkey = nostrEvent.tags.find(([tagName, _tagValue]) => tagName === 'p')![1]
+
+    // Lookup the private key for the destination pubkey
+    const destinationPrivateKey = await this.keyProvider.getPrivateKeyFor(destinationPubkey)
+
+    if(!destinationPrivateKey) {
+      throw new Error(`No key available to unwrap seal, pubkey: ${destinationPubkey}`)
+    }
+
     const unwrappedSeal: Seal = this.nip44Decrypt(
       nostrEvent as NostrEvent,
-      Buffer.from((this.identitySigner as NDKPrivateKeySigner).privateKey?.toString() || '', 'hex')
+      Buffer.from(destinationPrivateKey, 'hex')
     )
+
     const rumor = this.nip44Decrypt(
       unwrappedSeal,
-      Buffer.from((this.identitySigner as NDKPrivateKeySigner).privateKey?.toString() || '', 'hex')
+      Buffer.from(destinationPrivateKey, 'hex')
     )
     return { rumor, seal: unwrappedSeal }
   }
@@ -330,7 +352,7 @@ export class Nostr extends EventEmitter<{
     if (!myPubKey) {
       throw new Error('No trade pubkey found')
     }
-    console.log('🔑 Using trade key: (priv: ', this.tradeSigner?.privateKey, ', pub: ', myPubKey, ') for mostro event')
+    console.log('🔑 Using trade key: [priv: ', this.tradeSigner?.privateKey, ', pub: ', myPubKey, '] for mostro event')
 
     const rumorEvent = new NDKEvent(this.ndk)
     rumorEvent.kind = NDKKind.Text
@@ -386,12 +408,9 @@ export class Nostr extends EventEmitter<{
     // If we're in the initial signing mode, we need to sign the SHA-256 of the serialized content
     // and provide the signature in the second element of the array
       const innerMessageObj = contentObj.order
-      console.log('|> Inner message: ', JSON.stringify(innerMessageObj, null, 0))
       const content = JSON.stringify(innerMessageObj, null, 0)
       const sha256Content = sha256(content)
-      console.log('|> SHA-256 content: ', bytesToHex(sha256Content))
       const signature = bytesToHex(schnorr.sign(sha256Content, this.tradeSigner!.privateKey!))
-      console.log('|> Signature: ', signature)
       event.content = JSON.stringify([contentObj, signature])
       console.log('🎁 initial signing mode, content: ', event.content)
     } else {

@@ -44,11 +44,14 @@ describe('Nostr', () => {
     tradePrivateKey = Buffer.from(generateSecretKey()).toString('hex')
     mostroPubKey = getPublicKey(generateSecretKey())
 
+    const keyManager = new KeyManager()
+
     // Initialize Nostr instance
     nostr = new Nostr({
       relays: 'wss://test.relay',
       mostroPubKey: mostroPubKey,
-      debug: false
+      debug: false,
+      keyProvider: keyManager
     })
 
     // Set up signers
@@ -124,11 +127,13 @@ describe('Nostr', () => {
 
 
     it('should throw error when appropriate signer is not available', async () => {
+      const keyManager = new KeyManager()
       // Set up
       nostr = new Nostr({
         relays: 'wss://test.relay',
         mostroPubKey: mostroPubKey,
-        debug: false
+        debug: false,
+        keyProvider: keyManager
       })
       const event = new NDKEvent(mockNdk)
 

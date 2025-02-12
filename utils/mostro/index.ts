@@ -5,7 +5,6 @@ import { Nostr } from '../nostr/index'
 import { Action, type NewOrder, Order, OrderStatus, OrderType, type MostroInfo, type MostroMessage } from './types'
 import type { GiftWrap, Rumor, Seal } from '../nostr/types'
 import type { IMostro, MostroEvents } from './mostro-interface'
-import { KeyDerivation } from '../key-derivation'
 import { KeyManager } from '../key-manager'
 
 const REQUEST_TIMEOUT = 30000 // 30 seconds timeout
@@ -53,7 +52,8 @@ export class Mostro extends EventEmitter<MostroEvents> implements IMostro {
     this.nostr = new Nostr({ 
       relays: opts.relays, 
       mostroPubKey: opts.mostroPubKey,
-      debug: this.debug 
+      debug: this.debug,
+      keyProvider: this.keyManager
     })
 
     // Update event listener names and handler
@@ -363,13 +363,15 @@ export class Mostro extends EventEmitter<MostroEvents> implements IMostro {
 
   private async withTradeKeyManagement(orderId: string | null, action: Action, requestFn: () => Promise<MostroMessage>): Promise<MostroMessage> {
     let tradeKey = ''
-    
+    let newKeyIndex = 0
     // Generate new key for order creation and taking actions
     if (this.isTradeKeySettingAction(action)) {
-      const newKeyIndex = this.keyManager.nextKeyIndex
-      tradeKey = this.keyManager.getTradeKey(newKeyIndex)
-      console.log('🔑 Assigning new trade key: (priv: ', tradeKey, ', pub: ', getPublicKey(Buffer.from(tradeKey, 'hex')), ') for order ', orderId)
+      const nextKey = await this.keyManager.getNextAvailableKey()
+      newKeyIndex = nextKey.keyIndex
+      tradeKey = nextKey.privateKey
+      console.log(`🔑 Candidate trade key: [${newKeyIndex}][priv: ${tradeKey}, pub: ${getPublicKey(Buffer.from(tradeKey, 'hex'))})`)
       this.nostr.setTradeSigner(tradeKey)
+      // Subscribe to gift wraps for the new trade key
       this.nostr.subscribeGiftWraps(getPublicKey(Buffer.from(tradeKey, 'hex')))
     } else {
       // For all other actions, get and use the trade key for this order
@@ -390,11 +392,14 @@ export class Mostro extends EventEmitter<MostroEvents> implements IMostro {
       // If successful, and the action was a trade key setting action, store the trade key
       if (this.isTradeKeySettingAction(action) && response.order?.payload?.order?.id) {
         const newOrderId = response.order.payload.order.id
-        console.log('🔑 Storing trade key for order ', newOrderId, ', priv: ', tradeKey, ', pub: ', getPublicKey(Buffer.from(tradeKey, 'hex')))
-        await this.keyManager.storeTradeKey(newOrderId, tradeKey)
+        console.log(`🔑 Storing trade key [${newKeyIndex}][priv: ${tradeKey}, pub: ${getPublicKey(Buffer.from(tradeKey, 'hex'))}][${newOrderId}]`)
+        await this.keyManager.storeTradeKey(newOrderId, tradeKey, newKeyIndex)
       }
 
       return response
+    } catch(err) {
+      console.log('>> Error: ', err)
+      throw err
     } finally {
       // Clear the trade signer after use
       this.nostr.setTradeSigner('')
