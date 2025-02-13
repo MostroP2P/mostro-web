@@ -2,6 +2,7 @@ import { mnemonicToSeedSync } from '@scure/bip39'
 import Dexie from 'dexie'
 import { getPublicKey } from 'nostr-tools'
 import type { KeyProvider } from './nostr/key-provider'
+import { KeyDerivation } from './key-derivation'
 
 interface TradeKeyRecord {
   id?: number // Dexie will auto-increment this
@@ -11,7 +12,7 @@ interface TradeKeyRecord {
   createdAt: number
 }
 
-class TradeKeysDatabase extends Dexie {
+export class TradeKeysDatabase extends Dexie {
   tradeKeys!: Dexie.Table<TradeKeyRecord, number>
 
   constructor() {
@@ -21,6 +22,7 @@ class TradeKeysDatabase extends Dexie {
     })
   }
 }
+
 
 /**
  * The order ID for unassigned keys
@@ -68,7 +70,11 @@ export class KeyManager implements KeyProvider {
 
     if (unassignedKeys < this.MIN_AVAILABLE) {
       const keysToGenerate = this.POOL_SIZE - unassignedKeys
-      const nextIndex = await this.getNextTradeKeyIndex()
+      const totalTradeKeys =  await this.db.tradeKeys.count();
+      let nextIndex = 1
+      if (totalTradeKeys > 0) {
+        nextIndex = await this.getNextTradeKeyIndex()
+      }
 
       for (let i = 0; i < keysToGenerate; i++) {
         const tradeKey = this.getTradeKey(nextIndex + i)

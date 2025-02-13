@@ -4,6 +4,7 @@ import { generateSecretKey, getPublicKey, nip59 } from 'nostr-tools'
 import { Nostr } from '../../../utils/nostr'
 import { SigningMode } from '../../../utils/mostro'
 import type { Action, MostroMessage } from '~/utils/mostro/types'
+import { KeyManager } from '../../../utils/key-manager'
 
 const MOSTRO_MESSAGES = {
   TAKE_SELL: {
