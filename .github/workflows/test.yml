@@ -1,0 +1,21 @@
+name: Test
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - '**' 
+  pull_request:
+    branches:
+      - main
+      - develop
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: v22.4.1
+          cache: npm
+      - run: npm ci
+      - run: npm run test
