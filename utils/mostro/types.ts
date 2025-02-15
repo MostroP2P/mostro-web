@@ -188,6 +188,7 @@ export interface MostroInfo {
   fee: number
   hold_invoice_expiration_window: number
   invoice_expiration_window: number
+  created_at: number
 }
 
 type Peer = {
