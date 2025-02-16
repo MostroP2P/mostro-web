@@ -31,10 +31,6 @@ export const useAuth = defineStore('auth', {
       if (mnemonic) {
         try {
           this.mnemonic = mnemonic
-          // Initialize KeyManager with mnemonic
-          const keyManager = new KeyManager()
-          keyManager.init(mnemonic)
-
           const { $mostro } = useNuxtApp()
           $mostro.updateMnemonic(mnemonic)
         } catch(err) {
