@@ -40,7 +40,7 @@ export const useOrders = defineStore('orders', {
     },
     addOrder({ order, event }: {order: Order, event: NDKEvent }) {
       this.orders[order.id] = order
-      this.orders[order.id].updated_at = Math.abs(Date.now() / 1E3)
+      this.orders[order.id].updated_at = event.created_at
       if (this.userOrders[order.id]) {
         // If the order is in the `userOrders` map, it means it's ours,
         // so we set the `is_mine` flag to `true`
@@ -53,7 +53,7 @@ export const useOrders = defineStore('orders', {
         this.orders[order.id] = order
       }
       this.orders[order.id].is_mine = true
-      this.orders[order.id].updated_at = Math.abs(Date.now() / 1E3)
+      this.orders[order.id].updated_at = event?.created_at || Math.abs(Date.now() / 1E3)
       // We also add it to the `userOrders` map
       this.userOrders[order.id] = true
     },
@@ -152,7 +152,7 @@ export const useOrders = defineStore('orders', {
           existingOrder.status = OrderStatus.ACTIVE
           break
       }
-      existingOrder.updated_at = Math.floor(Date.now() / 1E3)
+      existingOrder.updated_at = event.created_at
     },
     markDisputed(order: Order, event: NDKEvent) {
       const existingOrder = this.orders[order.id]
@@ -165,7 +165,7 @@ export const useOrders = defineStore('orders', {
       //   return
       // }
       existingOrder.disputed = true
-      existingOrder.updated_at = Math.floor(Date.now() / 1E3)
+      existingOrder.updated_at = event.created_at
     }
   },
   getters: {
