@@ -225,7 +225,7 @@ export class Mostro extends EventEmitter<MostroEvents> implements IMostro {
 
   extractInfoFromEvent(ev: NDKEvent): MostroInfo {
     const tags = new Map<string, string>(ev.tags as [string, string][])
-    const mostro_pubkey = tags.get('mostro_pubkey') as string
+    const mostro_pubkey = ev.pubkey;
     const mostro_version = tags.get('mostro_version') as string
     const mostro_commit_id = tags.get('mostro_commit_id') as string
     const max_order_amount = Number(tags.get('max_order_amount') as string)
@@ -235,6 +235,8 @@ export class Mostro extends EventEmitter<MostroEvents> implements IMostro {
     const fee = Number(tags.get('fee') as string)
     const hold_invoice_expiration_window = Number(tags.get('hold_invoice_expiration_window') as string)
     const invoice_expiration_window = Number(tags.get('invoice_expiration_window') as string)
+    const created_at = ev.created_at || 0;
+    
     return {
       mostro_pubkey,
       mostro_version,
@@ -245,7 +247,8 @@ export class Mostro extends EventEmitter<MostroEvents> implements IMostro {
       expiration_seconds,
       fee,
       hold_invoice_expiration_window,
-      invoice_expiration_window
+      invoice_expiration_window,
+      created_at
     }
   }
 
@@ -263,7 +266,6 @@ export class Mostro extends EventEmitter<MostroEvents> implements IMostro {
     } else if (z === 'info') {
       // Info
       const info = this.extractInfoFromEvent(ev)
-      // this.mostroStore.addMostroInfo(info)
       this.emit('info-update', info)
       // console.info('< [🧌 -> 📢]', JSON.stringify(info), ', ev: ', nEvent)
     } else if (z === 'dispute') {

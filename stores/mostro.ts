@@ -1,43 +1,34 @@
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import type { Mostro } from '~/utils/mostro'
+import type { MostroInfo } from '~/utils/mostro/types'
 
-export interface MostroInfo {
-  mostro_pubkey: string
-  mostro_version: string
-  mostro_commit_id: string
-  max_order_amount: number
-  min_order_amount: number
-  expiration_hours: number
-  expiration_seconds: number
-  fee: number
-  hold_invoice_expiration_window: number
-  invoice_expiration_window: number
-}
+type MostrosMap = Record<string, MostroInfo>
 
-export const useMostroStore = defineStore('mostro', () => {
-  const mostroMap = ref<Record<string, MostroInfo>>({})
-
-  const getMostroInfo = computed(() => (pubkey: string) => {
-    return mostroMap.value[pubkey]
-  })
-
-  function addMostroInfo(info: MostroInfo) {
-    mostroMap.value[info.mostro_pubkey] = info
+export const useMostroStore = defineStore('mostro', {
+  state: () => ({
+    mostrosMap: {} as MostrosMap,
+  }),
+  actions: {
+    nuxtClientInit() {
+      const mostro = useNuxtApp().$mostro as Mostro;
+      mostro.on('info-update', (mostroInfo:  MostroInfo) => {
+        this.addMostroInfo(mostroInfo);
+      });
+    },
+    getMostroInfo(pubkey: string):  MostroInfo | undefined {
+      return this.mostrosMap[pubkey];
+    },
+    addMostroInfo(mostroInfo: MostroInfo) {
+      const previousMostroInfo = this.mostrosMap[mostroInfo.mostro_pubkey];
+      if (!previousMostroInfo || previousMostroInfo.created_at <= mostroInfo.created_at) {
+        this.mostrosMap[mostroInfo.mostro_pubkey] = mostroInfo;
+      }
+    },
+    removeMostroInfo(pubkey: string) {
+      delete this.mostrosMap[pubkey];
+    },
+    listMostroKeys(): string[] {
+      return Object.keys(this.mostrosMap);
+    }
   }
-
-  function removeMostroInfo(pubkey: string) {
-    delete mostroMap.value[pubkey]
-  }
-
-  function listMostroKeys() {
-    return Object.keys(mostroMap.value)
-  }
-
-  return {
-    mostroMap,
-    getMostroInfo,
-    addMostroInfo,
-    removeMostroInfo,
-    listMostroKeys
-  }
-})
+});
