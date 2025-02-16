@@ -382,8 +382,9 @@ export class Mostro extends EventEmitter<MostroEvents> implements IMostro {
       if (!tradeKey) {
         throw new Error(`No trade key found for order ${orderId}`)
       }
-      console.log('🔑 Using existing trade key: (priv: ', tradeKey.derivedKey, ', pub: ', getPublicKey(Buffer.from(tradeKey.derivedKey, 'hex')), ') for order ', orderId)
-      this.nostr.setTradeSigner(tradeKey.derivedKey)
+      console.log(`🔑 Using existing trade key for order ${orderId}: [${tradeKey.keyIndex}][pubkey: ${tradeKey.derivedKey}]`)
+      const privateTradeKey = this.keyManager.getTradeKey(tradeKey.keyIndex)
+      this.nostr.setTradeSigner(privateTradeKey)
     }
 
     try {
