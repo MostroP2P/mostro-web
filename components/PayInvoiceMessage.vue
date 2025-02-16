@@ -29,60 +29,51 @@
   </div>
 </template>
 
-<script lang="ts">
-import type { PropType } from 'vue'
-import { mapState } from 'pinia'
+<script lang="ts" setup>
+import { computed } from 'vue'
+import { useRoute } from 'vue-router'
 import CreatedAt from '~/components/CreatedAt.vue'
 import { useOrders } from '~/stores/orders'
 import type { MostroMessage } from '~/utils/mostro/types'
 
-export default {
-  props: {
-    message: {
-      type: Object as PropType<MostroMessage>,
-      required: true
-    }
-  },
-  computed: {
-    ...mapState(useOrders, ['getOrderById']),
-    order() {
-      if (typeof this.$route.params.id === 'string') {
-        return this.getOrderById(this.$route.params.id)
-      }
-      return null
-    },
-    messageText() {
-      return `You're selling ${this.satsAmount} sats for ${this.fiatCode} ${this.fiatAmount}`
-    },
-    satsAmount() {
-      const paymentRequest = this.message.order.content.payment_request
-      if (paymentRequest && Array.isArray(paymentRequest)) {
-        return paymentRequest[0]?.amount
-      }
-    },
-    fiatCode() {
-      const paymentRequest = this.message.order.content.payment_request
-      if (paymentRequest && Array.isArray(paymentRequest)) {
-        return paymentRequest[0]?.fiat_code
-      }
-      return 'N/A'
-    },
-    fiatAmount() {
-      const paymentRequest = this.message.order.content.payment_request
-      if (paymentRequest && Array.isArray(paymentRequest)) {
-        return paymentRequest[0]?.fiat_amount
-      }
-      return 'N/A'
-    },
-    creationDate() {
-      return this.message.created_at * 1e3
-    },
-    isTaker() {
-      return !this.order?.is_mine
-    },
-    isMaker() {
-      return this.order?.is_mine
-    }
+const props = defineProps<{
+  message: MostroMessage
+}>()
+
+const route = useRoute()
+const ordersStore = useOrders()
+
+const order = computed(() => {
+  if (typeof route.params.id === 'string') {
+    return ordersStore.getOrderById(route.params.id)
   }
-}
+  return null
+})
+
+const satsAmount = computed(() => {
+  const paymentRequest = props.message.order?.payload?.payment_request
+  if (paymentRequest && Array.isArray(paymentRequest)) {
+    return paymentRequest[0]?.amount
+  }
+})
+
+const fiatCode = computed(() => {
+  const paymentRequest = props.message.order?.payload?.payment_request
+  if (paymentRequest && Array.isArray(paymentRequest)) {
+    return paymentRequest[0]?.fiat_code
+  }
+  return 'N/A'
+})
+
+const fiatAmount = computed(() => {
+  const paymentRequest = props.message.order?.payload?.payment_request
+  if (paymentRequest && Array.isArray(paymentRequest)) {
+    return paymentRequest[0]?.fiat_amount
+  }
+  return 'N/A'
+})
+
+const creationDate = computed(() => props.message.created_at ? props.message.created_at * 1e3 : 0)
+const isTaker = computed(() => !order.value?.is_mine)
+const isMaker = computed(() => order.value?.is_mine)
 </script>
