@@ -70,10 +70,10 @@ export default {
     getInvoice() {
       if (
         this.message.order &&
-        this.message.order.content &&
-        this.message.order.content.payment_request
+        this.message.order.payload &&
+        this.message.order.payload.payment_request
       ) {
-        return this.message.order.content.payment_request[1]
+        return this.message.order.payload.payment_request[1]
       }
       return ''
     },
@@ -93,9 +93,7 @@ export default {
   },
   computed: {
     hasMessage() : boolean {
-      return this.message &&
-        this.message.order.content &&
-        this.message.order.content.payment_request !== undefined
+      return this.message?.order?.payload?.payment_request !== undefined
     }
   }
 }
