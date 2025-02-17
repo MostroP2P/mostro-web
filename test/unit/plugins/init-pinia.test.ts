@@ -64,7 +64,7 @@ describe('initPinia', () => {
 
   it('inits messages store', () => {
     initPinia();
-    expect(mocks.messagesStore.nuxtClientInit).toHaveBeenCalled
+    expect(mocks.messagesStore.nuxtClientInit).toHaveBeenCalled()
   });
 
   it('inits mostro store', () => {
