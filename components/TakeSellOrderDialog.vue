@@ -63,9 +63,13 @@ const onConfirm = async () => {
     )
     if (response?.order?.action === Action.AddInvoice) {
       // Route to the order page
-      const orderId = response.order.id.trim()
-      const path = `/my-trades/${orderId}`
-      router.push(path)
+      const orderId = response.order?.id?.trim()
+      if (orderId) {
+        const path = `/my-trades/${orderId}`
+        router.push(path)
+      } else {
+        console.error('Order ID is undefined. response: ', response)
+      }
     }
   } catch(err) {
     console.error('Error while confirming sell order: ', err)
