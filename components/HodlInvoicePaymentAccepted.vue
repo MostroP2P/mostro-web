@@ -48,14 +48,14 @@ export default {
   computed: {
     ...mapState(useOrders, ['getOrderById']),
     sellerPubkey(): String {
-      const order = this.message.order.content.order
+      const order = this.message.order?.payload?.order
       if (order) {
         return order.master_seller_pubkey || '??'
       }
       return '?'
     },
     fiatCode() {
-      const orderId = this.message.order.content.order?.id
+      const orderId = this.message.order?.payload?.order?.id
       if (orderId) {
         const order = this.getOrderById(orderId)
         if (order) {
@@ -65,7 +65,7 @@ export default {
       return '?'
     },
     fiatAmount() {
-      const orderId = this.message.order.content.order?.id
+      const orderId = this.message.order?.payload?.order?.id
       if (orderId) {
         const order = this.getOrderById(orderId)
         if (order) {
@@ -75,7 +75,7 @@ export default {
       return '?'
     },
     paymentMethod() {
-      const orderId = this.message.order.content.order?.id
+      const orderId = this.message.order?.payload?.order?.id
       if (orderId) {
         const order = this.getOrderById(orderId)
         if (order) {
@@ -85,7 +85,7 @@ export default {
       return '?'
     },
     creationDate() {
-      return this.message.created_at * 1e3
+      return this.message?.created_at ? this.message.created_at * 1e3 : '??'
     }
   }
 }

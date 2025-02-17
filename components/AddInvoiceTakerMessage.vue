@@ -37,25 +37,25 @@ export default {
   },
   computed: {
     orderId() {
-      return this.message.order.id
+      return this.message.order?.id
     },
     satsAmount() {
-      return this.message.order.content.small_order?.amount
+      return this.message.order?.payload?.small_order?.amount
     },
     sellerId() {
-      return this.message.order.content.small_order?.seller_pubkey
+      return this.message.order?.payload?.small_order?.seller_pubkey
     },
     fiatAmount() {
-      return this.message.order.content.small_order?.fiat_amount
+      return this.message.order?.payload?.small_order?.fiat_amount
     },
     fiatCode() {
-      return this.message.order.content.small_order?.fiat_code
+      return this.message.order?.payload?.small_order?.fiat_code
     },
     paymentMethod() {
-      return this.message.order.content.small_order?.payment_method
+      return this.message.order?.payload?.small_order?.payment_method
     },
     creationDate() {
-      return this.message.created_at * 1e3
+      return this.message?.created_at ? this.message.created_at * 1e3 : '??'
     }
   }
 }

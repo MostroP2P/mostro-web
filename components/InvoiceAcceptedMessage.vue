@@ -51,14 +51,14 @@ export default {
       return this.getOrderById(this.$route.params.id as string)
     },
     fiatAmount() {
-      const order = this.message.order.content.order
+      const order = this.message.order?.payload?.order
       if (order) {
         return order.fiat_amount
       }
       return NaN
     },
     fiatCode() {
-      const order = this.message.order.content.order
+      const order = this.message.order?.payload?.order
       if (order) {
         return order.fiat_code
       }
@@ -69,14 +69,14 @@ export default {
       return this?.order?.payment_method
     },
     buyerPubkey() {
-      const order = this.message.order.content.order
+      const order = this.message.order?.payload?.order
       if (order && order.master_buyer_pubkey) {
         return order.master_buyer_pubkey
       }
       return '?'
     },
     creationDate() {
-      return this.message.created_at * 1e3
+      return this.message?.created_at ? this.message.created_at * 1e3 : '??'
     }
   }
 }

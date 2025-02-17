@@ -25,10 +25,10 @@ export default defineComponent({
   },
   computed: {
     amount() {
-      return this.message.order.content?.small_order?.amount
+      return this.message.order?.payload?.small_order?.amount
     },
     creationDate() {
-      return this.message.created_at * 1e3
+      return this.message?.created_at ? this.message.created_at * 1e3 : '??'
     }
   }
 })
