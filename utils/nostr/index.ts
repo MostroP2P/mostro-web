@@ -207,11 +207,10 @@ export class Nostr extends EventEmitter<{
     this.subscribeGiftWraps(myPubKey)
   }
 
-  subscribeGiftWraps(myPubkey: string) {
+  async subscribeGiftWraps(myPubkey: string) {
     this.debug && console.log('📣 subscribing to gift wraps for key: ', myPubkey)
     const filters = {
       kinds: [NOSTR_GIFT_WRAP_KIND],
-      '#p': [myPubkey],
       since: Math.floor(Date.now() / 1e3) - EVENT_INTEREST_WINDOW,
     }
     if (!this.dmSubscriptions.has(myPubkey)) {
@@ -254,7 +253,26 @@ export class Nostr extends EventEmitter<{
 
   private async _processQueuedGiftWraps() {
     const unwrappedEventQueue: UnwrappedEvent[] = []
-    for (const event of this.giftWrapQueue) {
+    // The first thing we'll do is filter out any gift wraps that are not intended for us
+    // For this we have to retrieve all the trade keys from the database
+    const tradeKeys = await this.keyProvider.listTradeKeys()
+    const myPubKey = this.getIdentityPubKey()
+    if (!myPubKey) {
+      this.debug && console.log('⏳ No identity pubkey available yet, gift wrap processing delayed')
+      return
+    }
+    const tradeKeysSet = new Set(tradeKeys.concat([myPubKey]))
+    const t1 = performance.now()
+    const filteredQueue = this.giftWrapQueue.filter((event) => {
+      const pubkey = event.tags.find(([tagName, _tagValue]) => tagName === 'p')?.[1]
+      return pubkey && tradeKeysSet.has(pubkey)
+    })
+    const t2 = performance.now()
+    console.log(
+      `Got ${this.giftWrapQueue.length} gift wraps, ` +
+      `excluded ${this.giftWrapQueue.length - filteredQueue.length}, ` +
+      `kept ${filteredQueue.length}, T: ${(t2 - t1).toFixed(2)} ms`)
+    for (const event of filteredQueue) {
       try {
         const { rumor, seal } = await this.unwrapEvent(event)
         if (rumor.pubkey !== seal.pubkey) {

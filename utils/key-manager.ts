@@ -195,6 +195,11 @@ export class KeyManager implements KeyProvider {
     return keyRecord !== undefined
   }
 
+  async listTradeKeys(): Promise<string[]> {
+    const tradeKeys = await this.db.tradeKeys.toArray()
+    return tradeKeys.map((key) => key.derivedKey)
+  }
+
   /**
    * Update an existing key with an order ID
    * This is used when we need to associate a previously generated key with a new order ID

@@ -12,4 +12,11 @@ export interface KeyProvider {
    * @returns True if the key is a trade key, false otherwise
    */
   isTradeKey(pubkey: string): Promise<boolean>
+
+
+  /**
+   * Retrieves a list of all trade public keys
+   * @returns A list of all trade public keys
+   */
+  listTradeKeys(): Promise<string[]>
 } 
