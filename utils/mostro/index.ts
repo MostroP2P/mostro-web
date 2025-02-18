@@ -373,8 +373,6 @@ export class Mostro extends EventEmitter<MostroEvents> implements IMostro {
       tradeKey = nextKey.privateKey
       console.log(`🔑 Candidate trade key: [${newKeyIndex}][priv: ${tradeKey}, pub: ${getPublicKey(Buffer.from(tradeKey, 'hex'))})`)
       this.nostr.setTradeSigner(tradeKey)
-      // Subscribe to gift wraps for the new trade key
-      this.nostr.subscribeGiftWraps(getPublicKey(Buffer.from(tradeKey, 'hex')))
     } else {
       // For all other actions, get and use the trade key for this order
       if (!orderId) {
