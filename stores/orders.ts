@@ -72,6 +72,12 @@ export const useOrders = defineStore('orders', {
           master_seller_pubkey: (!existingOrder.master_seller_pubkey && order.master_seller_pubkey)
             ? order.master_seller_pubkey
             : existingOrder.master_seller_pubkey,
+          buyer_trade_pubkey: (!existingOrder.buyer_trade_pubkey && order.buyer_trade_pubkey)
+            ? order.buyer_trade_pubkey
+            : existingOrder.buyer_trade_pubkey,
+          seller_trade_pubkey: (!existingOrder.seller_trade_pubkey && order.seller_trade_pubkey)
+            ? order.seller_trade_pubkey
+            : existingOrder.seller_trade_pubkey,
           is_mine: existingOrder.is_mine || order.is_mine,
           status: updateStatus
             ? order.status
