@@ -2,18 +2,17 @@
   <code>
     <strong>
       <a @click="() => onPubkeyClick()" class="npub">
-        {{ userName ? userName : displayNpub }}
+        {{ displayNpub }}
       </a>
     </strong>
   </code>
 </template>
 <script lang="ts">
-import { defineComponent, computed, onMounted, ref } from 'vue'
+import { defineComponent, computed, ref } from 'vue'
 import { nip19 } from 'nostr-tools'
 import { useRouter } from 'vue-router'
 import useMobileDetector from '~/composables/useMobileDetector'
 import useTruncateMiddle from '~/composables/useText'
-import type { Nostr } from '~/plugins/01-nostr'
 
 export default defineComponent({
   name: 'Npub',
@@ -41,20 +40,9 @@ export default defineComponent({
       router.push({ path: `/messages/${npub.value}` })
     }
 
-    const userName = ref('')
-    const nuxt = useNuxtApp()
-    const $nostr: Nostr = nuxt.$nostr as Nostr
-    if ($nostr) {
-      $nostr.fetchProfile({ pubkey: props.publicKey })
-        .then(profile => {
-          userName.value = profile?.username || profile?.displayName || ''
-        })
-    }
-
     return {
       onPubkeyClick,
-      displayNpub,
-      userName
+      displayNpub
     }
   }
 })
