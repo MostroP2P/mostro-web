@@ -27,7 +27,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, watchEffect } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useMessages } from '@/stores/messages'
 import { useOrders } from '@/stores/orders'
@@ -46,7 +46,14 @@ const disputesStore = useDisputes()
 const { $mostro } = useNuxtApp()
 
 const orderId = computed(() => route.params.id as string)
-const pubkey = computed(() => authStore.pubKey)
+const pubkey = ref<string>()
+
+// Set up the watch to update pubkey when orderId changes
+watchEffect(async () => {
+  if (orderId.value) {
+    pubkey.value = await $mostro.getTradeKeyByOrderId(orderId.value)
+  }
+})
 
 // Methods
 const handleDispute = () => {
@@ -65,14 +72,14 @@ const handleCancel = () => {
 const payInvoiceMessage = computed(() => {
   const messages = messagesStore.getMostroMessagesByOrderId(orderId.value)
   return messages.find((msg: MostroMessage) =>
-    msg.order.action === Action.WaitingSellerToPay || msg.order.action === Action.PayInvoice
+    msg.order?.action === Action.WaitingSellerToPay || msg.order?.action === Action.PayInvoice
   )
 })
 
 const giveInvoiceMessage = computed(() => {
   const messages = messagesStore.getMostroMessagesByOrderId(orderId.value)
   return messages.find((msg: MostroMessage) =>
-    msg.order.action === Action.AddInvoice || msg.order.action === Action.TakeSell
+    msg.order?.action === Action.AddInvoice || msg.order?.action === Action.TakeSell
   )
 })
 
@@ -85,11 +92,11 @@ const order = computed(() =>
 )
 
 const isLocalSeller = computed(() =>
-  pubkey.value === order.value?.master_seller_pubkey
+  pubkey.value === order.value?.seller_trade_pubkey
 )
 
 const isLocalBuyer = computed(() =>
-  pubkey.value === order.value?.master_buyer_pubkey
+  pubkey.value === order.value?.buyer_trade_pubkey
 )
 
 const showRelease = computed(() =>
@@ -120,7 +127,7 @@ const showFiatSent = computed(() => {
 const showPayInvoice = computed(() => {
   const messages: MostroMessage[] = messagesStore.getMostroMessagesByOrderId(orderId.value)
   if (!messages || messages.length === 0) return false
-  return messages[messages.length - 1].order.action === Action.PayInvoice &&
+  return messages[messages.length - 1].order?.action === Action.PayInvoice &&
     currentOrderStatus.value !== OrderStatus.CANCELED
 })
 

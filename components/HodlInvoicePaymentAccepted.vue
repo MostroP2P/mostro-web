@@ -31,7 +31,8 @@ import NPub from '~/components/NPub.vue'
 import CreatedAt from '~/components/CreatedAt.vue'
 export default {
   components: {
-    npub: NPub
+    npub: NPub,
+    createdAt: CreatedAt
   },
   mixins: [ textMessage ],
   props: {
@@ -50,7 +51,7 @@ export default {
     sellerPubkey(): String {
       const order = this.message.order?.payload?.order
       if (order) {
-        return order.master_seller_pubkey || '??'
+        return order.seller_trade_pubkey || '??'
       }
       return '?'
     },

@@ -8,7 +8,8 @@
     </v-list-item-title>
     <div class="wrap-text text-message">
       The user
-        <npub :publicKey="buyerPubkey"/>
+        <npub v-if="buyerPubkey" :publicKey="buyerPubkey"/>
+        <span v-else>???</span>
       has taken your order and wants to buy your sats. Get in touch and tell
       him/her how to send you {{ fiatAmount }} {{ fiatCode }} through {{ paymentMethod }}.
       Once you verify you have received the full amount you have to release the sats.
@@ -70,8 +71,8 @@ export default {
     },
     buyerPubkey() {
       const order = this.message.order?.payload?.order
-      if (order && order.master_buyer_pubkey) {
-        return order.master_buyer_pubkey
+      if (order && order.buyer_trade_pubkey) {
+        return order.buyer_trade_pubkey
       }
       return '?'
     },

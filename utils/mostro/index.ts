@@ -503,6 +503,14 @@ export class Mostro extends EventEmitter<MostroEvents> implements IMostro {
     }
   }
 
+  async getTradeKeyByOrderId(orderId: string): Promise<string> {
+    const tradeKey = await this.keyManager.getKeyByOrderId(orderId)
+    if (!tradeKey) {
+      throw new Error(`No trade key found for order ${orderId}`)
+    }
+    return tradeKey.derivedKey
+  }
+
   getNostr(): Nostr {
     return this.nostr
   }

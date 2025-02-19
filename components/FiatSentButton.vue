@@ -52,7 +52,7 @@ export default {
     const order = computed(() => getOrderById(route.params.id as string))
     const fiatAmount = computed(() => order.value?.fiat_amount)
     const fiatCode = computed(() => order.value?.fiat_code)
-    const sellerPubkey = computed(() => order.value?.master_seller_pubkey ?? '')
+    const sellerPubkey = computed(() => order.value?.seller_trade_pubkey ?? '')
 
     const resetError = () => {
       errorMessage.value = ''
