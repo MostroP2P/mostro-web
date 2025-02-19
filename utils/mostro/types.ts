@@ -60,6 +60,8 @@ export class Order {
   }
   disputed?: boolean = false
   mostro_id: string
+  buyer_trade_pubkey?: string | null
+  seller_trade_pubkey?: string | null
   buyer_token?: string | null
   seller_token?: string | null
 
