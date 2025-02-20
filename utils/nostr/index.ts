@@ -421,7 +421,6 @@ export class Nostr extends EventEmitter<{
 
     // Parse the content if it's a string representation of JSON
     const contentObj = typeof event.content === 'string' ? JSON.parse(event.content) : event.content
-    console.log('|> Content: ', JSON.stringify(contentObj.order, null, 0))
     if (this.signingMode === SigningMode.INITIAL) {
     // If we're in the initial signing mode, we need to sign the SHA-256 of the serialized content
     // and provide the signature in the second element of the array
@@ -438,7 +437,6 @@ export class Nostr extends EventEmitter<{
     }
 
     const sealPrivateKey = Buffer.from(sealSigner.privateKey!, 'hex')
-    const rumorPrivateKey = Buffer.from(rumorSigner.privateKey!, 'hex')
     const rumorPrivateKeyUint8 = Buffer.from(this.tradeSigner!.privateKey!, 'hex')
     const rumor = nip59.createRumor(event.rawEvent(), rumorPrivateKeyUint8)
     const seal = nip59.createSeal(rumor, sealPrivateKey, destination)
