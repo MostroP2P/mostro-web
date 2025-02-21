@@ -399,7 +399,7 @@ export class Mostro extends EventEmitter<MostroEvents> implements IMostro {
 
       return response
     } catch(err) {
-      console.log('>> Error: ', err)
+      console.log('>> Error when sending mostro request: ', err)
       throw err
     } finally {
       // Clear the trade signer after use
