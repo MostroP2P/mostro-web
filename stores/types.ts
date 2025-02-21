@@ -96,9 +96,10 @@ export interface RootState {
   auth: AuthState
 }
 
-export interface EncryptedMnemonic {
+export interface EncryptedData {
   ciphertext: string,
-  salt: string
+  salt: string,
+  iv: string
 }
 
 export interface FiatData {
