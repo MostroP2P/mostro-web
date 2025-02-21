@@ -23,10 +23,10 @@
           <v-icon icon="mdi-key"></v-icon>
         </template>
         <v-list-item-title>
-          Secret Key
+          Mnemonic
         </v-list-item-title>
         <v-list-item-subtitle>
-          Be mindful of this information
+          Be mindful of this information, this is the key to all your trade identities.
         </v-list-item-subtitle>
         <v-row v-if="!isMobile">
           <v-col cols="1">
@@ -102,14 +102,14 @@ const mostroInfo = computed(() => {
 })
 
 const secret = computed(() => {
-  if (authStore?.privKey) {
-    return hexToNsec(authStore.privKey)
+  if (authStore?.mnemonic) {
+    return authStore.mnemonic
   }
   return ''
 })
 
 const hasSecret = computed(() => {
-  return authStore.privKey !== null
+  return authStore.mnemonic !== null
 })
 
 const onCopy = () => {
