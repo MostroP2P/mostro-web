@@ -46,5 +46,40 @@ export function useCrypto() {
     return key;
   }
 
-  return { generateSalt, deriveKey };
+  async function encrypt(data: string, password: string) {
+    const salt = window.crypto.getRandomValues(new Uint8Array(16))
+    const key = await deriveKey(password, Buffer.from(salt).toString('base64'), ['encrypt'])
+    const iv = window.crypto.getRandomValues(new Uint8Array(12))
+
+    const encrypted = await window.crypto.subtle.encrypt(
+      { name: 'AES-GCM', iv },
+      key,
+      new TextEncoder().encode(data)
+    )
+
+    return {
+      ciphertext: Buffer.from(encrypted).toString('base64'),
+      iv: Buffer.from(iv).toString('base64'),
+      salt: Buffer.from(salt).toString('base64')
+    }
+  }
+
+  async function decrypt(encrypted: { ciphertext: string, iv: string, salt: string }, password: string) {
+    const key = await deriveKey(password, encrypted.salt, ['decrypt'])
+
+    const decrypted = await window.crypto.subtle.decrypt(
+      { name: 'AES-GCM', iv: Buffer.from(encrypted.iv, 'base64') },
+      key,
+      Buffer.from(encrypted.ciphertext, 'base64')
+    )
+
+    return new TextDecoder().decode(decrypted)
+  }
+
+  return {
+    generateSalt,
+    deriveKey,
+    encrypt,
+    decrypt
+  }
 }

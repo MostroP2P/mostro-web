@@ -18,7 +18,7 @@ export function isNsec(nsec: string): boolean {
 
 export const useAuth = defineStore('auth', {
   state: () => ({
-    encryptedMnemonic: null as EncryptedMnemonic | null,
+    encryptedMnemonic: null as EncryptedData | null,
     mnemonic: null as string | null
   }),
   actions: {
@@ -56,7 +56,7 @@ export const useAuth = defineStore('auth', {
       const keyManager = new KeyManager()
       keyManager.init(this.mnemonic)
     },
-    setEncryptedMnemonic(encryptedMnemonic: EncryptedMnemonic) {
+    setEncryptedMnemonic(encryptedMnemonic: EncryptedData) {
       this.encryptedMnemonic = encryptedMnemonic
     },
     setMnemonic(mnemonic: string) {
