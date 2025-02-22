@@ -6,8 +6,7 @@ interface Alert {
   message: string
 }
 
-export const useAlertStore = defineStore({
-  id: 'mostro-alerts',
+export const useAlertStore = defineStore('mostro-alerts', {
   state: () => ({
     alerts: [] as Alert[],
     nextId: 1,
