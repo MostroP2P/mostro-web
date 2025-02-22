@@ -102,7 +102,6 @@ const onPassword = async () => {
       throw Error('Invalid password')
     }
     authStore.login(mnemonic)
-    authStore.setPassword(password.value)
     showDialog.value = false
   } catch(err) {
     console.warn('Login error: ', err)

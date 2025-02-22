@@ -6,7 +6,8 @@ export interface AuthState {
   encryptedMnemonic: string | null,
   mnemonic: string | null,
   encryptedNwc: string | null,
-  nwc: string | null
+  nwc: string | null,
+  nwcPassword: string | null
 }
 
 export function isNsec(nsec: string): boolean {
@@ -18,13 +19,16 @@ export function isNsec(nsec: string): boolean {
   }
 }
 
+function generatePassword() {
+  return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
+}
+
 export const useAuth = defineStore('auth', {
   state: () => ({
     encryptedMnemonic: null as EncryptedData | null,
     mnemonic: null as string | null,
     encryptedNwc: null as EncryptedData | null,
-    nwc: null as string | null,
-    _password: null as string | null
+    nwcPassword: null as string | null
   }),
   actions: {
     nuxtClientInit() {
@@ -47,6 +51,12 @@ export const useAuth = defineStore('auth', {
       if(encryptedNwc) {
         this.encryptedNwc = JSON.parse(encryptedNwc)
       }
+      let nwcPassword = localStorage.getItem('AUTH_LOCAL_STORAGE_NWC_PASSWORD')
+      if (!nwcPassword) {
+        nwcPassword = generatePassword()
+        localStorage.setItem('AUTH_LOCAL_STORAGE_NWC_PASSWORD', nwcPassword)
+      }
+      this.nwcPassword = nwcPassword
       watch(() => this.encryptedMnemonic, (newEncryptedMnemonic) => {
         if (newEncryptedMnemonic) {
           localStorage.setItem(AUTH_LOCAL_STORAGE_ENCRYPTED_MNEMONIC, JSON.stringify(newEncryptedMnemonic))
@@ -76,29 +86,13 @@ export const useAuth = defineStore('auth', {
     setMnemonic(mnemonic: string) {
       this.mnemonic = mnemonic
     },
-    setPassword(password: string) {
-      this._password = password
-    },
     async setNwc(nwc: string) {
-      if (!this._password) {
-        throw new Error('Password not available')
-      }
       const { encrypt } = useCrypto()
-      const encrypted = await encrypt(nwc, this._password)
+      if (!this.nwcPassword) {
+        throw new Error('NWC password not available')
+      }
+      const encrypted = await encrypt(nwc, this.nwcPassword)
       this.encryptedNwc = encrypted
-    },
-    async decryptNwc() {
-      if (!this.encryptedNwc) return
-      if (!this._password) {
-        throw new Error('Password not available')
-      }
-      try {
-        const { decrypt } = useCrypto()
-        this.nwc = await decrypt(this.encryptedNwc, this._password)
-      } catch (error) {
-        console.error('Failed to decrypt NWC:', error)
-        throw error
-      }
     },
     delete() {
       this.logout()
@@ -107,13 +101,10 @@ export const useAuth = defineStore('auth', {
     },
     deleteNwc() {
       this.encryptedNwc = null
-      this.nwc = null
       localStorage.removeItem('AUTH_LOCAL_STORAGE_ENCRYPTED_NWC')
     },
     logout() {
       this.mnemonic = null
-      this.nwc = null
-      this._password = null
     },
   },
   getters: {

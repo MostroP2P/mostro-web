@@ -106,10 +106,6 @@ const onMnemonicConfirmed = async function () {
     const { encrypt } = useCrypto()
     const encrypted = await encrypt(mnemonic.value, password.value)
 
-    if (authStore.hasNwc) {
-      authStore.setPassword(password.value)
-    }
-
     authStore.setEncryptedMnemonic(encrypted)
     authStore.login(mnemonic.value)
   } catch(err) {
