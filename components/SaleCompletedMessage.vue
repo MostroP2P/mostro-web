@@ -29,7 +29,8 @@ export default {
     return { timeago }
   },
   components: {
-    npub: NPub
+    npub: NPub,
+    CreatedAt
   },
   mixins: [ textMessage ],
   props: {
@@ -46,17 +47,26 @@ export default {
   computed: {
     ...mapState(useOrders, ['getOrderById']),
     buyerPubkey() {
-      const orderMessage = this.message.order
-      const storedOrder = this.getOrderById(orderMessage.id)
-      if (!storedOrder) {
-        console.warn(`Order with id ${orderMessage.id} not found`)
+      try {
+        const orderMessage = this.message.order
+        if (!orderMessage) {
+          console.warn(`Order message not found in SaleCompletedMessage`)
+          return 'N/A'
+        }
+        const storedOrder = this.getOrderById(orderMessage.id as string)
+        if (!storedOrder) {
+          console.warn(`Order with id ${orderMessage.id} not found`)
+          return 'N/A'
+        }
+        const buyerPubkey = storedOrder.buyer_trade_pubkey
+        return buyerPubkey ? buyerPubkey : '?'
+      } catch (error) {
+        console.error('Error in buyerPubkey:', error)
         return 'N/A'
       }
-      const buyerPubkey = storedOrder.master_buyer_pubkey
-      return buyerPubkey ? buyerPubkey : '?'
     },
     creationDate() {
-      return this.message.created_at * 1e3
+      return this.message.created_at ? this.message.created_at * 1e3 : 'N/A'
     }
   }
 }
