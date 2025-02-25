@@ -18,6 +18,16 @@ export const useMostroStore = defineStore('mostro', {
     getMostroInfo(pubkey: string):  MostroInfo | undefined {
       return this.mostrosMap[pubkey];
     },
+    getDefaultMostroPubkey(): string | undefined {
+      // for now we only have a single mostro instance, so we return the first one
+      return this.listMostroKeys()[0];
+    },
+    getDefaultMostroInfo(): MostroInfo | undefined {
+      const defaultMostroKey = this.getDefaultMostroPubkey();
+      if (!defaultMostroKey) return undefined;
+
+      return this.mostrosMap[defaultMostroKey];
+    },
     addMostroInfo(mostroInfo: MostroInfo) {
       const previousMostroInfo = this.mostrosMap[mostroInfo.mostro_pubkey];
       if (!previousMostroInfo || previousMostroInfo.created_at <= mostroInfo.created_at) {
