@@ -57,6 +57,8 @@ export const AUTH_LOCAL_STORAGE_ENCRYPTED_KEY = 'encrypted-private-key'
 export const AUTH_LOCAL_STORAGE_DECRYPTED_KEY = 'decrypted-private-key'
 export const AUTH_LOCAL_STORAGE_ENCRYPTED_MNEMONIC = 'encrypted-mostro-mnemonic'
 export const AUTH_LOCAL_STORAGE_DECRYPTED_MNEMONIC = 'mostro-mnemonic'
+export const AUTH_LOCAL_STORAGE_ENCRYPTED_NWC = 'encrypted-nwc'
+export const AUTH_LOCAL_STORAGE_NWC_PASSWORD = 'nwc-password'
 
 export interface OrderState {
   orders: typeof reactive<OrderMapType>,

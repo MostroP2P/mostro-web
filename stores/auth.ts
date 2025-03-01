@@ -1,5 +1,10 @@
 import { watch } from 'vue'
-import { AUTH_LOCAL_STORAGE_ENCRYPTED_MNEMONIC, AUTH_LOCAL_STORAGE_DECRYPTED_MNEMONIC } from './types'
+import {
+  AUTH_LOCAL_STORAGE_ENCRYPTED_MNEMONIC,
+  AUTH_LOCAL_STORAGE_DECRYPTED_MNEMONIC,
+  AUTH_LOCAL_STORAGE_ENCRYPTED_NWC,
+  AUTH_LOCAL_STORAGE_NWC_PASSWORD
+} from './types'
 import { nip19 } from 'nostr-tools'
 
 export interface AuthState {
@@ -47,14 +52,14 @@ export const useAuth = defineStore('auth', {
           this.delete()
         }
       }
-      const encryptedNwc = localStorage.getItem('AUTH_LOCAL_STORAGE_ENCRYPTED_NWC')
+      const encryptedNwc = localStorage.getItem(AUTH_LOCAL_STORAGE_ENCRYPTED_NWC)
       if(encryptedNwc) {
         this.encryptedNwc = JSON.parse(encryptedNwc)
       }
-      let nwcPassword = localStorage.getItem('AUTH_LOCAL_STORAGE_NWC_PASSWORD')
+      let nwcPassword = localStorage.getItem(AUTH_LOCAL_STORAGE_NWC_PASSWORD)
       if (!nwcPassword) {
         nwcPassword = generatePassword()
-        localStorage.setItem('AUTH_LOCAL_STORAGE_NWC_PASSWORD', nwcPassword)
+        localStorage.setItem(AUTH_LOCAL_STORAGE_NWC_PASSWORD, nwcPassword)
       }
       this.nwcPassword = nwcPassword
       watch(() => this.encryptedMnemonic, (newEncryptedMnemonic) => {
@@ -69,7 +74,7 @@ export const useAuth = defineStore('auth', {
       })
       watch(() => this.encryptedNwc, (newEncryptedNwc) => {
         if (newEncryptedNwc) {
-          localStorage.setItem('AUTH_LOCAL_STORAGE_ENCRYPTED_NWC', JSON.stringify(newEncryptedNwc))
+          localStorage.setItem(AUTH_LOCAL_STORAGE_ENCRYPTED_NWC, JSON.stringify(newEncryptedNwc))
         }
       })
     },
