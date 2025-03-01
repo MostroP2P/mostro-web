@@ -5,7 +5,7 @@ import {
   AUTH_LOCAL_STORAGE_ENCRYPTED_NWC,
   AUTH_LOCAL_STORAGE_NWC_PASSWORD
 } from './types'
-import { nip19 } from 'nostr-tools'
+import { useCrypto } from '~/composables/useCrypto'
 
 export interface AuthState {
   encryptedMnemonic: string | null,
@@ -13,19 +13,6 @@ export interface AuthState {
   encryptedNwc: string | null,
   nwc: string | null,
   nwcPassword: string | null
-}
-
-export function isNsec(nsec: string): boolean {
-  try {
-    const decoded = nip19.decode(nsec)
-    return decoded.type === 'nsec'
-  } catch (error) {
-    return false
-  }
-}
-
-function generatePassword() {
-  return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
 }
 
 export const useAuth = defineStore('auth', {
@@ -56,6 +43,7 @@ export const useAuth = defineStore('auth', {
       if(encryptedNwc) {
         this.encryptedNwc = JSON.parse(encryptedNwc)
       }
+      const { generatePassword } = useCrypto()
       let nwcPassword = localStorage.getItem(AUTH_LOCAL_STORAGE_NWC_PASSWORD)
       if (!nwcPassword) {
         nwcPassword = generatePassword()

@@ -1,4 +1,23 @@
 export function useCrypto() {
+
+  /**
+   * Generates a random password
+   * @returns A random password
+   */
+  function generatePassword(length = 26, includeSpecial = true) {
+    const charset = `abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789${
+      includeSpecial ? '!@#$%^&*()_+-=[]{};:,.<>?' : ''
+    }`
+    const values = new Uint32Array(length)
+    window.crypto.getRandomValues(values)
+
+    let password = ''
+    for (let i = 0; i < length; i++) {
+      password += charset[values[i] % charset.length]
+    }
+    return password
+  }
+
   /**
    * Generates a random salt to be used with PBKDF2 
    * @returns A random salt
@@ -77,6 +96,7 @@ export function useCrypto() {
   }
 
   return {
+    generatePassword,
     generateSalt,
     deriveKey,
     encrypt,
