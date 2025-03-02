@@ -115,9 +115,8 @@ export const useAuth = defineStore('auth', {
 
       this.mnemonic = mnemonic
 
-      // Initialize KeyManager
-      const keyManager = new KeyManager()
-      keyManager.init(this.mnemonic)
+      const { $mostro } = useNuxtApp()
+      $mostro.updateMnemonic(mnemonic)
     },
     setEncryptedMnemonic(encryptedMnemonic: EncryptedData) {
       this.encryptedMnemonic = encryptedMnemonic
