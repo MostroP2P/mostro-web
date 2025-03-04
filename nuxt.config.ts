@@ -2,7 +2,10 @@
 export default defineNuxtConfig({
   ssr: false,
   devtools: { enabled: true },
-
+  devServer: {
+    host: '0.0.0.0',
+    port: process.env.DEV_SERVER_PORT ? Number(process.env.DEV_SERVER_PORT) : 3001,
+  },
   vite: {
     plugins: [
       require('vite-plugin-wasm')(),
