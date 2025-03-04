@@ -144,7 +144,9 @@ export type NewOrder = Pick<
   'buyer_token' |
   'seller_token' |
   'buyer_invoice'
->
+> & {
+  trade_index?: number
+}
 
 export type SmallOrder = {
   amount: number,
