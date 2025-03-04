@@ -398,6 +398,23 @@ export class Nostr extends EventEmitter<{
     return this.giftWrapAndPublishPeerEvent(event, destination)
   }
 
+  private serializeMessageForSigning(message: MostroMessage) {
+    if (message.order) {
+      return JSON.stringify({
+        order: {
+          version: message.order.version,
+          id: message.order.id,
+          request_id: message.order.request_id,
+          trade_index: message.order.trade_index,
+          action: message.order.action,
+          payload: message.order.payload
+        }
+      }, null, 0)
+    } else {
+      throw new Error('Serialization not implemented for message type: ' + message)
+    }
+  }
+
   /**
    * Gift wrap and publish a mostro event. The communication with mostro is more nuanced, so we need to use
    * both the identity and trade keys, depending on the context. For introductions (new trades being taken or created)
@@ -424,9 +441,8 @@ export class Nostr extends EventEmitter<{
     if (this.signingMode === SigningMode.INITIAL) {
     // If we're in the initial signing mode, we need to sign the SHA-256 of the serialized content
     // and provide the signature in the second element of the array
-      const innerMessageObj = contentObj.order
-      const content = JSON.stringify(innerMessageObj, null, 0)
-      const sha256Content = sha256(content)
+      const messageToSign = this.serializeMessageForSigning(contentObj)
+      const sha256Content = sha256(messageToSign)
       const signature = bytesToHex(schnorr.sign(sha256Content, this.tradeSigner!.privateKey!))
       event.content = JSON.stringify([contentObj, signature])
       console.log('🎁 initial signing mode, content: ', event.content)
