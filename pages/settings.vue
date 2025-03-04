@@ -124,20 +124,18 @@ const toggleButtonText = computed(() => isShown.value ? 'Hide' : 'Show')
 const mostroStore = useMostroStore()
 
 const mostroInfo = computed(() => {
-  const keys = mostroStore.listMostroKeys()
-  // for now we only have a single mostro instance, so we return the first one
-  return hexToNpub(keys[0])
+  const defaultMostroKey = mostroStore.getDefaultMostroPubkey();
+  if (!defaultMostroKey)  return '';
+
+  return hexToNpub(defaultMostroKey);
 })
 
 const secret = computed(() => {
-  if (authStore?.mnemonic) {
-    return authStore.mnemonic
-  }
-  return ''
+  return authStore?.mnemonic || '';
 })
 
 const hasSecret = computed(() => {
-  return authStore.mnemonic !== null
+  return !!authStore.mnemonic;
 })
 
 const onCopy = () => {
