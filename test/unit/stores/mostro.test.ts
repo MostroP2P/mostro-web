@@ -294,6 +294,98 @@ describe('useMostroStore', () => {
     });
   });
 
+  describe('getDefaultMaxOrderAmount', () => {
+    describe('without mostro info', () => {
+      it('returns undefined', () => {
+        const mostroStore = useMostroStore()
+        expect(mostroStore.getDefaultMaxOrderAmount()).toBeUndefined()
+      });
+    });
+
+    describe('with mostro info', () => {
+      let mostroStore: ReturnType<typeof useMostroStore>;
+  
+      beforeEach(() => {
+        mostroStore = useMostroStore()
+        mostroStore.addMostroInfo({
+          mostro_pubkey: 'my-mostro-pubkey',
+          created_at: 1739627993,
+          expiration_hours: 24,
+          expiration_seconds: 900,
+          fee: 0.01,
+          hold_invoice_expiration_window: 300,
+          invoice_expiration_window: 300,
+          max_order_amount: 1000000,
+          min_order_amount: 100,
+          mostro_commit_id: 'my-mostro-commit-id',
+          mostro_version: '0.13.0'
+        });
+        mostroStore.addMostroInfo({
+          mostro_pubkey: 'another-mostro-pubkey',
+          created_at: 1739627994,
+          expiration_hours: 48,
+          expiration_seconds: 1000,
+          fee: 0.05,
+          hold_invoice_expiration_window: 500,
+          invoice_expiration_window: 500,
+          max_order_amount: 5000000,
+          min_order_amount: 500,
+          mostro_commit_id: 'another-mostro-commit-id',
+          mostro_version: '0.12.0'
+        });
+      });
+      it('returns max order amount of first mostro', () => {
+        expect(mostroStore.getDefaultMaxOrderAmount()).toBe(1000000);
+      });
+    });
+  });
+
+  describe('getDefaultMinOrderAmount', () => {
+    describe('without mostro info', () => {
+      it('returns undefined', () => {
+        const mostroStore = useMostroStore()
+        expect(mostroStore.getDefaultMinOrderAmount()).toBeUndefined()
+      });
+    });
+
+    describe('with mostro info', () => {
+      let mostroStore: ReturnType<typeof useMostroStore>;
+  
+      beforeEach(() => {
+        mostroStore = useMostroStore()
+        mostroStore.addMostroInfo({
+          mostro_pubkey: 'my-mostro-pubkey',
+          created_at: 1739627993,
+          expiration_hours: 24,
+          expiration_seconds: 900,
+          fee: 0.01,
+          hold_invoice_expiration_window: 300,
+          invoice_expiration_window: 300,
+          max_order_amount: 1000000,
+          min_order_amount: 100,
+          mostro_commit_id: 'my-mostro-commit-id',
+          mostro_version: '0.13.0'
+        });
+        mostroStore.addMostroInfo({
+          mostro_pubkey: 'another-mostro-pubkey',
+          created_at: 1739627994,
+          expiration_hours: 48,
+          expiration_seconds: 1000,
+          fee: 0.05,
+          hold_invoice_expiration_window: 500,
+          invoice_expiration_window: 500,
+          max_order_amount: 5000000,
+          min_order_amount: 500,
+          mostro_commit_id: 'another-mostro-commit-id',
+          mostro_version: '0.12.0'
+        });
+      });
+      it('returns min order amount of first mostro', () => {
+        expect(mostroStore.getDefaultMinOrderAmount()).toBe(100);
+      });
+    });
+  });
+
   describe('listMostroKeys', () => {
     describe('without mostro info', () => {
       it('listMostroKeys returns empty array', () => {

@@ -143,12 +143,19 @@ import fiat from '~/assets/fiat.json'
 import type { NewOrder, Order } from '~/utils/mostro/types'
 import { OrderType } from '~/utils/mostro/types'
 import type { NDKEvent } from '@nostr-dev-kit/ndk'
+import { useMostroStore } from '@/stores/mostro';
+import { useOrderValidations } from '~/composables/useOrderValidations';
 
 interface Fiat {
   [key: string]: FiatData;
 }
 
 export default defineComponent({
+  setup() {
+    const { validateAmount } = useOrderValidations();
+
+    return { validateAmount };
+  },
   data() {
     return {
       valid: false,
@@ -175,9 +182,7 @@ export default defineComponent({
           return isValidSingle || isValidRange || 'Must be a single number or a complete valid range (e.g. 10-100)';
         }
       ],
-      amountRules: [
-        (v: string) => Number(v) > 0 || 'Sats amount is required'
-      ],
+      amountRules: [ this.validateAmount ],
       invoiceRules: [
         (v: string) => !v || this.validateInvoice() || this.decodedInvoiceError || 'Invalid Lightning Network invoice'
       ],
