@@ -35,6 +35,7 @@
     "vue-tsc": "^2.0.29"
   },
   "dependencies": {
+    "@getalby/sdk": "^4.0.0",
     "@mdi/font": "^7.4.47",
     "@nostr-dev-kit/ndk": "^2.10.4",
     "@nostr-dev-kit/ndk-cache-dexie": "^2.5.5",

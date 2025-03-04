@@ -9,11 +9,35 @@ import {
 import { useOrders } from './orders'
 import { useAlertStore } from './alerts'
 import type { NDKEvent } from '@nostr-dev-kit/ndk'
+import { webln } from '@getalby/sdk'
 import { Action, type MostroMessage, type Order } from '~/utils/mostro/types'
 import type { Mostro } from '~/utils/mostro'
 import type { GiftWrap, Rumor, Seal } from '~/utils/nostr/types'
 import { nip19 } from 'nostr-tools'
 import { KeyManager } from '~/utils/key-manager'
+import Dexie from 'dexie'
+
+interface ProcessedInvoice {
+  id?: number
+  invoice: string
+  orderId: string
+  processedAt: number
+  paymentResponse?: string // Store payment response as JSON string
+}
+
+class ProcessedInvoicesDatabase extends Dexie {
+  processedInvoices!: Dexie.Table<ProcessedInvoice, number>
+
+  constructor() {
+    super('mostro-processed-invoices-db')
+    this.version(1).stores({
+      processedInvoices: '++id, invoice, orderId, processedAt'
+    })
+  }
+}
+
+const processedInvoicesDb = new ProcessedInvoicesDatabase()
+
 export interface MessagesState {
   messages: {
     mostro: MostroMessage[],
@@ -28,6 +52,100 @@ export interface MessagesState {
 const MIN_EXPECTED_RESPONSE_TIME = 60
 
 const keyManager = new KeyManager()
+
+const payInvoice = async (invoice: string) => {
+  const authStore = useAuth()
+  if (!authStore.nwcPassword) {
+    throw new Error('NWC password not available')
+  }
+  if (!authStore.encryptedNwc) {
+    throw new Error('NWC not available')
+  }
+  const { decrypt } = useCrypto()
+  const nostrWalletConnectUrl = await decrypt(authStore.encryptedNwc, authStore.nwcPassword)
+  if (!nostrWalletConnectUrl) {
+    throw new Error('NWC URL not available')
+  }
+  const nwc = new webln.NWC({ nostrWalletConnectUrl })
+  await nwc.enable()
+  const response = await nwc.sendPayment(invoice)
+  return response
+}
+
+const hasNwc = () => {
+  const authStore = useAuth()
+  return authStore.nwcPassword && authStore.encryptedNwc
+}
+
+const pendingPayments = new Map<string, Promise<PaymentResponse>>()
+
+const onPaymentResolved = (invoice: string, response: PaymentResponse) => {
+  console.log('Payment resolved, response: ', response)
+  pendingPayments.delete(invoice)
+}
+
+/**
+ * Handles the payment of an invoice using NWC.
+ *
+ * @param invoice - The invoice to pay.
+ * @param orderId - The id of the order to update.
+ */
+const handleNwcPayment = async (invoice: string, orderId: string) => {
+  const orderStore = useOrders()
+  if (invoice && orderId) {
+    // Check if invoice was already processed
+    const processedInvoice = await processedInvoicesDb.processedInvoices
+      .where('invoice')
+      .equals(invoice)
+      .first()
+
+    if (processedInvoice) {
+      // If the invoice was processed and payment was successful, update order status
+      if (processedInvoice.paymentResponse) {
+        orderStore.updateOrderStatus(orderId, OrderStatus.ACTIVE)
+      }
+      return
+    }
+
+    const pendingPayment = payInvoice(invoice)
+    const alertStore = useAlertStore()
+    pendingPayment
+      .then(async (response) => {
+        onPaymentResolved(invoice, response)
+        // Store the processed invoice
+        await processedInvoicesDb.processedInvoices.add({
+          invoice,
+          orderId,
+          processedAt: Math.floor(Date.now() / 1000),
+          paymentResponse: JSON.stringify(response)
+        })
+      })
+      .catch(async (error) => {
+        // Store the failed attempt
+        await processedInvoicesDb.processedInvoices.add({
+          invoice,
+          orderId,
+          processedAt: Math.floor(Date.now() / 1000),
+          paymentResponse: undefined
+        })
+        alertStore.addAlert(
+          'warning',
+          `Automatic payment for order ${orderId} failed. Message: ${error.message}. Please pay manually.`
+        )
+      })
+
+    pendingPayments.set(invoice, pendingPayment)
+    // If the payment is not resolved in 2 seconds, we assume it reached mostro and its being held
+    await new Promise(resolve => setTimeout(resolve, 2_000))
+    if (pendingPayments.has(invoice)) {
+      orderStore.updateOrderStatus(orderId, OrderStatus.ACTIVE)
+      alertStore.addAlert(
+        'success',
+        `Automatic payment for order ${orderId} succeeded`
+      )
+    }
+  }
+}
 
 export const useMessages = defineStore('messages', {
   state: () => ({
@@ -50,6 +168,17 @@ export const useMessages = defineStore('messages', {
         const orderMessage = message.order
         const orderStore = useOrders()
         const disputeStore = useDisputes()
+        if (orderMessage?.action === Action.PayInvoice) {
+          if (hasNwc()) {
+            const invoice = message.order?.payload?.payment_request?.[1] as string
+            const orderId = message.order?.id
+            if (invoice && orderId) {
+              handleNwcPayment(invoice, orderId)
+            } else {
+              console.warn('>>> [NWC] PayInvoice: invoice or orderId is undefined')
+            }
+          }
+        }
         if (orderMessage?.action === Action.NewOrder) {
           const order: Order = orderMessage.payload?.order as Order
           orderStore.addUserOrder({ order, event })
@@ -96,7 +225,7 @@ export const useMessages = defineStore('messages', {
         } else if (orderMessage?.action === Action.OutOfRangeSatsAmount) {
           this.handleOutOfRangeSatsAmount(message)
         }
-        orderStore.updateOrderStatus(message.order.id as string, orderMessage.action as Action, event)
+        orderStore.onOrderAction(message.order.id as string, orderMessage.action as Action, event)
         this.messages.mostro.push(message)
       } else if (message['cant-do']) {
         console.warn(`>>> [${message['cant-do'].id}] CantDo, id: ${message['cant-do'].id} message: ${message['cant-do']?.content?.text_message}`)

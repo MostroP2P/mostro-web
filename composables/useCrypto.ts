@@ -1,4 +1,23 @@
 export function useCrypto() {
+
+  /**
+   * Generates a random password
+   * @returns A random password
+   */
+  function generatePassword(length = 26, includeSpecial = true) {
+    const charset = `abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789${
+      includeSpecial ? '!@#$%^&*()_+-=[]{};:,.<>?' : ''
+    }`
+    const values = new Uint32Array(length)
+    window.crypto.getRandomValues(values)
+
+    let password = ''
+    for (let i = 0; i < length; i++) {
+      password += charset[values[i] % charset.length]
+    }
+    return password
+  }
+
   /**
    * Generates a random salt to be used with PBKDF2 
    * @returns A random salt
@@ -46,5 +65,41 @@ export function useCrypto() {
     return key;
   }
 
-  return { generateSalt, deriveKey };
+  async function encrypt(data: string, password: string) {
+    const salt = window.crypto.getRandomValues(new Uint8Array(16))
+    const key = await deriveKey(password, Buffer.from(salt).toString('base64'), ['encrypt'])
+    const iv = window.crypto.getRandomValues(new Uint8Array(12))
+
+    const encrypted = await window.crypto.subtle.encrypt(
+      { name: 'AES-GCM', iv },
+      key,
+      new TextEncoder().encode(data)
+    )
+
+    return {
+      ciphertext: Buffer.from(encrypted).toString('base64'),
+      iv: Buffer.from(iv).toString('base64'),
+      salt: Buffer.from(salt).toString('base64')
+    }
+  }
+
+  async function decrypt(encrypted: { ciphertext: string, iv: string, salt: string }, password: string) {
+    const key = await deriveKey(password, encrypted.salt, ['decrypt'])
+
+    const decrypted = await window.crypto.subtle.decrypt(
+      { name: 'AES-GCM', iv: Buffer.from(encrypted.iv, 'base64') },
+      key,
+      Buffer.from(encrypted.ciphertext, 'base64')
+    )
+
+    return new TextDecoder().decode(decrypted)
+  }
+
+  return {
+    generatePassword,
+    generateSalt,
+    deriveKey,
+    encrypt,
+    decrypt
+  }
 }

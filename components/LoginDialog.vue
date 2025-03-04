@@ -94,16 +94,10 @@ const onPassword = async () => {
     return
   }
   try {
-    let encryptedMnemonic = authStore.encryptedMnemonic
-    const salt = Buffer.from(encryptedMnemonic.salt, 'base64')
-    const ciphertext = encryptedMnemonic.ciphertext
-    const { deriveKey } = useCrypto()
-    const key = await deriveKey(password.value, salt.toString('base64'), ['encrypt', 'decrypt'])
-    let rawKey = await window.crypto.subtle.exportKey('raw', key)
-    let rawKeyBytes = Buffer.from(rawKey)
-    let base64Key = rawKeyBytes.toString('base64')
-    const plaintext = CryptoJS.AES.decrypt(ciphertext, base64Key).toString()
-    const mnemonic = Buffer.from(plaintext, 'hex').toString('utf8')
+    // Use the new decrypt function
+    const { decrypt } = useCrypto()
+    const mnemonic = await decrypt(authStore.encryptedMnemonic, password.value)
+    
     if (!mnemonic) {
       throw Error('Invalid password')
     }

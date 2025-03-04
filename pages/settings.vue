@@ -23,10 +23,10 @@
           <v-icon icon="mdi-key"></v-icon>
         </template>
         <v-list-item-title>
-          Secret Key
+          Mnemonic
         </v-list-item-title>
         <v-list-item-subtitle>
-          Be mindful of this information
+          Be mindful of this information, this is the key to all your trade identities.
         </v-list-item-subtitle>
         <v-row v-if="!isMobile">
           <v-col cols="1">
@@ -75,6 +75,32 @@
           </v-col>
         </v-row>
       </v-list-item>
+      <v-divider />
+      <v-list-item>
+        <template v-slot:prepend>
+          <v-icon icon="mdi-power-plug-outline"></v-icon>
+        </template>
+        <v-list-item-title>
+          Nostr Wallet Connect
+        </v-list-item-title>
+        <v-list-item-subtitle>
+          {{ hasNwc ? 'NWC is configured' : 'NWC is not configured' }}
+        </v-list-item-subtitle>
+        <v-row>
+          <v-col>
+            <NwcDialog v-if="!hasNwc" class="mt-4"/>
+            <v-btn
+              v-else
+              variant="tonal"
+              color="error"
+              class="mt-4"
+              @click="authStore.deleteNwc()"
+            >
+              Remove NWC
+            </v-btn>
+          </v-col>
+        </v-row>
+      </v-list-item>
     </v-list>
   </v-card>  
 </template>
@@ -85,6 +111,8 @@ import { useAuth } from '../stores/auth'
 import useMobileDetector from '../composables/useMobileDetector'
 import useNip19 from '../composables/useNip19'
 import { useMostroStore } from '../stores/mostro'
+import NwcDialog from '~/components/NwcDialog.vue'
+
 const authStore = useAuth()
 const { isMobile } = useMobileDetector()
 const { hexToNsec, hexToNpub } = useNip19()
@@ -102,19 +130,21 @@ const mostroInfo = computed(() => {
 })
 
 const secret = computed(() => {
-  if (authStore?.privKey) {
-    return hexToNsec(authStore.privKey)
+  if (authStore?.mnemonic) {
+    return authStore.mnemonic
   }
   return ''
 })
 
 const hasSecret = computed(() => {
-  return authStore.privKey !== null
+  return authStore.mnemonic !== null
 })
 
 const onCopy = () => {
   navigator.clipboard.writeText(secret.value)
 }
+
+const hasNwc = computed(() => authStore.hasNwc)
 
 </script>
 

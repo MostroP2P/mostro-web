@@ -3,7 +3,7 @@ import { schnorr } from '@noble/curves/secp256k1'
 import { sha256 } from '@noble/hashes/sha256'
 import { bytesToHex } from '@noble/hashes/utils'
 import { getPublicKey, nip44, nip19, nip59, type NostrEvent, type EventTemplate } from 'nostr-tools'
-import NDK, { NDKKind, NDKSubscription, NDKEvent, NDKRelay, NDKUser, NDKRelayList, getRelayListForUser, NDKPrivateKeySigner } from '@nostr-dev-kit/ndk'
+import NDK, { NDKKind, NDKSubscription, NDKEvent, NDKRelay, NDKUser, NDKRelayList, getRelayListForUser, NDKPrivateKeySigner, NDKRelaySet } from '@nostr-dev-kit/ndk'
 import NDKCacheAdapterDexie from '@nostr-dev-kit/ndk-cache-dexie'
 import { type GiftWrap, type Rumor, type Seal, type UnwrappedEvent } from './types'
 import { SigningMode } from '../mostro'
@@ -464,8 +464,11 @@ export class Nostr extends EventEmitter<{
   async publishEvent(event: NDKEvent) {
     try {
       const poolSize = this.ndk.pool.size()
-      const relays = await event.publish()
-      this.debug && console.log(`📡 Event published to [${relays.size}/${poolSize}] relays`)
+      const relaySet = new NDKRelaySet(new Set(this.ndk.pool.relays.values()), this.ndk, this.ndk.pool)
+      const t1 = performance.now()
+      const relays = await event.publish(relaySet, 5_000, 1)
+      const t2 = performance.now()
+      this.debug && console.log(`📡 Event published to [${relays.size}/${poolSize}] relays. ⏱️ In ${(t2 - t1).toFixed(2)} ms`)
     } catch (err) {
       console.error('Error publishing event: ', err)
     }

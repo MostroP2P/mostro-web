@@ -90,7 +90,7 @@ const isProcessing = ref(false)
 const authStore = useAuth()
 
 const { rules } = useSecretValidator()
-const { generateSalt, deriveKey } = useCrypto()
+const { generateSalt, deriveKey, encrypt } = useCrypto()
 
 const onGenerateMnemonic = async () => {
   mnemonic.value = generateMnemonic()
@@ -103,14 +103,10 @@ const onMnemonicConfirmed = async function () {
       throw new Error('Invalid mnemonic')
     }
 
-    const salt = generateSalt()
-    const key = await deriveKey(password.value, salt.toString('base64'), ['encrypt', 'decrypt'])
-    let rawKey = await window.crypto.subtle.exportKey('raw', key)
-    let rawKeyBytes = Buffer.from(rawKey)
-    let base64Key = rawKeyBytes.toString('base64')
+    const { encrypt } = useCrypto()
+    const encrypted = await encrypt(mnemonic.value, password.value)
 
-    const ciphertext = CryptoJS.AES.encrypt(mnemonic.value, base64Key).toString()
-    authStore.setEncryptedMnemonic({ ciphertext, salt: salt.toString('base64') })
+    authStore.setEncryptedMnemonic(encrypted)
     authStore.login(mnemonic.value)
   } catch(err) {
     console.error('Error while processing mnemonic. Err: ', err)

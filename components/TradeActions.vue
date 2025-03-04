@@ -50,8 +50,12 @@ const pubkey = ref<string>()
 
 // Set up the watch to update pubkey when orderId changes
 watchEffect(async () => {
-  if (orderId.value) {
-    pubkey.value = await $mostro.getTradeKeyByOrderId(orderId.value)
+  try {
+    if (orderId.value) {
+      pubkey.value = await $mostro.getTradeKeyByOrderId(orderId.value)
+    }
+  } catch (err) {
+    console.error('Error getting trade key: ', err)
   }
 })
 
