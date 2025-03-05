@@ -7,7 +7,7 @@ import NDK, { NDKKind, NDKSubscription, NDKEvent, NDKRelay, NDKUser, NDKRelayLis
 import NDKCacheAdapterDexie from '@nostr-dev-kit/ndk-cache-dexie'
 import { type GiftWrap, type Rumor, type Seal, type UnwrappedEvent } from './types'
 import { SigningMode } from '../mostro'
-import type { MostroMessage } from '../mostro/types'
+import { Action, type MostroMessage } from '../mostro/types'
 import type { KeyProvider } from './key-provider'
 
 /**
@@ -400,16 +400,28 @@ export class Nostr extends EventEmitter<{
 
   private serializeMessageForSigning(message: MostroMessage) {
     if (message.order) {
-      return JSON.stringify({
-        order: {
-          version: message.order.version,
-          id: message.order.id,
-          request_id: message.order.request_id,
-          trade_index: message.order.trade_index,
-          action: message.order.action,
-          payload: message.order.payload
-        }
-      }, null, 0)
+      if (message.order.action === Action.NewOrder) {
+        return JSON.stringify({
+          order: {
+            version: message.order.version,
+            request_id: message.order.request_id,
+            trade_index: message.order.trade_index,
+            action: message.order.action,
+            payload: message.order.payload
+          }
+        }, null, 0)
+      } else {
+        return JSON.stringify({
+          order: {
+            version: message.order.version,
+            request_id: message.order.request_id,
+            trade_index: message.order.trade_index,
+            id: message.order.id,
+            action: message.order.action,
+            payload: message.order.payload
+          }
+        }, null, 0)
+      }
     } else {
       throw new Error('Serialization not implemented for message type: ' + message)
     }
@@ -442,7 +454,7 @@ export class Nostr extends EventEmitter<{
     // If we're in the initial signing mode, we need to sign the SHA-256 of the serialized content
     // and provide the signature in the second element of the array
       const messageToSign = this.serializeMessageForSigning(contentObj)
-      const sha256Content = sha256(messageToSign)
+      const sha256Content = sha256(messageToSign as string)
       const signature = bytesToHex(schnorr.sign(sha256Content, this.tradeSigner!.privateKey!))
       event.content = JSON.stringify([contentObj, signature])
       console.log('🎁 initial signing mode, content: ', event.content)
