@@ -35,6 +35,16 @@ export const useOrders = defineStore('orders', {
           // this order is ours.
           const order = orderMessage.payload?.order as Order
           this.addUserOrder({ order, event: ev })
+        } else if (orderMessage && orderMessage.action === Action.AddInvoice) {
+          // If we get a mostro message with an add-invoice action,
+          // this means mostro is waiting for a buyer invoice. Regardless of which side we're on
+          // (either seller or buyer) the state of the order needs to be updated to waiting-buyer-invoice.
+          this.updateOrderStatus(orderMessage.id as string, OrderStatus.WAITING_BUYER_INVOICE)
+        } else if (orderMessage && orderMessage.action === Action.WaitingSellerToPay) {
+          // If we get a mostro message with a waiting-seller-to-pay action,
+          // this means mostro is waiting for the seller to pay a hold invoice. Regardless of which side we're on
+          // (either seller or buyer) the state of the order needs to be updated to waiting-payment.
+          this.updateOrderStatus(orderMessage.id as string, OrderStatus.WAITING_PAYMENT)
         }
       })
     },
