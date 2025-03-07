@@ -31,7 +31,7 @@
     "typescript": "^5.5.4",
     "vite-plugin-top-level-await": "^1.4.4",
     "vite-plugin-wasm": "^3.4.1",
-    "vitest": "^2.0.5",
+    "vitest": "^3.0.7",
     "vue-tsc": "^2.0.29"
   },
   "dependencies": {

@@ -22,6 +22,16 @@ export const useMostroStore = defineStore('mostro', {
       // for now we only have a single mostro instance, so we return the first one
       return this.listMostroKeys()[0];
     },
+    getDefaultMaxOrderAmount(): number | undefined {
+      const defaultMostroInfo = this.getDefaultMostroInfo();
+      const maxOrderAmount = defaultMostroInfo?.max_order_amount;
+      return maxOrderAmount ? Number(maxOrderAmount) : undefined;
+    },
+    getDefaultMinOrderAmount(): number | undefined {
+      const defaultMostroInfo = this.getDefaultMostroInfo();
+      const minOrderAmount = defaultMostroInfo?.min_order_amount;
+      return minOrderAmount ? Number(minOrderAmount) : undefined;
+    },
     getDefaultMostroInfo(): MostroInfo | undefined {
       const defaultMostroKey = this.getDefaultMostroPubkey();
       if (!defaultMostroKey) return undefined;
